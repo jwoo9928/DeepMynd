@@ -87,33 +87,15 @@ function App() {
     // return () => unsubscribe();
   }, []);
 
-  const handleLoadModel = async () => {
-    await llmController.current.initialize();
-  };
-
-  const handleSendMessage = async (content: string) => {
-    await chatController.current.sendMessage(content);
-  };
-
-  const handleInterrupt = () => {
-    chatController.current.interrupt();
-  };
-
-  const handleReset = () => {
-    chatController.current.reset();
-    setTps(null);
-    setNumTokens(null);
-  };
-
   return (
     <>
-      <Initialize
+      {/* <Initialize
         status={status}
         progressItems={progressItems}
         loadingMessage={loadingMessage}
         error={error}
         handleLoadModel={handleLoadModel}
-      />
+      /> */}
       <ChatLayout />
     </>
   )

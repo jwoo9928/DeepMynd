@@ -2,6 +2,7 @@ export interface Message {
   role: 'user' | 'assistant' | 'system';
   content: string;
   answerIndex?: number;
+  timestamp?: number;
 }
 
 export interface ChatRoom {
@@ -18,7 +19,21 @@ export interface ProgressItem {
   loaded: number;
 }
 
+export interface GenerationStatus {
+  tps: number | undefined;
+  numTokens: number;
+  state: 'thinking' | 'answering';
+  startTime: number | undefined;
+}
+
 export interface GenerationUpdateData {
   output: string;
   state: 'answering' | 'complete' | 'error';
+}
+
+export interface Persona {
+  name: string;
+  description: string;
+  system: string;
+  id: string;
 }

@@ -6,19 +6,22 @@ import {
     PreTrainedTokenizer,
 } from "@huggingface/transformers";
 import { eventEmitter, EVENT_TYPES } from './events';
-import { Message, ProgressItem } from './types';
+import { GenerationStatus, Message, ProgressItem } from './types';
 import { TextGenerationPipeline } from "./TextGenerationPipeline";
 
 export class LLMController {
     private static instance: LLMController;
     private tokenizer: AutoTokenizer | null = null;
     private model: AutoModelForCausalLM | null = null;
+    private streamer: TextStreamer | null = null;
     private stopping_criteria: InterruptableStoppingCriteria;
     private past_key_values_cache: any = null;
     private isWebGPUAvailable: boolean = false;
+    private generationStatus: GenerationStatus | null = null;
 
     private constructor() {
         this.stopping_criteria = new InterruptableStoppingCriteria();
+        this.resetGenerationStatus();
         this.checkWebGPU();
     }
 
@@ -61,6 +64,13 @@ export class LLMController {
             console.log("tokenizer testing:", this.tokenizer)
             this.model = model;
 
+            this.streamer = new TextStreamer(tokenizer, {
+                skip_prompt: true,
+                skip_special_tokens: true,
+                callback_function: this.outputCallback.bind(this),
+                token_callback_function: this.tokenCallback.bind(this),
+            });
+
             eventEmitter.emit(EVENT_TYPES.LOADING_MESSAGE, 'Compiling shaders and warming up model...');
 
             eventEmitter.emit(EVENT_TYPES.MODEL_STATUS, 'ready');
@@ -71,7 +81,44 @@ export class LLMController {
         }
     }
 
+    private tokenCallback(tokens: bigint[]) {
+        let { numTokens, startTime } = this.generationStatus as GenerationStatus;
+
+        if (numTokens && startTime && this.generationStatus) {
+            let tokenizer = this.tokenizer as PreTrainedTokenizer;
+
+            const [START_THINKING_TOKEN_ID, END_THINKING_TOKEN_ID] = tokenizer.encode(
+                "<think></think>",
+                { add_special_tokens: false },
+            );
+
+            const tokenNumbers = tokens.map(Number); // bigint[] → number[]
+            if (++numTokens > 1) {
+                this.generationStatus.tps = (numTokens / (performance.now() - startTime)) * 1000;
+            }
+            if (tokenNumbers[0] === END_THINKING_TOKEN_ID) {
+                this.generationStatus.state = "answering";
+            }
+        }
+    };
+
+    public outputCallback = (output: string) => {
+        const { state, numTokens, tps } = this.generationStatus as GenerationStatus;
+        eventEmitter.emit(EVENT_TYPES.GENERATION_UPDATE, {
+            output,
+            state,
+            tps,
+            numTokens,
+        });
+    };
+
     public async generate(messages: Message[]) {
+        this.generationStatus = {
+            state: "thinking",
+            numTokens: 0,
+            tps: undefined,
+            startTime: performance.now()
+        }
         if (!this.isWebGPUAvailable && !this.tokenizer && !this.model) {
             eventEmitter.emit(EVENT_TYPES.ERROR, 'WebGPU not available');
             return;
@@ -83,46 +130,10 @@ export class LLMController {
             return_dict: true,
         });
 
-        const [START_THINKING_TOKEN_ID, END_THINKING_TOKEN_ID] = tokenizer.encode(
-            "<think></think>",
-            { add_special_tokens: false },
-        );
-
-        let state: "thinking" | "answering" = "thinking";
-        let numTokens = 0;
-        let tps: number | undefined;
-        let startTime: number | undefined;
-
-        const tokenCallback = (tokens: bigint[]) => {
-            startTime ??= performance.now();
-
-            const tokenNumbers = tokens.map(Number); // bigint[] → number[]
-            if (++numTokens > 1) {
-                tps = (numTokens / (performance.now() - startTime)) * 1000;
-            }
-            if (tokenNumbers[0] === END_THINKING_TOKEN_ID) {
-                state = "answering";
-            }
-        };
-
-        const outputCallback = (output: string) => {
-            console.log("output", output)
-            eventEmitter.emit(EVENT_TYPES.GENERATION_UPDATE, {
-                output,
-                state,
-                tps,
-                numTokens,
-            });
-        };
-
-        const streamer = new TextStreamer(tokenizer, {
-            skip_prompt: true,
-            skip_special_tokens: true,
-            callback_function: outputCallback,
-            token_callback_function: tokenCallback,
-        });
         eventEmitter.emit(EVENT_TYPES.GENERATION_START);
+        //@ts-ignore
         const { past_key_values, sequences } = await model.generate({
+            //@ts-ignore
             ...inputs,
             // TODO: Add back when fixed
             // past_key_values: past_key_values_cache,
@@ -134,7 +145,7 @@ export class LLMController {
             // temperature: 0.2,
 
             max_new_tokens: 2048,
-            streamer,
+            streamer: this.streamer,
             stopping_criteria: this.stopping_criteria,
             return_dict_in_generate: true,
         });
@@ -161,5 +172,14 @@ export class LLMController {
 
     public isAvailable(): boolean {
         return this.isWebGPUAvailable;
+    }
+
+    public resetGenerationStatus() {
+        this.generationStatus = {
+            state: "thinking",
+            numTokens: 0,
+            tps: undefined,
+            startTime: undefined,
+        };
     }
 }
