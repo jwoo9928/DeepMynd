@@ -1,6 +1,6 @@
 import React, { useRef } from "react";
-import { LLMController } from "../\bcontrollers/LLMController";
-import { ProgressItem } from "../\bcontrollers/types";
+import { LLMController } from "../controllers/LLMController";
+import { ProgressItem } from "../controllers/types";
 
 interface InitializeProps {
     status: 'loading' | 'ready' | null;

@@ -8,6 +8,7 @@ export interface ChatRoom {
   messages: Message[];
   isRunning: boolean;
   roomId: string;
+  systemMessage: string;
 }
 
 export interface ProgressItem {
@@ -15,4 +16,9 @@ export interface ProgressItem {
   progress: number;
   total: number;
   loaded: number;
+}
+
+export interface GenerationUpdateData {
+  output: string;
+  state: 'answering' | 'complete' | 'error';
 }
