@@ -61,7 +61,6 @@ export class LLMController {
             });
 
             this.tokenizer = tokenizer;
-            console.log("tokenizer testing:", this.tokenizer)
             this.model = model;
 
             this.streamer = new TextStreamer(tokenizer, {
@@ -141,10 +140,9 @@ export class LLMController {
             // Sampling
             do_sample: false,
             // repetition_penalty: 1.1,
-            // top_k: 3,
-            // temperature: 0.2,
-
-            max_new_tokens: 2048,
+            top_k: 3,
+            temperature: 0.8,
+            max_new_tokens: 300,//2048,
             streamer: this.streamer,
             stopping_criteria: this.stopping_criteria,
             return_dict_in_generate: true,

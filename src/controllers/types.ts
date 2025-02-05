@@ -9,6 +9,7 @@ export interface ChatRoom {
   messages: Message[];
   isRunning: boolean;
   roomId: string;
+  personaId?: string;
   systemMessage: string;
 }
 
@@ -36,4 +37,5 @@ export interface Persona {
   description: string;
   system: string;
   id: string;
+  image?:string;
 }

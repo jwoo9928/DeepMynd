@@ -1,6 +1,8 @@
 import { Search, X, Plus, Bot, PlusCircle, ChevronRight, ChevronLeft } from "lucide-react";
 import React, { useState } from "react";
 import Modal from 'react-modal';
+import { EVENT_TYPES, eventEmitter } from "../controllers/events";
+import { ModeValues } from "./types";
 
 // Modal을 앱의 루트에 바인딩
 Modal.setAppElement('#root');
@@ -63,10 +65,10 @@ const EmptyModelState = () => (
     <p className="text-sm text-gray-500 mb-4">
       Get started by connecting your own AI model or create a custom one.
     </p>
-    {/* <button className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+    <button className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
       <PlusCircle className="w-4 h-4 mr-2" />
       Connect Model
-    </button> */}
+    </button>
   </div>
 );
 
@@ -216,8 +218,9 @@ const Sidebar = ({ isOpen, toggleSidebar }: {
   };
 
   const handleCreateModel = () => {
-    console.log('Creating new model');
     setIsModalOpen(false);
+    console.log('Creating new model');
+    eventEmitter.emit(EVENT_TYPES.CREATE_NEW_PERSONA, ModeValues.Create);
   };
 
   return (

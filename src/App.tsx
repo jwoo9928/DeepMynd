@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
-import ChatLayout from './components/ChatLayout'
+import ChatLayout from './components/chat/ChatLayout'
 import { ChatController } from './controllers/ChatController'
 import { LLMController } from './controllers/LLMController'
 import { EVENT_TYPES, eventEmitter } from './controllers/events'
@@ -87,15 +87,19 @@ function App() {
     // return () => unsubscribe();
   }, []);
 
+  const handleLoadModel = async () => {
+    await llmController.current.initialize();
+  };
+
   return (
     <>
-      {/* <Initialize
+      <Initialize
         status={status}
         progressItems={progressItems}
         loadingMessage={loadingMessage}
         error={error}
         handleLoadModel={handleLoadModel}
-      /> */}
+      />
       <ChatLayout />
     </>
   )

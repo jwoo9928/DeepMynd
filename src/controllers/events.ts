@@ -8,7 +8,9 @@ export const EVENT_TYPES = {
   GENERATION_UPDATE: 'generation_update',
   GENERATION_COMPLETE: 'generation_complete',
   CHAT_MESSAGE_RECEIVED: 'chat_message_received',
-  ERROR: 'error'
+  ERROR: 'error',
+  CREATE_NEW_PERSONA: 'create_new_persona',
+  CREATE_NEW_CHAT: 'create_new_chat',
 } as const;
 
 export const eventEmitter = new EventEmitter();
