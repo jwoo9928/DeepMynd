@@ -29,7 +29,7 @@ const ChatLayout = () => {
 
     const handleMessageReceived = (updatedMessages: Message[]) => {
       console.log('recieved', updatedMessages[updatedMessages.length - 1].content);
-      setMessages([...updatedMessages]);
+      setMessages(updatedMessages);
       scrollToBottom();
     };
 

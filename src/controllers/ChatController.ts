@@ -54,15 +54,18 @@ export class ChatController {
 
   public async sendMessage(content: string): Promise<void> {
     if (!this.currentFocustRoomId) {
-      throw new Error('No chat room selected');
+      // throw new Error('No chat room selected');
+      this.createChatRoom()
     }
     const room = this.getChatRoom(this.currentFocustRoomId);
     console.log('roomId', this.currentFocustRoomId);
     console.log('room', room);
+    this.currentMessages = room.messages;
 
     if (room.isRunning) {
       return;
     }
+
     if (this.currentMessages.length !== 0) {
       this.currentMessages = room.messages
     }
@@ -110,6 +113,7 @@ export class ChatController {
       const room = this.getChatRoom(roomId);
       this.chatRooms.set(roomId, { ...room, messages: [...this.currentMessages] });
       room.isRunning = false;
+      this.currentMessages = [];
     }
 
   }
