@@ -1,8 +1,30 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Menu, X, Send, MoreVertical, Search } from 'lucide-react';
+import { ChatController } from '../\bcontrollers/ChatController';
+import { Message } from '../\bcontrollers/types';
+import { EVENT_TYPES, eventEmitter } from '../\bcontrollers/events';
 
 const ChatLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [roomId, setRoomId] = useState<string>();
+  const [messages, setMessages] = useState<Message[]>([]);
+  const chatController = useRef(ChatController.getInstance());
+  const [value, setValue] = useState<string>('');
+
+  useEffect(() => {
+    const roomId = chatController.current.createChatRoom();
+    chatController.current.initializeEventListeners(roomId);
+    setRoomId(roomId);
+
+    eventEmitter.on(EVENT_TYPES.CHAT_MESSAGE_RECEIVED, (message: Message[]) => {
+      console.log("message", message)
+      setMessages(message);
+    });
+    return () => {
+      chatController.current.removeListeners();
+      eventEmitter.off(EVENT_TYPES.CHAT_MESSAGE_RECEIVED);
+    }
+  }, []);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -80,17 +102,14 @@ const ChatLayout = () => {
 
           {/* Messages Area */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className={`flex ${i % 2 === 0 ? 'justify-end' : 'justify-start'}`}>
+            {messages.map((msg, index) => (
+              <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div
-                  className={`max-w-[70%] p-3 rounded-2xl ${
-                    i % 2 === 0
-                      ? 'bg-blue-500 text-white rounded-br-none'
-                      : 'bg-gray-200 text-gray-900 rounded-bl-none'
-                  }`}
+                  className={`max-w-[70%] p-3 rounded-2xl transition-all duration-300 ease-in-out 
+                    ${msg.role === 'user' ? 'bg-blue-500 text-white rounded-br-none' : 'bg-gray-200 text-gray-900 rounded-bl-none'}
+                    ${index === messages.length - 1 ? 'animate-bounce' : ''}`}
                 >
-                  <p>This is a sample message {i}</p>
-                  <span className="text-xs mt-1 block opacity-70">12:3{i} PM</span>
+                  <p>{msg.content}</p>
                 </div>
               </div>
             ))}
@@ -100,11 +119,16 @@ const ChatLayout = () => {
           <div className="bg-white border-t border-gray-200 p-4">
             <div className="flex items-center space-x-2">
               <input
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
                 type="text"
                 placeholder="Type a message..."
                 className="flex-1 bg-gray-100 rounded-full px-4 py-2 outline-none"
               />
-              <button className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600">
+              <button className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600" onClick={() => {
+                chatController.current.sendMessage(roomId, value);
+                setValue('');
+              }}>
                 <Send className="h-5 w-5" />
               </button>
             </div>

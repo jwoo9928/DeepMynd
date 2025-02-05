@@ -7,6 +7,7 @@ export const EVENT_TYPES = {
   GENERATION_START: 'generation_start',
   GENERATION_UPDATE: 'generation_update',
   GENERATION_COMPLETE: 'generation_complete',
+  CHAT_MESSAGE_RECEIVED: 'chat_message_received',
   ERROR: 'error'
 } as const;
 
