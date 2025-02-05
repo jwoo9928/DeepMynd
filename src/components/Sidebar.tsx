@@ -1,4 +1,4 @@
-import { Search, X, Plus, Bot, PlusCircle, ChevronRight } from "lucide-react";
+import { Search, X, Plus, Bot, PlusCircle, ChevronRight, ChevronLeft } from "lucide-react";
 import React, { useState } from "react";
 import Modal from 'react-modal';
 
@@ -50,6 +50,105 @@ const ModelCard = ({ name, description, onClick }: {
   </div>
 );
 
+
+interface ModelCardsSectionProps {
+  models: any[];
+  onSelectModel: (modelId: string) => void;
+}
+
+const EmptyModelState = () => (
+  <div className="p-8 text-center border-2 border-dashed border-gray-200 rounded-lg">
+    <Bot className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+    <h3 className="text-lg font-medium text-gray-900 mb-2">Bring Your Own Model</h3>
+    <p className="text-sm text-gray-500 mb-4">
+      Get started by connecting your own AI model or create a custom one.
+    </p>
+    {/* <button className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+      <PlusCircle className="w-4 h-4 mr-2" />
+      Connect Model
+    </button> */}
+  </div>
+);
+
+const ModelCardsSection = ({ models, onSelectModel }: ModelCardsSectionProps) => {
+  const [currentPage, setCurrentPage] = useState(0);
+  const itemsPerPage = 2;
+  const totalPages = Math.ceil(models.length / itemsPerPage);
+
+  if (!models.length) {
+    return <EmptyModelState />;
+  }
+
+  if (models.length <= 2) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {models.map((model) => (
+          <ModelCard
+            key={model.id}
+            name={model.name}
+            description={model.description}
+            onClick={() => onSelectModel(model.id)}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  const handlePrevPage = () => {
+    setCurrentPage((prev) => (prev > 0 ? prev - 1 : totalPages - 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage((prev) => (prev < totalPages - 1 ? prev + 1 : 0));
+  };
+
+  const currentModels = models.slice(
+    currentPage * itemsPerPage,
+    (currentPage + 1) * itemsPerPage
+  );
+
+  return (
+    <div className="relative">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {currentModels.map((model) => (
+          <ModelCard
+            key={model.id}
+            name={model.name}
+            description={model.description}
+            onClick={() => onSelectModel(model.id)}
+          />
+        ))}
+      </div>
+
+      {/* Navigation Arrows */}
+      <button
+        onClick={handlePrevPage}
+        className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 p-2 rounded-full bg-white shadow-lg hover:bg-gray-50 transition-colors"
+      >
+        <ChevronLeft className="w-5 h-5 text-gray-600" />
+      </button>
+      <button
+        onClick={handleNextPage}
+        className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 p-2 rounded-full bg-white shadow-lg hover:bg-gray-50 transition-colors"
+      >
+        <ChevronRight className="w-5 h-5 text-gray-600" />
+      </button>
+
+      {/* Pagination Dots */}
+      <div className="flex justify-center space-x-2 mt-4">
+        {Array.from({ length: totalPages }).map((_, index) => (
+          <button
+            key={index}
+            onClick={() => setCurrentPage(index)}
+            className={`w-2 h-2 rounded-full transition-all ${currentPage === index ? 'bg-blue-500 w-4' : 'bg-gray-300'
+              }`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const NewChatModal = ({ isOpen, onClose, onSelectModel, onCreateModel, onSkip }: {
   isOpen: boolean;
   onClose: () => void;
@@ -75,18 +174,7 @@ const NewChatModal = ({ isOpen, onClose, onSelectModel, onCreateModel, onSkip }:
       </div>
 
       <div className="space-y-4 flex-1">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <ModelCard
-            name="GPT-4"
-            description="Advanced language model for complex tasks"
-            onClick={() => onSelectModel('gpt4')}
-          />
-          <ModelCard
-            name="Claude"
-            description="Helpful assistant for general tasks"
-            onClick={() => onSelectModel('claude')}
-          />
-        </div>
+        <ModelCardsSection models={[]} onSelectModel={onSelectModel} />
 
         <div className="mt-6 border-t border-gray-200 pt-6">
           <button
