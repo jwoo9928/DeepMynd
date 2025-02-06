@@ -103,4 +103,4 @@ const Chat = ({
     )
 }
 
-export default React.memo(Chat)
+export default Chat
