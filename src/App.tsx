@@ -1,12 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import './App.css'
 import ChatLayout from './components/chat/ChatLayout'
 import { ChatController } from './controllers/ChatController'
 import { LLMController } from './controllers/LLMController'
 import { EVENT_TYPES, eventEmitter } from './controllers/events'
-import { Message, ProgressItem } from './controllers/types'
+import { ProgressItem } from './controllers/types'
 import Initialize from './components/Initialize'
 
 function App() {
@@ -17,7 +15,6 @@ function App() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [tps, setTps] = useState<number | null>(null);
   const [numTokens, setNumTokens] = useState<number | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
 
   const chatController = useRef(ChatController.getInstance());
   const llmController = useRef(LLMController.getInstance());
@@ -75,16 +72,6 @@ function App() {
       eventEmitter.off(EVENT_TYPES.GENERATION_UPDATE, handleGenerationUpdate);
       eventEmitter.off(EVENT_TYPES.ERROR, handleError);
     };
-  }, []);
-
-  useEffect(() => {
-    // Subscribe to chat controller updates
-    // const unsubscribe = chatController.current.subscribe(() => {
-    //   setMessages(chatController.current.getMessages());
-    //   setIsGenerating(chatController.current.isGenerating());
-    // });
-
-    // return () => unsubscribe();
   }, []);
 
   const handleLoadModel = async () => {

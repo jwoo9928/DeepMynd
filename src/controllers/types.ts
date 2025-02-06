@@ -12,6 +12,8 @@ export interface ChatRoom {
   personaId?: string;
   systemMessage: string;
   lastMessageTimestamp?: number;
+  isPin: boolean;
+  boostThinking: boolean;
 }
 
 export interface ProgressItem {

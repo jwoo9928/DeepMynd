@@ -4,6 +4,7 @@ import { EVENT_TYPES, eventEmitter } from "../controllers/events";
 import { ModeValues } from "./types";
 import { ChatController } from "../controllers/ChatController";
 import NewChatModal from "./NewChatModal";
+import { ChatRoom } from "../controllers/types";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -11,11 +12,6 @@ interface SidebarProps {
 }
 
 const SWIPE_THRESHOLD = 80;
-
-interface Room {
-  roomId: string;
-  // 다른 룸 속성들도 여기에 추가
-}
 
 interface SwipeState {
   roomId: string | null;
@@ -29,8 +25,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   const chatController = useRef(ChatController.getInstance());
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
-  const [rooms, setRooms] = useState<Room[]>(chatController.current.getChatRooms());
-  const [pinnedRooms, setPinnedRooms] = useState<Set<string>>(new Set());
+  const [rooms, setRooms] = useState<ChatRoom[]>(chatController.current.getChatRooms());
   const [dropdownOpen, setDropdownOpen] = useState<string | null>(null);
   const isDesktop = window.matchMedia("(min-width: 768px)").matches;
 
@@ -124,32 +119,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
     }
   };
 
-  const handleDeleteRoom = (roomId: string) => {
-    setRooms(prev => prev.filter(room => room.roomId !== roomId));
-    setPinnedRooms(prev => {
-      const newPinned = new Set(prev);
-      newPinned.delete(roomId);
-      return newPinned;
-    });
-  };
+  const handleDeleteRoom = useCallback((roomId: string) => {
+    // setRooms(prev => prev.filter(room => room.roomId !== roomId));
+    chatController.current.deleteChatRoom(roomId);
+  }, []);
 
   const handlePinRoom = (roomId: string) => {
-    setPinnedRooms(prev => {
-      const newPinned = new Set(prev);
-      if (newPinned.has(roomId)) {
-        newPinned.delete(roomId);
-      } else {
-        newPinned.add(roomId);
-      }
-      return newPinned;
-    });
+    chatController.current.pinHandleChatRoom(roomId);
   };
-
-  const sortedRooms = [...rooms].sort((a, b) => {
-    if (pinnedRooms.has(a.roomId) && !pinnedRooms.has(b.roomId)) return -1;
-    if (!pinnedRooms.has(a.roomId) && pinnedRooms.has(b.roomId)) return 1;
-    return 0;
-  });
 
   const handleSelectRoom = (roomId: string, e: React.MouseEvent) => {
     // 드롭다운 클릭 시 방 선택 방지
@@ -224,8 +201,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
         </div>
 
         <div className="overflow-y-auto h-[calc(100%-8rem)]">
-          {sortedRooms.map((room, i) => {
-            const isPinned = pinnedRooms.has(room.roomId);
+          {rooms.map((room, i) => {
+            const isPinned = room.isPin;
             const isSelected = selectedRoomId === room.roomId;
             const swipeOffset = swipeState.roomId === room.roomId
               ? Math.max(

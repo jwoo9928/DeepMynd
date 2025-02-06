@@ -49,7 +49,9 @@ export class ChatController {
       isRunning: false,
       roomId,
       personaId: p_id,
-      systemMessage: systemMessage
+      systemMessage: systemMessage,
+      isPin: false,
+      boostThinking: false,
     };
 
     this.chatRooms.set(roomId, newRoom);
@@ -82,13 +84,14 @@ export class ChatController {
       // throw new Error('No chat room selected');
       this.createDefaultChatRoom();
     }
+    //@ts-ignore
     const room = this.getChatRoom(this.currentFocustRoomId);
 
     if (room.isRunning) {
       return;
     }
-
-    const systemMessage: Message = { role: 'system', content: room.systemMessage };
+    const boostThinking = room.boostThinking ? 'Thinking shortly!' : '';
+    const systemMessage: Message = { role: 'system', content: boostThinking + room.systemMessage };
     const userMessage: Message = { role: 'user', content };
     this.currentMessages.push(userMessage);
     // room.isRunning = true;
@@ -150,6 +153,25 @@ export class ChatController {
     eventEmitter.emit(EVENT_TYPES.CHAT_MESSAGE_RECEIVED, this.currentMessages);
   }
 
+  public deleteChatRoom(roomId: string): void {
+    if (this.currentFocustRoomId === roomId) {
+      this.currentFocustRoomId = undefined;
+      this.currentMessages = [];
+      this.changeChatRoom(this.getChatRooms()[0].roomId);
+    }
+    this.chatRooms.delete(roomId);
+  }
+
+  public pinHandleChatRoom(roomId: string): void {
+    const room = this.getChatRoom(roomId);
+    if (room.isPin) {
+      this.chatRooms.set(roomId, { ...room, isPin: false });
+    } else {
+      this.chatRooms.set(roomId, { ...room, isPin: true });
+    }
+  }
+
+
   public getMessages(): Message[] {
     return this.currentMessages;
   }
@@ -168,5 +190,14 @@ export class ChatController {
 
   public getChatRooms(): ChatRoom[] {
     return Array.from(this.chatRooms.values());
+  }
+
+  public boostThinking(): boolean {
+    if (this.currentFocustRoomId) {
+      const room = this.getChatRoom(this.currentFocustRoomId);
+      this.chatRooms.set(this.currentFocustRoomId, { ...room, boostThinking: !room.boostThinking });
+      return room.boostThinking;
+    }
+    return false;
   }
 }
