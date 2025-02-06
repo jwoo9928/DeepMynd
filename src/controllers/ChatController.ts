@@ -58,16 +58,29 @@ export class ChatController {
   }
 
   private updateRoomId(roomId: string): void {
+    if (this.currentFocustRoomId === roomId) {
+      return;
+    }
     this.currentFocustRoomId = roomId;
     const room = this.getChatRoom(roomId);
     console.log("rooms", this.getChatRooms())
     this.currentMessages = room.messages;
+    eventEmitter.emit(EVENT_TYPES.CHAT_MESSAGE_RECEIVED, this.currentMessages);
+  }
+
+  public createDefaultChatRoom(): boolean {
+    try {
+      this.createChatRoom(this.personaController.getDefaultId());
+      return true
+    } catch {
+      return false
+    }
   }
 
   public async sendMessage(content: string): Promise<void> {
     if (!this.currentFocustRoomId) {
       // throw new Error('No chat room selected');
-      this.createChatRoom(this.personaController.getDefaultId());
+      this.createDefaultChatRoom();
     }
     const room = this.getChatRoom(this.currentFocustRoomId);
 
@@ -118,8 +131,9 @@ export class ChatController {
     const roomId = this.currentFocustRoomId;
     if (roomId) {
       const room = this.getChatRoom(roomId);
-      this.chatRooms.set(roomId, { ...room, messages: [...this.currentMessages] });
+      room.lastMessageTimestamp = Date.now();
       room.isRunning = false;
+      this.chatRooms.set(roomId, { ...room, messages: [...this.currentMessages] });
       //this.currentMessages = [];
       console.log("3")
     }

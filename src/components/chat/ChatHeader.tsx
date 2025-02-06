@@ -20,4 +20,4 @@ const ChatHeader = ({ toggleSidebar }: {
     </div>
 );
 
-export default ChatHeader
+export default React.memo(ChatHeader);

@@ -11,6 +11,7 @@ export interface ChatRoom {
   roomId: string;
   personaId?: string;
   systemMessage: string;
+  lastMessageTimestamp?: number;
 }
 
 export interface ProgressItem {
@@ -37,5 +38,5 @@ export interface Persona {
   description: string;
   system: string;
   id: string;
-  image?:string;
+  image?: string;
 }
