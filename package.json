@@ -20,6 +20,7 @@
     "onnxruntime-web": "^1.20.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-markdown": "^9.0.3",
     "react-modal": "^3.16.3",
     "vite-plugin-wasm": "^3.4.1",
     "voy-search": "^0.6.3"

@@ -1,6 +1,7 @@
 import React from "react";
 import { Message } from "../../controllers/types";
 import LoadingDots from "./LoadingDots";
+import ReactMarkdown from 'react-markdown';
 
 const MessageBubble = ({ message, isLast, isGenerating }: {
     message: Message;
@@ -18,9 +19,17 @@ const MessageBubble = ({ message, isLast, isGenerating }: {
         ${isLast && isGenerating ? 'animate-[bubble_0.5s_ease-in-out_infinite]' : ''}
       `}
         >
-            <p>{message.content}{isLast && isGenerating && <LoadingDots />}</p>
+            <ReactMarkdown>
+                {message.content}
+            </ReactMarkdown>
+            {isLast && isGenerating && <LoadingDots />}
         </div>
     </div>
 );
 
-export default MessageBubble
+export default React.memo(MessageBubble, (prevProps, nextProps) => {
+    // message의 내용이 바뀌거나 마지막 메시지 여부가 변할 때만 리렌더링
+    return prevProps.message.content === nextProps.message.content &&
+        prevProps.isLast === nextProps.isLast &&
+        prevProps.isGenerating === nextProps.isGenerating;
+});

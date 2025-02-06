@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { Menu, X, Send, MoreVertical, Search } from 'lucide-react';
 import { ChatController } from '../../controllers/ChatController';
 import { Message } from '../../controllers/types';
 import { EVENT_TYPES, eventEmitter } from '../../controllers/events';
@@ -27,7 +26,7 @@ const ChatLayout = () => {
     chatController.current.initializeEventListeners();
     const handleMessageReceived = (updatedMessages: Message[]) => {
       console.log('recieved', updatedMessages[updatedMessages.length - 1].content);
-      setMessages(updatedMessages);
+      setMessages([...updatedMessages]);
       scrollToBottom();
     };
 
@@ -70,6 +69,10 @@ const ChatLayout = () => {
     setMode(ModeValues.Chat)
   }, [])
 
+  const boostThinking = useCallback(() => {
+    return chatController.current.boostThinking();
+  }, []);
+
   return (
     <div className="h-screen w-full bg-gray-100">
       <div className="flex h-full">
@@ -85,6 +88,7 @@ const ChatLayout = () => {
             handleSendMessage={handleSendMessage}
             handleKeyPress={handleKeyPress}
             messagesEndRef={messagesEndRef}
+            boostThinking={boostThinking}
           /> : <ModelCustomization onBack={onBack} />
         }
 
