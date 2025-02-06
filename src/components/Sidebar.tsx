@@ -1,22 +1,46 @@
-import { Search, X, Plus } from "lucide-react";
+import { Search, X, Plus, MoreVertical, Pin, Trash2 } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import Modal from 'react-modal';
 import { EVENT_TYPES, eventEmitter } from "../controllers/events";
 import { ModeValues } from "./types";
 import { ChatController } from "../controllers/ChatController";
 import NewChatModal from "./NewChatModal";
 
-// Modal을 앱의 루트에 바인딩
-Modal.setAppElement('#root');
-
-const Sidebar = ({ isOpen, toggleSidebar }: {
+interface SidebarProps {
   isOpen: boolean;
   toggleSidebar: () => void;
-}) => {
+}
+
+const SWIPE_THRESHOLD = 80;
+
+interface Room {
+  roomId: string;
+  // 다른 룸 속성들도 여기에 추가
+}
+
+interface SwipeState {
+  roomId: string | null;
+  startX: number;
+  currentX: number;
+  swiping: boolean;
+  direction: 'left' | 'right' | null;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   const chatController = useRef(ChatController.getInstance());
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
-  const [rooms, setRooms] = useState(chatController.current.getChatRooms());
+  const [rooms, setRooms] = useState<Room[]>(chatController.current.getChatRooms());
+  const [pinnedRooms, setPinnedRooms] = useState<Set<string>>(new Set());
+  const [dropdownOpen, setDropdownOpen] = useState<string | null>(null);
+  const isDesktop = window.matchMedia("(min-width: 768px)").matches;
+
+  const [swipeState, setSwipeState] = useState<SwipeState>({
+    roomId: null,
+    startX: 0,
+    currentX: 0,
+    swiping: false,
+    direction: null
+  });
 
   const handleCreateRoomEvent = useCallback((roomId: string) => {
     setRooms(chatController.current.getChatRooms());
@@ -36,7 +60,6 @@ const Sidebar = ({ isOpen, toggleSidebar }: {
     }
   }, [selectedRoomId]);
 
-
   const handleSelectModel = useCallback((model: string) => {
     console.log('Selected model:', model);
     setIsModalOpen(false);
@@ -54,6 +77,114 @@ const Sidebar = ({ isOpen, toggleSidebar }: {
 
     chatController.current.createDefaultChatRoom();
   }, []);
+
+  // 터치 핸들러 수정
+  const handleTouchStart = (e: React.TouchEvent, roomId: string) => {
+    if (!isDesktop) {
+      setSwipeState({
+        roomId,
+        startX: e.touches[0].clientX,
+        currentX: e.touches[0].clientX,
+        swiping: true,
+        direction: null
+      });
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (swipeState.swiping) {
+      const currentX = e.touches[0].clientX;
+      const diff = currentX - swipeState.startX;
+
+      setSwipeState(prev => ({
+        ...prev,
+        currentX,
+        direction: diff > 0 ? 'right' : 'left'
+      }));
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (swipeState.swiping && swipeState.roomId) {
+      const diff = Math.abs(swipeState.currentX - swipeState.startX);
+      if (diff > SWIPE_THRESHOLD / 2) { // 절반 이상 스와이프 되었을 때 액션 실행
+        if (swipeState.direction === 'left') {
+          handleDeleteRoom(swipeState.roomId);
+        } else if (swipeState.direction === 'right') {
+          handlePinRoom(swipeState.roomId);
+        }
+      }
+      setSwipeState({
+        roomId: null,
+        startX: 0,
+        currentX: 0,
+        swiping: false,
+        direction: null
+      });
+    }
+  };
+
+  const handleDeleteRoom = (roomId: string) => {
+    setRooms(prev => prev.filter(room => room.roomId !== roomId));
+    setPinnedRooms(prev => {
+      const newPinned = new Set(prev);
+      newPinned.delete(roomId);
+      return newPinned;
+    });
+  };
+
+  const handlePinRoom = (roomId: string) => {
+    setPinnedRooms(prev => {
+      const newPinned = new Set(prev);
+      if (newPinned.has(roomId)) {
+        newPinned.delete(roomId);
+      } else {
+        newPinned.add(roomId);
+      }
+      return newPinned;
+    });
+  };
+
+  const sortedRooms = [...rooms].sort((a, b) => {
+    if (pinnedRooms.has(a.roomId) && !pinnedRooms.has(b.roomId)) return -1;
+    if (!pinnedRooms.has(a.roomId) && pinnedRooms.has(b.roomId)) return 1;
+    return 0;
+  });
+
+  const handleSelectRoom = (roomId: string, e: React.MouseEvent) => {
+    // 드롭다운 클릭 시 방 선택 방지
+    if ((e.target as HTMLElement).closest('.dropdown-content')) {
+      return;
+    }
+    setSelectedRoomId(roomId);
+    setDropdownOpen(null);
+  };
+
+  const renderDropdown = (roomId: string, isPinned: boolean) => {
+    if (dropdownOpen !== roomId) return null;
+
+    return (
+      <div
+        className="dropdown-content absolute right-4 top-12 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-30"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={() => handlePinRoom(roomId)}
+          className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2"
+        >
+          <Pin className="h-4 w-4" />
+          {isPinned ? 'Unpin' : 'Pin'}
+        </button>
+        <button
+          onClick={() => handleDeleteRoom(roomId)}
+          className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2 text-red-600"
+        >
+          <Trash2 className="h-4 w-4" />
+          Delete
+        </button>
+      </div>
+    );
+  };
 
   return (
     <>
@@ -93,20 +224,96 @@ const Sidebar = ({ isOpen, toggleSidebar }: {
         </div>
 
         <div className="overflow-y-auto h-[calc(100%-8rem)]">
-          {rooms.map((room, i) => (
-            <div key={room.roomId} className="px-4 py-3 hover:bg-gray-50 cursor-pointer">
-              <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-gray-300 rounded-full"></div>
-                <div className="flex-1">
-                  <div className="flex justify-between items-center">
-                    <h3 className="font-medium">User {i}</h3>
-                    <span className="text-xs text-gray-500">12:30 PM</span>
+          {sortedRooms.map((room, i) => {
+            const isPinned = pinnedRooms.has(room.roomId);
+            const isSelected = selectedRoomId === room.roomId;
+            const swipeOffset = swipeState.roomId === room.roomId
+              ? Math.max(
+                Math.min(
+                  swipeState.currentX - swipeState.startX,
+                  SWIPE_THRESHOLD
+                ),
+                -SWIPE_THRESHOLD
+              )
+              : 0;
+
+            return (
+              <div
+                className="relative" // 부모 컨테이너
+              >
+                {/* 왼쪽 스와이프 시 나타날 삭제 버튼 */}
+                <div
+                  className={`
+                    absolute right-0 top-0 bottom-0 
+                    flex items-center justify-center
+                    bg-red-500 text-white
+                    transition-opacity duration-200
+                    ${swipeOffset < -SWIPE_THRESHOLD / 2 ? 'opacity-100' : 'opacity-0'}
+                  `}
+                  style={{ width: `${SWIPE_THRESHOLD}px` }}
+                >
+                  <Trash2 className="h-6 w-6" />
+                </div>
+
+                {/* 오른쪽 스와이프 시 나타날 고정 버튼 */}
+                <div
+                  className={`
+                    absolute left-0 top-0 bottom-0
+                    flex items-center justify-center
+                    bg-blue-500 text-white
+                    transition-opacity duration-200
+                    ${swipeOffset > SWIPE_THRESHOLD / 2 ? 'opacity-100' : 'opacity-0'}
+                  `}
+                  style={{ width: `${SWIPE_THRESHOLD}px` }}
+                >
+                  <Pin className="h-6 w-6" />
+                </div>
+                <div
+                  key={room.roomId}
+                  className={`
+                  relative px-4 py-3 cursor-pointer
+                  transition-all duration-200 ease-in-out
+                  ${isSelected ? 'bg-gray-100' : 'hover:bg-gray-50'}
+                `}
+                  style={{
+                    transform: `translateX(${swipeOffset}px)`
+                  }}
+                  onClick={(e) => handleSelectRoom(room.roomId, e)}
+                  onTouchStart={(e) => handleTouchStart(e, room.roomId)}
+                  onTouchMove={handleTouchMove}
+                  onTouchEnd={handleTouchEnd}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="w-12 h-12 bg-gray-300 rounded-full"></div>
+                    <div className="flex-1">
+                      <div className="flex justify-between items-center">
+                        <h3 className="font-medium flex items-center gap-2">
+                          {isPinned && <Pin className="h-3 w-3" />}
+                          User {i}
+                        </h3>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-gray-500">12:30 PM</span>
+                          {isDesktop && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDropdownOpen(dropdownOpen === room.roomId ? null : room.roomId);
+                              }}
+                              className="focus:outline-none"
+                            >
+                              <MoreVertical className="h-4 w-4 text-gray-500 hover:text-gray-700" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-500 truncate">Latest message preview...</p>
+                    </div>
                   </div>
-                  <p className="text-sm text-gray-500 truncate">Latest message preview...</p>
+                  {renderDropdown(room.roomId, isPinned)}
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -122,6 +329,14 @@ const Sidebar = ({ isOpen, toggleSidebar }: {
         <div
           className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-10"
           onClick={toggleSidebar}
+        />
+      )}
+
+      {/* 드롭다운 외부 클릭 시 닫기 */}
+      {dropdownOpen && (
+        <div
+          className="fixed inset-0 z-20"
+          onClick={() => setDropdownOpen(null)}
         />
       )}
     </>
