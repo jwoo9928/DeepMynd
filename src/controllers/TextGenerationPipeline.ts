@@ -1,4 +1,4 @@
-import { AutoModelForCausalLM, AutoTokenizer, PreTrainedTokenizer, ProgressCallback } from "@huggingface/transformers";
+import { AutoModelForCausalLM, AutoTokenizer, pipeline, PreTrainedTokenizer, ProgressCallback } from "@huggingface/transformers";
 
 export class TextGenerationPipeline {
     static model_id = "onnx-community/DeepSeek-R1-Distill-Qwen-1.5B-ONNX";
@@ -20,3 +20,21 @@ export class TextGenerationPipeline {
         return Promise.all([this.tokenizer, this.model]);
     }
 }
+
+
+// export class TextGenerationPipeline {
+//     static model_id = "onnx-community/DeepSeek-R1-Distill-Qwen-1.5B-ONNX";
+//     static instance: any = null;
+
+//     static async getInstance(progress_callback = undefined) {
+
+//         if (this.instance === null) {
+//             this.instance = await pipeline("text-generation", this.model_id, {
+//                 device: "webgpu",
+//                 progress_callback,
+//             });
+//         }
+
+//         return this.instance;
+//     }
+// }

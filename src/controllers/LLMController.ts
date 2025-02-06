@@ -38,8 +38,17 @@ export class LLMController {
             const adapter = await navigator.gpu?.requestAdapter();
             this.isWebGPUAvailable = true;
             if (!adapter) {
+                console.error("WebGPU is not supported (no adapter found)");
                 throw new Error("WebGPU is not supported (no adapter found)");
             }
+            console.log("WebGPU is supported");
+            const device = await adapter.requestDevice();
+            if (!device) {
+                throw new Error("WebGPU device request failed");
+            }
+
+            this.isWebGPUAvailable = true;
+            console.log("WebGPU is fully supported",device);
         } catch (e) {
             this.isWebGPUAvailable = false;
             eventEmitter.emit(EVENT_TYPES.ERROR, `${e}`);
