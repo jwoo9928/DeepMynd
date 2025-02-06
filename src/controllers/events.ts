@@ -11,6 +11,7 @@ export const EVENT_TYPES = {
   ERROR: 'error',
   CREATE_NEW_PERSONA: 'create_new_persona',
   CREATE_NEW_CHAT: 'create_new_chat',
+  IMPORTED_PERSONA: 'imported_persona',
 } as const;
 
 export const eventEmitter = new EventEmitter();

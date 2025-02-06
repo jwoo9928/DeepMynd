@@ -2,6 +2,7 @@ import { eventEmitter, EVENT_TYPES } from './events';
 import { ChatRoom, Message, GenerationUpdateData } from './types';
 import { LLMController } from './LLMController';
 import { v4 as uuid } from 'uuid';
+import { PersonaController } from './PersonaController';
 
 export class ChatController {
   private static instance: ChatController | null = null;
@@ -9,10 +10,12 @@ export class ChatController {
   private readonly llmController: LLMController;
   private currentMessages: Message[];
   private currentFocustRoomId: string | undefined;
+  private readonly personaController: PersonaController;
 
   private constructor() {
     this.chatRooms = new Map();
     this.llmController = LLMController.getInstance();
+    this.personaController = PersonaController.getInstance();
     this.currentMessages = [];
   }
 
@@ -21,6 +24,22 @@ export class ChatController {
       ChatController.instance = new ChatController();
     }
     return ChatController.instance;
+  }
+
+  public initializeEventListeners(): void {
+    eventEmitter.on(EVENT_TYPES.GENERATION_START, this.handleGenerationStart.bind(this));
+    eventEmitter.on(EVENT_TYPES.GENERATION_UPDATE, this.handleGenerationUpdate.bind(this));
+    eventEmitter.on(EVENT_TYPES.GENERATION_COMPLETE, this.handleGenerationComplete.bind(this));
+    eventEmitter.on(EVENT_TYPES.IMPORTED_PERSONA, this.createChatRoom.bind(this));
+  }
+
+  public removeEventListeners(): void {
+    [
+      EVENT_TYPES.GENERATION_START,
+      EVENT_TYPES.GENERATION_UPDATE,
+      EVENT_TYPES.GENERATION_COMPLETE,
+      EVENT_TYPES.IMPORTED_PERSONA
+    ].forEach(eventType => eventEmitter.off(eventType));
   }
 
   public createChatRoom(p_id?: string, systemMessage: string = ''): void {
@@ -35,46 +54,33 @@ export class ChatController {
 
     this.chatRooms.set(roomId, newRoom);
     eventEmitter.emit(EVENT_TYPES.CREATE_NEW_CHAT, roomId);
+    this.updateRoomId(roomId);
+  }
+
+  private updateRoomId(roomId: string): void {
     this.currentFocustRoomId = roomId;
-  }
-
-  public initializeEventListeners(): void {
-    eventEmitter.on(EVENT_TYPES.GENERATION_START, this.handleGenerationStart.bind(this));
-    eventEmitter.on(EVENT_TYPES.GENERATION_UPDATE, this.handleGenerationUpdate.bind(this));
-    eventEmitter.on(EVENT_TYPES.GENERATION_COMPLETE, () => this.handleGenerationComplete.bind(this));
-  }
-
-  public removeEventListeners(): void {
-    [
-      EVENT_TYPES.GENERATION_START,
-      EVENT_TYPES.GENERATION_UPDATE,
-      EVENT_TYPES.GENERATION_COMPLETE
-    ].forEach(eventType => eventEmitter.off(eventType));
+    const room = this.getChatRoom(roomId);
+    console.log("rooms", this.getChatRooms())
+    this.currentMessages = room.messages;
   }
 
   public async sendMessage(content: string): Promise<void> {
     if (!this.currentFocustRoomId) {
       // throw new Error('No chat room selected');
-      this.createChatRoom()
+      this.createChatRoom(this.personaController.getDefaultId());
     }
     const room = this.getChatRoom(this.currentFocustRoomId);
-    console.log('roomId', this.currentFocustRoomId);
-    console.log('room', room);
-    this.currentMessages = room.messages;
 
     if (room.isRunning) {
       return;
     }
 
-    if (this.currentMessages.length !== 0) {
-      this.currentMessages = room.messages
-    }
-
     const systemMessage: Message = { role: 'system', content: room.systemMessage };
     const userMessage: Message = { role: 'user', content };
     this.currentMessages.push(userMessage);
-
+    // room.isRunning = true;
     eventEmitter.emit(EVENT_TYPES.CHAT_MESSAGE_RECEIVED, this.currentMessages);
+    console.log("1")
     this.llmController.generate([systemMessage].concat(this.currentMessages));
   }
 
@@ -82,6 +88,7 @@ export class ChatController {
   private handleGenerationStart(): void {
     this.currentMessages.push({ role: 'assistant', content: '' });
     eventEmitter.emit(EVENT_TYPES.CHAT_MESSAGE_RECEIVED, this.currentMessages);
+    console.log("2")
   }
 
   private handleGenerationUpdate(data: GenerationUpdateData): void {
@@ -113,9 +120,20 @@ export class ChatController {
       const room = this.getChatRoom(roomId);
       this.chatRooms.set(roomId, { ...room, messages: [...this.currentMessages] });
       room.isRunning = false;
-      this.currentMessages = [];
+      //this.currentMessages = [];
+      console.log("3")
     }
 
+  }
+
+  public changeChatRoom(roomId: string): void {
+    if (this.currentFocustRoomId === roomId) {
+      return;
+    }
+    const room = this.getChatRoom(roomId);
+    this.currentMessages = room.messages;
+    this.currentFocustRoomId = room.roomId;
+    eventEmitter.emit(EVENT_TYPES.CHAT_MESSAGE_RECEIVED, this.currentMessages);
   }
 
   public getMessages(): Message[] {
@@ -132,5 +150,9 @@ export class ChatController {
       throw new Error(`Chat room with ID ${roomId} not found`);
     }
     return room;
+  }
+
+  public getChatRooms(): ChatRoom[] {
+    return Array.from(this.chatRooms.values());
   }
 }

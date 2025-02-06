@@ -15,7 +15,7 @@ const ChatLayout = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [inputValue, setInputValue] = useState('');
-  const [mode,setMode] = useState<Mode>(ModeValues.Chat);
+  const [mode, setMode] = useState<Mode>(ModeValues.Chat);
   const chatController = useRef(ChatController.getInstance());
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -24,9 +24,7 @@ const ChatLayout = () => {
   }, []);
 
   useEffect(() => {
-    // const roomId = chatController.current.createChatRoom();
     chatController.current.initializeEventListeners();
-
     const handleMessageReceived = (updatedMessages: Message[]) => {
       console.log('recieved', updatedMessages[updatedMessages.length - 1].content);
       setMessages(updatedMessages);
@@ -47,11 +45,11 @@ const ChatLayout = () => {
     eventEmitter.on(EVENT_TYPES.CREATE_NEW_PERSONA, setMode)
 
     return () => {
-      chatController.current.removeEventListeners();
       eventEmitter.off(EVENT_TYPES.CHAT_MESSAGE_RECEIVED);
       eventEmitter.off(EVENT_TYPES.GENERATION_START);
       eventEmitter.off(EVENT_TYPES.GENERATION_COMPLETE);
       eventEmitter.off(EVENT_TYPES.CREATE_NEW_PERSONA);
+      chatController.current.removeEventListeners();
     };
   }, []);
 
@@ -71,11 +69,6 @@ const ChatLayout = () => {
   const onBack = useCallback(() => {
     setMode(ModeValues.Chat)
   }, [])
-
-  useEffect(() => {
-    console.log("mode", mode) 
-  }
-  ,[mode])
 
   return (
     <div className="h-screen w-full bg-gray-100">

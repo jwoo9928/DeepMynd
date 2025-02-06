@@ -2,17 +2,17 @@ import { v4 as uuid } from 'uuid';
 import { Persona } from './types';
 import { LLMController } from './LLMController';
 import { ChatController } from './ChatController';
+import { EVENT_TYPES, eventEmitter } from './events';
 
 export class PersonaController {
-    private personaList: Persona[];
+    private personaList: Map<string, Persona>;
+    private default_p_id: string;
     private static instance: PersonaController | null = null;
-    private readonly LLModelController: LLMController;
-    private readonly ChatController: ChatController;
 
     constructor() {
-        this.personaList = [];
-        this.LLModelController = LLMController.getInstance();
-        this.ChatController = ChatController.getInstance();
+        this.personaList = new Map();
+        const id = this.createNewPersona('Default', '')
+        this.default_p_id = id
 
     }
 
@@ -23,7 +23,7 @@ export class PersonaController {
         return PersonaController.instance;
     }
 
-    createNewPersona(name: string, system: string, image: string): void {
+    createNewPersona(name: string, system: string, image?: string): string {
         // const systemMessage = { role: 'system', content: '' };
         const description = "This is a new model";
         const newPersona: Persona = {
@@ -33,16 +33,21 @@ export class PersonaController {
             id: uuid(),
             image: image,
         }
-        this.personaList.push(newPersona);
-        this.ChatController.createChatRoom(newPersona.id, system);
+        this.personaList.set(newPersona.id, newPersona);
+        eventEmitter.emit(EVENT_TYPES.IMPORTED_PERSONA, newPersona.id);
+        return newPersona.id;
     }
 
-    getModelList(): Persona[] {
-        return this.personaList;
+    getModelList(): Persona[] | undefined {
+        return Array.from(this.personaList.values()) ?? undefined
     }
 
     getModel(uuid: string): Persona | undefined {
-        return this.personaList.find(persona => persona.id === uuid);
+        return this.personaList.get(uuid);
+    }
+
+    getDefaultId(): string {
+        return this.default_p_id;
     }
 
 

@@ -1,8 +1,9 @@
 import { Search, X, Plus, Bot, PlusCircle, ChevronRight, ChevronLeft } from "lucide-react";
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import Modal from 'react-modal';
 import { EVENT_TYPES, eventEmitter } from "../controllers/events";
 import { ModeValues } from "./types";
+import { ChatController } from "../controllers/ChatController";
 
 // Modal을 앱의 루트에 바인딩
 Modal.setAppElement('#root');
@@ -210,7 +211,26 @@ const Sidebar = ({ isOpen, toggleSidebar }: {
   isOpen: boolean;
   toggleSidebar: () => void;
 }) => {
+  const chatController = useRef(ChatController.getInstance());
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
+  const [rooms, setRooms] = useState(chatController.current.getChatRooms());
+
+  const handleCreateRoomEvent = useCallback((roomId: string) => {
+    setRooms(chatController.current.getChatRooms());
+    setSelectedRoomId(roomId);
+  }, []);
+
+  useEffect(() => {
+    eventEmitter.on(EVENT_TYPES.CREATE_NEW_CHAT, handleCreateRoomEvent);
+  }, []);
+
+  useEffect(() => {
+    if (selectedRoomId) {
+      chatController.current.changeChatRoom(selectedRoomId);
+    }
+  }, [selectedRoomId]);
+
 
   const handleSelectModel = (model) => {
     console.log('Selected model:', model);
@@ -261,8 +281,8 @@ const Sidebar = ({ isOpen, toggleSidebar }: {
         </div>
 
         <div className="overflow-y-auto h-[calc(100%-8rem)]">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="px-4 py-3 hover:bg-gray-50 cursor-pointer">
+          {rooms.map((room, i) => (
+            <div key={room.roomId} className="px-4 py-3 hover:bg-gray-50 cursor-pointer">
               <div className="flex items-center space-x-3">
                 <div className="w-12 h-12 bg-gray-300 rounded-full"></div>
                 <div className="flex-1">
