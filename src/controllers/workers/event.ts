@@ -1,11 +1,16 @@
-export const WORKER_TYPE = {
-    INIT: 'INIT',
+export const WORKER_STATUS = {
+    INIT: 'init',
+    MODEL_INITIALIZE: 'initiate',
+    MODEL_PROGRESS: 'progress',
+    MODEL_DONE: 'done',
     STATUS_LOADING: 'loading',
     STATUS_READY: 'ready',
     STATUS_ERROR: 'error',
     CHECK: 'check',
     LOAD: 'load',
-    GENERATE: 'generate',
+    GENERATION_UPDATE: 'generation_update',
+    GENERATION_START: 'generation_start',
+    GENERATION_COMPLETE: 'generation_complete',
     INTERRUPT: 'interrupt',
     RESET: 'reset',
 }

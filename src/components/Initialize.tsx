@@ -17,7 +17,6 @@ const Initialize = ({
     error,
     handleLoadModel
 }: InitializeProps) => {
-    const llmController = useRef(LLMController.getInstance());
 
     // if (!llmController.current.isAvailable()) {
     //     return (

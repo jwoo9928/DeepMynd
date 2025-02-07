@@ -46,7 +46,6 @@ export class ChatController {
     const roomId = uuid();
     const newRoom: ChatRoom = {
       messages: [],
-      isRunning: false,
       roomId,
       personaId: p_id,
       systemMessage: systemMessage,
@@ -65,7 +64,6 @@ export class ChatController {
     }
     this.currentFocustRoomId = roomId;
     const room = this.getChatRoom(roomId);
-    console.log("rooms", this.getChatRooms())
     this.currentMessages = room.messages;
     eventEmitter.emit(EVENT_TYPES.CHAT_MESSAGE_RECEIVED, this.currentMessages);
   }
@@ -86,18 +84,13 @@ export class ChatController {
     }
     //@ts-ignore
     const room = this.getChatRoom(this.currentFocustRoomId);
-
-    if (room.isRunning) {
-      return;
-    }
     const boostThinking = room.boostThinking ? 'Thinking shortly!' : '';
     const systemMessage: Message = { role: 'system', content: boostThinking + room.systemMessage };
     const userMessage: Message = { role: 'user', content };
     this.currentMessages.push(userMessage);
-    // room.isRunning = true;
     eventEmitter.emit(EVENT_TYPES.CHAT_MESSAGE_RECEIVED, this.currentMessages);
+    this.llmController.generateText([systemMessage, userMessage]);
     console.log("1")
-    this.llmController.generate([systemMessage].concat(this.currentMessages));
   }
 
 
@@ -135,9 +128,7 @@ export class ChatController {
     if (roomId) {
       const room = this.getChatRoom(roomId);
       room.lastMessageTimestamp = Date.now();
-      room.isRunning = false;
       this.chatRooms.set(roomId, { ...room, messages: [...this.currentMessages] });
-      //this.currentMessages = [];
       console.log("3")
     }
 
@@ -176,9 +167,9 @@ export class ChatController {
     return this.currentMessages;
   }
 
-  public isGenerating(roomId: string): boolean {
-    return this.getChatRoom(roomId).isRunning;
-  }
+  // public isGenerating(roomId: string): boolean {
+  //   return this.getChatRoom(roomId).isRunning;
+  // }
 
   private getChatRoom(roomId: string): ChatRoom {
     const room = this.chatRooms.get(roomId);

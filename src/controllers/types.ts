@@ -7,7 +7,6 @@ export interface Message {
 
 export interface ChatRoom {
   messages: Message[];
-  isRunning: boolean;
   roomId: string;
   personaId?: string;
   systemMessage: string;
@@ -33,6 +32,7 @@ export interface GenerationStatus {
 export interface GenerationUpdateData {
   output: string;
   state: 'answering' | 'complete' | 'error';
+  cache: any;
 }
 
 export interface Persona {

@@ -75,7 +75,7 @@ function App() {
   }, []);
 
   const handleLoadModel = async () => {
-    await llmController.current.initialize();
+    await llmController.current.initializeModel();
   };
 
   return (

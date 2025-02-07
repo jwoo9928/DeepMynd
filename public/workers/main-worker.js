@@ -2,23 +2,13 @@ import {
     TextStreamer,
     InterruptableStoppingCriteria,
 } from "@huggingface/transformers";
-import { TextGenerationPipeline } from "../TextGenerationPipeline";
-import { WORKER_STATUS } from "./event";
-
-interface Message {
-    role: string;
-    content: string;
-}
-
-interface WorkerMessage {
-    type: string;
-    data?: any;
-}
+import { TextGenerationPipeline } from "../../src/controllers/TextGenerationPipeline";
+import { WORKER_STATUS } from "../../src/controllers/workers/event";
 
 /**
  * Helper function to perform feature detection for WebGPU
  */
-async function check(): Promise<void> {
+async function check() {
     try {
         //@ts-ignore
         const adapter = await navigator.gpu.requestAdapter();
@@ -28,17 +18,16 @@ async function check(): Promise<void> {
     } catch (e) {
         self.postMessage({
             status: WORKER_STATUS.STATUS_ERROR,
-            data: (e as Error).toString(),
+            data: (e).toString(),
         });
     }
 }
 
-async function load(): Promise<void> {
+async function load() {
     self.postMessage({ status: WORKER_STATUS.INIT, data: "Loading model..." });
 
     await TextGenerationPipeline.getInstance((x) => {
         self.postMessage(x);
-        console.log(x);
     });
 
     self.postMessage({ status: WORKER_STATUS.STATUS_LOADING, data: "Compiling shaders and warming up model..." });
@@ -51,9 +40,9 @@ async function load(): Promise<void> {
  */
 
 const stopping_criteria = new InterruptableStoppingCriteria();
-let past_key_values_cache: any = null;
+let past_key_values_cache = null;
 
-async function generate(messages: Message[]): Promise<void> {
+async function generate(messages) {
     const [tokenizer, model] = await TextGenerationPipeline.getInstance();
 
     const inputs = tokenizer.apply_chat_template(messages, {
@@ -65,12 +54,12 @@ async function generate(messages: Message[]): Promise<void> {
         add_special_tokens: false,
     });
 
-    let state: "thinking" | "answering" = "thinking";
-    let startTime: number | undefined;
+    let state = "thinking";
+    let startTime;
     let numTokens = 0;
-    let tps: number | undefined;
+    let tps;
 
-    const token_callback_function = (tokens: bigint[]): void => {
+    const token_callback_function = (tokens) => {
         startTime ??= performance.now();
         if (numTokens++ > 0) {
             tps = (numTokens / (performance.now() - startTime)) * 1000;
@@ -80,7 +69,7 @@ async function generate(messages: Message[]): Promise<void> {
         }
     };
 
-    const callback_function = (output: string): void => {
+    const callback_function = (output) => {
         self.postMessage({
             status: "update",
             output,
@@ -121,7 +110,7 @@ async function generate(messages: Message[]): Promise<void> {
     });
 }
 
-self.addEventListener("message", async (e: MessageEvent<WorkerMessage>) => {
+self.addEventListener("message", async (e) => {
     const { type, data } = e.data;
 
     switch (type) {

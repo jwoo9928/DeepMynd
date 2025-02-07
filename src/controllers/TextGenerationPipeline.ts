@@ -1,4 +1,4 @@
-import { AutoModelForCausalLM, AutoTokenizer, pipeline, PreTrainedTokenizer, ProgressCallback } from "@huggingface/transformers";
+import { AutoModelForCausalLM, AutoTokenizer, pipeline, PreTrainedTokenizer } from "@huggingface/transformers";
 
 export class TextGenerationPipeline {
     static model_id = "onnx-community/DeepSeek-R1-Distill-Qwen-1.5B-ONNX";
