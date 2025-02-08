@@ -77,7 +77,7 @@ export class ChatController {
     }
   }
 
-  public async sendMessage(content: string, boostThinking : boolean = false): Promise<void> {
+  public async sendMessage(content: string, boost : boolean = false): Promise<void> {
     if (!this.currentFocustRoomId) {
       // throw new Error('No chat room selected');
       this.createDefaultChatRoom();
@@ -85,10 +85,11 @@ export class ChatController {
     //@ts-ignore
     const room = this.getChatRoom(this.currentFocustRoomId);
     const systemMessage: Message = { role: 'system', content: room.systemMessage };
-    const userMessage: Message = { role: 'user', content: boostThinking + content };
+    const boostThinking = boost? '' : 'Thinking Shortly!';
+    const userMessage: Message = { role: 'user', content: content };
     const messages = this.currentMessages.length === 0 ? [systemMessage, userMessage] : [userMessage];
     this.currentMessages.push(userMessage);
-    eventEmitter.emit(EVENT_TYPES.CHAT_MESSAGE_RECEIVED, this.currentMessages);
+    eventEmitter.emit(EVENT_TYPES.CHAT_MESSAGE_RECEIVED, {...this.currentMessages, content: boostThinking + content});
     this.llmController.generateText(messages);
     console.log("1")
   }

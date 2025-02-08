@@ -108,7 +108,7 @@ const Initialize = ({
       <div className="h-screen flex flex-col items-center justify-center bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200">
         <div className="max-w-[500px] text-center p-4">
           <img
-            src="logo.png"
+            src="public/assets/deepmynd.jpg"
             alt="Logo"
             className="w-4/5 mx-auto mb-6 drop-shadow-lg"
           />

@@ -62,7 +62,7 @@ const ChatLayout = () => {
 
   const handleSendMessage = useCallback(() => {
     if (!inputValue.trim()) return;
-    chatController.current.sendMessage(inputValue.trim(),boost);
+    chatController.current.sendMessage(inputValue.trim(), boost);
     setInputValue('');
   }, [inputValue]);
 

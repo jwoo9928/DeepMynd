@@ -9,7 +9,7 @@ export class PersonaController {
 
     constructor() {
         this.personaList = new Map();
-        const id = this.createNewPersona('Default', '')
+        const id = this.createNewPersona('Default', '', '/assets/deepmynd_500.jpg')
         this.default_p_id = id
 
     }
