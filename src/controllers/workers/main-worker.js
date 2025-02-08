@@ -2,7 +2,7 @@ import {
     TextStreamer,
     InterruptableStoppingCriteria,
 } from "@huggingface/transformers";
-import { TextGenerationPipeline } from "../TextGenerationPipeline";
+import { TextGenerationPipeline } from "../../pipelines/TextGenerationPipeline";
 import { WORKER_STATUS, WORKER_EVENTS } from "./event";
 
 /**
@@ -24,6 +24,7 @@ async function check() {
 }
 
 async function load() {
+    self.postMessage({ type: 'test', data: 'test' });
     self.postMessage({ type: WORKER_STATUS.STATUS_LOADING });
 
     await TextGenerationPipeline.getInstance((x) => {

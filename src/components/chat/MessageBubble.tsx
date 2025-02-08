@@ -12,32 +12,45 @@ interface MessageBubbleProps {
 
 const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isLast, isGenerating }) => {
   const [isThinkExpanded, setIsThinkExpanded] = useState(false);
-  
+
+  const renderImageOrMarkdown = (content: string) => {
+    if (content.startsWith('/image:')) {
+      const imageData = content.replace('/image:', '');
+      return (
+        <img 
+          src={`data:image/jpeg;base64,${imageData}`} 
+          alt="Generated content"
+          className="max-w-full rounded-lg"
+        />
+      );
+    }
+    return <ReactMarkdown>{content}</ReactMarkdown>;
+  };
 
   const renderContent = () => {
     const content = message.content;
     const parts = content.split('</think>');
 
     // </Think>가 없으면 모든 내용이 Think 영역
-    if (parts.length === 1 ) {
+    if (parts.length === 1) {
       return (
-          <div className="relative">
-              <button
-                  onClick={() => setIsThinkExpanded(!isThinkExpanded)}
-                  className="flex items-center gap-2 p-2 bg-gray-700 rounded-lg text-sm"
-              >
-                  <div className="flex items-center gap-2 text-gray-300">
-                      <Bot className="w-5 h-5 text-gray-500" />
-                      Thinking...
-                      <div className="w-4 h-4">
-                          {isThinkExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                      </div>
-                  </div>
-              </button>
+        <div className="relative">
+          <button
+            onClick={() => setIsThinkExpanded(!isThinkExpanded)}
+            className="flex items-center gap-2 p-2 bg-gray-700 rounded-lg text-sm"
+          >
+            <div className="flex items-center gap-2 text-gray-300">
+              <Bot className="w-5 h-5 text-gray-500" />
+              Thinking...
+              <div className="w-4 h-4">
+                {isThinkExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+              </div>
+            </div>
+          </button>
 
-              {isThinkExpanded && (
-                  <div className="mt-2 italic text-sm">
-              <ReactMarkdown>{content.replace('<think>', '')}</ReactMarkdown>
+          {isThinkExpanded && (
+            <div className="mt-2 italic text-sm">
+              {renderImageOrMarkdown(content.replace('<think>', ''))}
             </div>
           )}
         </div>
@@ -53,25 +66,25 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isLast, isGenera
           <button
             onClick={() => setIsThinkExpanded(!isThinkExpanded)}
             className="flex items-center gap-2 p-2 bg-gray-700/50 rounded-lg text-sm"
-                >
-                    <div className="flex items-center gap-2 text-gray-300">
-                        <Bot className="w-5 h-5 text-gray-500" />
-                        Thinking...
-                        <div className="w-4 h-4">
-                            {isThinkExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                        </div>
-                    </div>
-                </button>
+          >
+            <div className="flex items-center gap-2 text-gray-300">
+              <Bot className="w-5 h-5 text-gray-500" />
+              Thinking...
+              <div className="w-4 h-4">
+                {isThinkExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+              </div>
+            </div>
+          </button>
 
-                {isThinkExpanded && (
+          {isThinkExpanded && (
             <div className="mt-2 text-gray-500 italic text-sm">
-              <ReactMarkdown>{thinkContent.replace('<think>', '')}</ReactMarkdown>
+              {renderImageOrMarkdown(thinkContent.replace('<think>', ''))}
             </div>
           )}
         </div>
 
         {normalContent && (
-          <ReactMarkdown>{normalContent}</ReactMarkdown>
+          renderImageOrMarkdown(normalContent)
         )}
       </div>
     );
@@ -88,20 +101,19 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isLast, isGenera
           }
           ${isLast && isGenerating ? 'animate-[bubble_0.5s_ease-in-out_infinite]' : ''}
         `}
-            >
-                {message.role === 'user' ?
-                    <ReactMarkdown>
-                        {message.content}
-                    </ReactMarkdown> : renderContent()}
-                {isLast && isGenerating && <LoadingDots />}
-            </div>
-        </div>
-    );
+      >
+        {message.role === 'user' ?
+          <ReactMarkdown>{message.content}</ReactMarkdown> 
+          : renderContent()
+        }
+        {isLast && isGenerating && <LoadingDots />}
+      </div>
+    </div>
+  );
 };
 
 export default React.memo(MessageBubble, (prevProps, nextProps) => {
-    // message의 내용이 바뀌거나 마지막 메시지 여부가 변할 때만 리렌더링
-    return prevProps.message.content === nextProps.message.content &&
-        prevProps.isLast === nextProps.isLast &&
-        prevProps.isGenerating === nextProps.isGenerating;
+  return prevProps.message.content === nextProps.message.content &&
+    prevProps.isLast === nextProps.isLast &&
+    prevProps.isGenerating === nextProps.isGenerating;
 });

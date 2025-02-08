@@ -2,7 +2,7 @@ import {
     TextStreamer,
     InterruptableStoppingCriteria,
 } from "@huggingface/transformers";
-import { TextGenerationPipeline } from "../TextGenerationPipeline";
+import { TextGenerationPipeline } from "../../pipelines/TextGenerationPipeline";
 import { WORKER_STATUS } from "./event";
 
 interface Message {

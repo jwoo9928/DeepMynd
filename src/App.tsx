@@ -3,23 +3,35 @@ import './App.css'
 import ChatLayout from './components/chat/ChatLayout'
 import Initialize from './components/Initialize'
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { ModelStatus } from './components/types';
 
 function App() {
-  const [status, setStatus] = useState<'loading' | 'ready' | null>(null);
+  const [modelStatus, setModelStatus] = useState<ModelStatus>({
+    text: null,
+    image: null
+  });
   const navigate = useNavigate();
-  // ✅ 상태 변경에 따라 URL 이동
+
+  const isAllReady = Object.values(modelStatus).every(status => status === 'ready');
+  
   useEffect(() => {
-    if (status === "ready") {
+    if (isAllReady) {
       navigate("/chat");
     }
-  }, [status]);
+  }, [modelStatus]);
 
   return (
     <Routes>
-      {/* status가 'ready'가 아니면 /init으로 이동 */}
-      <Route path="/init" element={<Initialize status={status} setStatus={setStatus} />} />
+      <Route 
+        path="/init" 
+        element={
+          <Initialize 
+            modelStatus={modelStatus} 
+            setModelStatus={setModelStatus} 
+          />
+        } 
+      />
       <Route path="/chat" element={<ChatLayout />} />
-      {/* 기본적으로 /init으로 리다이렉트 */}
       <Route path="*" element={<Navigate to="/init" replace />} />
     </Routes>
   )

@@ -6,6 +6,7 @@ export const EVENT_TYPES = {
   GENERATION_START: 'generation_start',
   GENERATION_UPDATE: 'generation_update',
   GENERATION_COMPLETE: 'generation_complete',
+  IMAGE_GEN_COMPLETE: 'image_gen_complete',
   CHAT_MESSAGE_RECEIVED: 'chat_message_received',
   ERROR: 'error',
   CREATE_NEW_PERSONA: 'create_new_persona',

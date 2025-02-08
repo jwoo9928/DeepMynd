@@ -30,6 +30,7 @@ export class ChatController {
     eventEmitter.on(EVENT_TYPES.GENERATION_START, this.handleGenerationStart.bind(this));
     eventEmitter.on(EVENT_TYPES.GENERATION_UPDATE, this.handleGenerationUpdate.bind(this));
     eventEmitter.on(EVENT_TYPES.GENERATION_COMPLETE, this.handleGenerationComplete.bind(this));
+    eventEmitter.on(EVENT_TYPES.IMAGE_GEN_COMPLETE, this.handleGenerationComplete.bind(this));
     eventEmitter.on(EVENT_TYPES.IMPORTED_PERSONA, this.createChatRoom.bind(this));
   }
 
@@ -82,6 +83,7 @@ export class ChatController {
       // throw new Error('No chat room selected');
       this.createDefaultChatRoom();
     }
+    console.log("send message", content)
     //@ts-ignore
     const room = this.getChatRoom(this.currentFocustRoomId);
     const systemMessage: Message = { role: 'system', content: room.systemMessage };
@@ -90,7 +92,11 @@ export class ChatController {
     const messages = this.currentMessages.length === 0 ? [systemMessage, userMessage] : [userMessage];
     this.currentMessages.push(userMessage);
     eventEmitter.emit(EVENT_TYPES.CHAT_MESSAGE_RECEIVED, {...this.currentMessages, content: boostThinking + content});
-    this.llmController.generateText(messages);
+    if (content.startsWith('/image')) {
+      this.llmController.generateImage(content);
+    } else {
+      this.llmController.generateText(messages);
+    }
     console.log("1")
   }
 
@@ -125,13 +131,18 @@ export class ChatController {
   }
 
   private handleGenerationComplete(data:{
-    output: string;
+    output?: string;
+    blob?: string;
   }): void {
     const roomId = this.currentFocustRoomId;
     console.log("data", data)
     if (roomId) {
       const room = this.getChatRoom(roomId);
       room.lastMessageTimestamp = Date.now();
+      if (data.blob) {
+        this.currentMessages[this.currentMessages.length - 1].content = `/image:${data.blob}`;
+        eventEmitter.emit(EVENT_TYPES.CHAT_MESSAGE_RECEIVED, this.currentMessages);
+      }
       this.chatRooms.set(roomId, { ...room, messages: [...this.currentMessages] });
       console.log("3")
     }

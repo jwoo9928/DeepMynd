@@ -16,6 +16,7 @@ export const WORKER_STATUS = {
     GENERATION_UPDATE: 'generation_update',
     GENERATION_START: 'generation_start',
     GENERATION_COMPLETE: 'generation_complete',
+    IMAGE_GEN_COMPLETE: 'image_gen_complete',
     INTERRUPT: 'interrupt',
     RESET: 'reset',
 }
