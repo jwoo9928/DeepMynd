@@ -46,7 +46,6 @@ export class ChatController {
     const roomId = uuid();
     const newRoom: ChatRoom = {
       messages: [],
-      isRunning: false,
       roomId,
       personaId: p_id,
       systemMessage: systemMessage,
@@ -65,7 +64,6 @@ export class ChatController {
     }
     this.currentFocustRoomId = roomId;
     const room = this.getChatRoom(roomId);
-    console.log("rooms", this.getChatRooms())
     this.currentMessages = room.messages;
     eventEmitter.emit(EVENT_TYPES.CHAT_MESSAGE_RECEIVED, this.currentMessages);
   }
@@ -79,25 +77,20 @@ export class ChatController {
     }
   }
 
-  public async sendMessage(content: string): Promise<void> {
+  public async sendMessage(content: string, boostThinking : boolean = false): Promise<void> {
     if (!this.currentFocustRoomId) {
       // throw new Error('No chat room selected');
       this.createDefaultChatRoom();
     }
     //@ts-ignore
     const room = this.getChatRoom(this.currentFocustRoomId);
-
-    if (room.isRunning) {
-      return;
-    }
-    const boostThinking = room.boostThinking ? 'Thinking shortly!' : '';
-    const systemMessage: Message = { role: 'system', content: boostThinking + room.systemMessage };
-    const userMessage: Message = { role: 'user', content };
+    const systemMessage: Message = { role: 'system', content: room.systemMessage };
+    const userMessage: Message = { role: 'user', content: boostThinking + content };
+    const messages = this.currentMessages.length === 0 ? [systemMessage, userMessage] : [userMessage];
     this.currentMessages.push(userMessage);
-    // room.isRunning = true;
     eventEmitter.emit(EVENT_TYPES.CHAT_MESSAGE_RECEIVED, this.currentMessages);
+    this.llmController.generateText(messages);
     console.log("1")
-    this.llmController.generate([systemMessage].concat(this.currentMessages));
   }
 
 
@@ -130,14 +123,15 @@ export class ChatController {
     eventEmitter.emit(EVENT_TYPES.CHAT_MESSAGE_RECEIVED, this.currentMessages);
   }
 
-  private handleGenerationComplete(): void {
+  private handleGenerationComplete(data:{
+    output: string;
+  }): void {
     const roomId = this.currentFocustRoomId;
+    console.log("data", data)
     if (roomId) {
       const room = this.getChatRoom(roomId);
       room.lastMessageTimestamp = Date.now();
-      room.isRunning = false;
       this.chatRooms.set(roomId, { ...room, messages: [...this.currentMessages] });
-      //this.currentMessages = [];
       console.log("3")
     }
 
@@ -176,9 +170,9 @@ export class ChatController {
     return this.currentMessages;
   }
 
-  public isGenerating(roomId: string): boolean {
-    return this.getChatRoom(roomId).isRunning;
-  }
+  // public isGenerating(roomId: string): boolean {
+  //   return this.getChatRoom(roomId).isRunning;
+  // }
 
   private getChatRoom(roomId: string): ChatRoom {
     const room = this.chatRooms.get(roomId);

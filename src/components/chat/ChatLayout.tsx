@@ -17,15 +17,23 @@ const ChatLayout = () => {
   const [mode, setMode] = useState<Mode>(ModeValues.Chat);
   const chatController = useRef(ChatController.getInstance());
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [boost, setBoost] = useState<boolean>(false);
 
   const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesEndRef.current) {
+      // 메시지 컨테이너의 아래쪽 위치가 화면 하단에 있는지 확인
+      const isScrolledToBottom = messagesEndRef.current.getBoundingClientRect().bottom <= window.innerHeight;
+      
+      // 사용자가 이미 화면 하단에 있을 경우에만 스크롤을 맨 아래로 내림
+      if (isScrolledToBottom) {
+        messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
   }, []);
 
   useEffect(() => {
     chatController.current.initializeEventListeners();
     const handleMessageReceived = (updatedMessages: Message[]) => {
-      console.log('recieved', updatedMessages[updatedMessages.length - 1].content);
       setMessages([...updatedMessages]);
       scrollToBottom();
     };
@@ -54,7 +62,7 @@ const ChatLayout = () => {
 
   const handleSendMessage = useCallback(() => {
     if (!inputValue.trim()) return;
-    chatController.current.sendMessage(inputValue.trim());
+    chatController.current.sendMessage(inputValue.trim(),boost);
     setInputValue('');
   }, [inputValue]);
 
@@ -68,10 +76,6 @@ const ChatLayout = () => {
   const onBack = useCallback(() => {
     setMode(ModeValues.Chat)
   }, [])
-
-  const boostThinking = useCallback(() => {
-    return chatController.current.boostThinking();
-  }, []);
 
   return (
     <div className="h-screen w-full bg-gray-100">
@@ -88,7 +92,8 @@ const ChatLayout = () => {
             handleSendMessage={handleSendMessage}
             handleKeyPress={handleKeyPress}
             messagesEndRef={messagesEndRef}
-            boostThinking={boostThinking}
+            setBoost={setBoost}
+            boost={boost}
           /> : <ModelCustomization onBack={onBack} />
         }
 

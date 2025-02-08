@@ -1,94 +1,27 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import './App.css'
 import ChatLayout from './components/chat/ChatLayout'
-import { ChatController } from './controllers/ChatController'
-import { LLMController } from './controllers/LLMController'
-import { EVENT_TYPES, eventEmitter } from './controllers/events'
-import { ProgressItem } from './controllers/types'
 import Initialize from './components/Initialize'
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 
 function App() {
   const [status, setStatus] = useState<'loading' | 'ready' | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loadingMessage, setLoadingMessage] = useState('');
-  const [progressItems, setProgressItems] = useState<ProgressItem[]>([]);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [tps, setTps] = useState<number | null>(null);
-  const [numTokens, setNumTokens] = useState<number | null>(null);
-
-  const chatController = useRef(ChatController.getInstance());
-  const llmController = useRef(LLMController.getInstance());
-
+  const navigate = useNavigate();
+  // ✅ 상태 변경에 따라 URL 이동
   useEffect(() => {
-    const handleModelStatus = (status: 'loading' | 'ready') => {
-      setStatus(status);
-    };
-
-    const handleLoadingMessage = (message: string) => {
-      setLoadingMessage(message);
-    };
-
-    const handleProgressUpdate = (data: any) => {
-      console.log("data", data)
-      switch (data.status) {
-        case 'initiate':
-          setProgressItems(prev => [...prev, data]);
-          break;
-        case 'progress':
-          setProgressItems(prev =>
-            prev.map(item =>
-              item.file === data.file ? { ...item, ...data } : item
-            )
-          );
-          break;
-        case 'done':
-          setProgressItems(prev =>
-            prev.filter(item => item.file !== data.file)
-          );
-          break;
-      }
-    };
-
-    const handleGenerationUpdate = (data: any) => {
-      setTps(data.tps);
-      setNumTokens(data.numTokens);
-    };
-
-    const handleError = (error: string) => {
-      setError(error);
-      setStatus(null);
-    };
-
-    eventEmitter.on(EVENT_TYPES.MODEL_STATUS, handleModelStatus);
-    eventEmitter.on(EVENT_TYPES.LOADING_MESSAGE, handleLoadingMessage);
-    eventEmitter.on(EVENT_TYPES.PROGRESS_UPDATE, handleProgressUpdate);
-    eventEmitter.on(EVENT_TYPES.GENERATION_UPDATE, handleGenerationUpdate);
-    eventEmitter.on(EVENT_TYPES.ERROR, handleError);
-
-    return () => {
-      eventEmitter.off(EVENT_TYPES.MODEL_STATUS, handleModelStatus);
-      eventEmitter.off(EVENT_TYPES.LOADING_MESSAGE, handleLoadingMessage);
-      eventEmitter.off(EVENT_TYPES.PROGRESS_UPDATE, handleProgressUpdate);
-      eventEmitter.off(EVENT_TYPES.GENERATION_UPDATE, handleGenerationUpdate);
-      eventEmitter.off(EVENT_TYPES.ERROR, handleError);
-    };
-  }, []);
-
-  const handleLoadModel = async () => {
-    await llmController.current.initialize();
-  };
+    if (status === "ready") {
+      navigate("/chat");
+    }
+  }, [status]);
 
   return (
-    <>
-      <Initialize
-        status={status}
-        progressItems={progressItems}
-        loadingMessage={loadingMessage}
-        error={error}
-        handleLoadModel={handleLoadModel}
-      />
-      <ChatLayout />
-    </>
+    <Routes>
+      {/* status가 'ready'가 아니면 /init으로 이동 */}
+      <Route path="/init" element={<Initialize status={status} setStatus={setStatus} />} />
+      <Route path="/chat" element={<ChatLayout />} />
+      {/* 기본적으로 /init으로 리다이렉트 */}
+      <Route path="*" element={<Navigate to="/init" replace />} />
+    </Routes>
   )
 }
 
