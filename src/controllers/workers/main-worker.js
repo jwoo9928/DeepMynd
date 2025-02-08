@@ -3,7 +3,7 @@ import {
     InterruptableStoppingCriteria,
 } from "@huggingface/transformers";
 import { TextGenerationPipeline } from "../TextGenerationPipeline";
-import { WORKER_STATUS } from "./event";
+import { WORKER_STATUS, WORKER_EVENTS } from "./event";
 
 /**
  * Helper function to perform feature detection for WebGPU
@@ -17,22 +17,20 @@ async function check() {
         }
     } catch (e) {
         self.postMessage({
-            status: WORKER_STATUS.STATUS_ERROR,
+            type: WORKER_STATUS.STATUS_ERROR,
             data: (e).toString(),
         });
     }
 }
 
 async function load() {
-    self.postMessage({ status: WORKER_STATUS.MODEL_INITIALIZE, data: "Loading model..." });
+    self.postMessage({ type: WORKER_STATUS.STATUS_LOADING });
 
     await TextGenerationPipeline.getInstance((x) => {
         self.postMessage(x);
     });
 
-    self.postMessage({ status: WORKER_STATUS.MODEL_PROGRESS, data: "Compiling shaders and warming up model..." });
-
-    self.postMessage({ status: WORKER_STATUS.MODEL_DONE });
+    self.postMessage({ type: WORKER_STATUS.STATUS_READY });
 }
 
 /**
@@ -71,11 +69,13 @@ async function generate(messages) {
 
     const callback_function = (output) => {
         self.postMessage({
-            status: "update",
-            output,
-            tps,
-            numTokens,
-            state,
+            type: WORKER_STATUS.GENERATION_UPDATE,
+            data: {
+                output,
+                tps,
+                numTokens,
+                state,
+            }
         });
     };
 
@@ -103,31 +103,27 @@ async function generate(messages) {
 
     const decoded = tokenizer.batch_decode(sequences, { skip_special_tokens: true });
 
-    self.postMessage({
-        status: WORKER_STATUS.GENERATION_COMPLETE,
-        output: decoded,
-        cache: past_key_values_cache,
-    });
+    self.postMessage({type: WORKER_STATUS.GENERATION_COMPLETE});
 }
 
 self.addEventListener("message", async (e) => {
     const { type, data } = e.data;
 
     switch (type) {
-        case "check":
+        case WORKER_EVENTS.CHECK:
             check();
             break;
-        case "load":
+        case WORKER_EVENTS.LOAD:
             load();
             break;
-        case WORKER_STATUS.GENERATION_START:
+        case WORKER_EVENTS.GENERATION:
             stopping_criteria.reset();
             generate(data);
             break;
-        case "interrupt":
+        case WORKER_EVENTS.INTERRUPT:
             stopping_criteria.interrupt();
             break;
-        case "reset":
+        case WORKER_EVENTS.RESET:
             past_key_values_cache = null;
             stopping_criteria.reset();
             break;

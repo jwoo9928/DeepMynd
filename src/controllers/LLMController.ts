@@ -1,6 +1,6 @@
 import { eventEmitter, EVENT_TYPES } from './events';
 import { GenerationStatus, Message } from './types';
-import { WORKER_STATUS } from "./workers/event";
+import { WORKER_EVENTS, WORKER_STATUS } from "./workers/event";
 import { v4 as uuid } from 'uuid';
 
 export class LLMController {
@@ -25,20 +25,16 @@ export class LLMController {
     public async initializeModel() {
         try {
             eventEmitter.emit(EVENT_TYPES.MODEL_STATUS, 'loading');
-
             const worker = new Worker(new URL("./workers/main-worker.js", import.meta.url), {
                 type: "module",
             });
-            console.log("created worker")
             const workerId = uuid();
             this.text_gen_worker_id = workerId;
             worker.onmessage = (e) => this.eventHandler(workerId, e);
-            console.log("event handling")
-            worker.postMessage({ type: WORKER_STATUS.CHECK });
-            worker.postMessage({ type: WORKER_STATUS.LOAD });
-            console.log("posted messagess")
             this.workers.set(workerId, worker);
             this.workerStates.set(workerId, 'idle');
+            worker.postMessage({ type: WORKER_STATUS.CHECK });
+            worker.postMessage({ type: WORKER_STATUS.LOAD });
             // eventEmitter.emit(EVENT_TYPES.MODEL_STATUS, 'ready');
         } catch (error) {
             eventEmitter.emit(EVENT_TYPES.ERROR, `${error}`);
@@ -47,35 +43,40 @@ export class LLMController {
     }
 
     private eventHandler(workerId: string, event: MessageEvent) {
-        const { type, data } = event.data;
-        switch (type) {
-            case WORKER_STATUS.MODEL_INITIALIZE
-                || WORKER_STATUS.MODEL_PROGRESS
-                || WORKER_STATUS.MODEL_DONE:
-                console.log("init model update", type, data)
-                eventEmitter.emit(EVENT_TYPES.PROGRESS_UPDATE, data);
-                break;
-            case WORKER_STATUS.STATUS_ERROR:
-                // eventEmitter.emit(EVENT_TYPES.MODEL_STATUS, 'loading');
-                break;
-            case WORKER_STATUS.STATUS_READY:
-                eventEmitter.emit(EVENT_TYPES.MODEL_STATUS, 'ready');
-                break;
-            case WORKER_STATUS.STATUS_ERROR:
-                eventEmitter.emit(EVENT_TYPES.ERROR, data);
-                break;
-            case WORKER_STATUS.GENERATION_UPDATE:
-                this.workerStates.set(workerId, 'busy');
-                eventEmitter.emit(EVENT_TYPES.CHAT_MESSAGE_RECEIVED, data);
-                break;
-            case WORKER_STATUS.GENERATION_COMPLETE:
-                eventEmitter.emit(EVENT_TYPES.GENERATION_COMPLETE, data);
-                break;
-            case WORKER_STATUS.STATUS_ERROR:
-                eventEmitter.emit(EVENT_TYPES.MODEL_STATUS, 'loading');
-                break;
-            default:
-                break;
+        const { type, status, data } = event.data;
+        // console.log("event data", event.data)
+        if (type !== undefined) {
+            switch (type) {
+                case WORKER_STATUS.STATUS_LOADING:
+                    eventEmitter.emit(EVENT_TYPES.MODEL_STATUS, 'loading');
+                    break;
+                case WORKER_STATUS.STATUS_READY:
+                    eventEmitter.emit(EVENT_TYPES.MODEL_STATUS, 'ready');
+                    break;
+                case WORKER_STATUS.STATUS_ERROR:
+                    eventEmitter.emit(EVENT_TYPES.ERROR, data);
+                    break;
+                case WORKER_STATUS.GENERATION_UPDATE:
+                    console.log("gen data", event)
+                    eventEmitter.emit(EVENT_TYPES.GENERATION_UPDATE, data);
+                    break;
+                case WORKER_STATUS.GENERATION_COMPLETE:
+                    this.workerStates.set(workerId, 'idle');
+                    eventEmitter.emit(EVENT_TYPES.GENERATION_COMPLETE, data);
+                    break;
+                case WORKER_STATUS.STATUS_ERROR:
+                    // eventEmitter.emit(EVENT_TYPES.MODEL_STATUS, 'loading');
+                    break;
+            }
+        } else {
+            if (status === WORKER_STATUS.MODEL_INITIATE ||
+                status === WORKER_STATUS.MODEL_PROGRESS ||
+                status === WORKER_STATUS.MODEL_DONE ||
+                status === WORKER_STATUS.MODEL_DOWNLOAD) {
+                console.log("event data", event.data)
+                eventEmitter.emit(EVENT_TYPES.PROGRESS_UPDATE, event.data);
+                return;
+            }
         }
     }
 
@@ -85,7 +86,7 @@ export class LLMController {
             const id = this.text_gen_worker_id;
             let worker = this.workers.get(id);
             this.workerStates.set(id, 'busy');
-            worker?.postMessage({ type: WORKER_STATUS.GENERATION_START, data: messages });
+            worker?.postMessage({ type: WORKER_EVENTS.GENERATION, data: messages });
         }
     }
 }

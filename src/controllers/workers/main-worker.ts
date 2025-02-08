@@ -27,7 +27,7 @@ async function check(): Promise<void> {
         }
     } catch (e) {
         self.postMessage({
-            status: WORKER_STATUS.STATUS_ERROR,
+            type: WORKER_STATUS.STATUS_ERROR,
             data: (e as Error).toString(),
         });
     }

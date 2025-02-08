@@ -15,7 +15,8 @@ interface ChatProps {
     handleKeyPress: (e: React.KeyboardEvent<HTMLInputElement>) => void;
     handleSendMessage: () => void;
     messagesEndRef: React.RefObject<HTMLDivElement>;
-    boostThinking: () => boolean;
+    boost: boolean;
+    setBoost: React.Dispatch<React.SetStateAction<boolean>>
 }
 
 const Chat = ({
@@ -28,14 +29,9 @@ const Chat = ({
     handleKeyPress,
     handleSendMessage,
     messagesEndRef,
-    boostThinking
+    boost,
+    setBoost
 }: ChatProps) => {
-    const [boost, setBoost] = useState<boolean>(false);
-
-    const handleBoosting = useCallback(() => {
-        const result = boostThinking();
-        setBoost(result);
-    }, [boostThinking]);
 
     // messages가 변경될 때만 새 배열을 생성하고, 그렇지 않으면 캐싱된 결과를 사용
     const renderedMessages = useMemo(() => {
@@ -88,8 +84,8 @@ const Chat = ({
 
                 {/* DeepThink 토글 버튼 */}
                 <button
-                    onClick={handleBoosting}
-                    className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors duration-200 ${true
+                    onClick={setBoost}
+                    className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors duration-200 ${boost
                         ? 'bg-gray-800 text-white'
                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                         }`}
