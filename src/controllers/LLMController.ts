@@ -1,5 +1,5 @@
 import { eventEmitter, EVENT_TYPES } from './events';
-import { GenerationStatus, Message } from './types';
+import {  Message } from './types';
 import { WORKER_EVENTS, WORKER_STATUS } from "./workers/event";
 import { v4 as uuid } from 'uuid';
 

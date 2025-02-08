@@ -153,6 +153,7 @@ const NewChatModal = ({ isOpen, onClose, onSelectModel, onCreateModel, onSkip }:
   onCreateModel: () => void;
   onSkip: () => void;
 }) => (
+  //@ts-ignore
   <Modal
     isOpen={isOpen}
     onRequestClose={onClose}

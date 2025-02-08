@@ -24,7 +24,6 @@ async function check() {
 }
 
 async function load() {
-    self.postMessage({ status: WORKER_STATUS.INIT, data: "Loading model..." });
 
     await TextGenerationPipeline.getInstance((x) => {
         self.postMessage(x);

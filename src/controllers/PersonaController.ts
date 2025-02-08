@@ -1,7 +1,5 @@
 import { v4 as uuid } from 'uuid';
 import { Persona } from './types';
-import { LLMController } from './LLMController';
-import { ChatController } from './ChatController';
 import { EVENT_TYPES, eventEmitter } from './events';
 
 export class PersonaController {

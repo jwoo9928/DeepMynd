@@ -1,9 +1,9 @@
 
-import { Paperclip, Search, Send } from "lucide-react";
+import { Paperclip, Send } from "lucide-react";
 import { Message } from "../../controllers/types";
 import ChatHeader from "./ChatHeader";
 import MessageBubble from "./MessageBubble";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useMemo } from "react";
 
 interface ChatProps {
     isSidebarOpen: boolean;
@@ -84,7 +84,7 @@ const Chat = ({
 
                 {/* DeepThink 토글 버튼 */}
                 <button
-                    onClick={setBoost}
+                    onClick={() => setBoost(prev => !prev)}
                     className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors duration-200 ${boost
                         ? 'bg-gray-800 text-white'
                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'

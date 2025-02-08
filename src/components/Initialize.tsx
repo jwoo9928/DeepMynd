@@ -13,7 +13,7 @@ const Initialize = ({
   setStatus
 }: InitializeProps) => {
   const [error, setError] = useState<string | null>(null);
-  const [loadingMessage, setLoadingMessage] = useState('');
+  const [loadingMessage, ] = useState('');
   const [progressItems, setProgressItems] = useState<ProgressItem[]>([]);
   //   const [isGenerating, setIsGenerating] = useState(false);
   //   const [tps, setTps] = useState<number | null>(null);
@@ -26,9 +26,9 @@ const Initialize = ({
       setStatus(status);
     };
 
-    const handleLoadingMessage = (message: string) => {
-      setLoadingMessage(message);
-    };
+    // const handleLoadingMessage = (message: string) => {
+    //   setLoadingMessage(message);
+    // };
 
     const handleProgressUpdate = (data: any) => {
       console.log("data", data)
@@ -51,7 +51,7 @@ const Initialize = ({
       }
     };
 
-    const handleGenerationUpdate = (data: any) => {
+    const handleGenerationUpdate = () => {
       // setTps(data.tps);
       // setNumTokens(data.numTokens);
     };
