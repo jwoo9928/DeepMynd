@@ -18,18 +18,21 @@ function App() {
     const isAllReady = Object.values(modelStatus).every(status => status === 'ready');
     if (isAllReady) {
       console.log("isAllReady: ", isAllReady)
-      navigate("/chat");
+      navigate("/auth");
     }
   }, [modelStatus]);
 
   return (
     <Routes>
       <Route
-        path="/init"
+        path="/auth"
         element={<Auth />}
       />
+      <Route
+        path="/init"
+        element={<Initialize modelStatus={modelStatus} setModelStatus={setModelStatus} />} />
       <Route path="/chat" element={<ChatLayout />} />
-      <Route path="*" element={<Navigate to="/init" replace />} />
+      <Route path="*" element={<Navigate to="/auth" replace />} />
     </Routes>
   )
 }

@@ -3,7 +3,7 @@ import React from 'react';
 import { Loader2 } from 'lucide-react';
 
 interface AuthButtonProps {
-    provider: 'google' | 'apple';
+    provider: 'google' | 'apple' | 'guest';
     onClick: () => void;
     loading: boolean;
     children: React.ReactNode;
@@ -18,7 +18,8 @@ export const AuthButton: React.FC<AuthButtonProps> = ({
     const baseStyles = "w-full flex items-center justify-center space-x-3 px-4 py-3 rounded-lg font-medium transition duration-200 transform hover:scale-[1.02]";
     const providerStyles = {
         google: "bg-white hover:bg-gray-100 text-gray-800",
-        apple: "bg-black hover:bg-gray-900 text-white"
+        apple: "bg-black hover:bg-gray-900 text-white",
+        guest: "bg-gray-800 hover:bg-gray-900 text-white"
     };
 
     return (
