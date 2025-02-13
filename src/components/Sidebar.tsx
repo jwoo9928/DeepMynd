@@ -216,6 +216,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
 
             return (
               <div
+                key={room.roomId}
                 className="relative" // 부모 컨테이너
               >
                 {/* 왼쪽 스와이프 시 나타날 삭제 버튼 */}

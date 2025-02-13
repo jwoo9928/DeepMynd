@@ -18,15 +18,14 @@ export class LLMController {
 
     public static getInstance(): LLMController {
         if (!LLMController.instance) {
-            LLMController.instance = new LLMController();
+          LLMController.instance = new LLMController();
         }
         return LLMController.instance;
-    }
+      }
 
     public async initializeModel() {
         try {
             console.log("testing")
-            eventEmitter.emit(EVENT_TYPES.MODEL_STATUS, 'loading');
             const worker = new Worker(new URL("./workers/main-worker.js", import.meta.url), {
                 type: "module",
             });
@@ -109,7 +108,7 @@ export class LLMController {
 
     public async generateText(messages: Message[]) {
         if (this.text_gen_worker_id) {
-            eventEmitter.emit(EVENT_TYPES.GENERATION_START);
+            eventEmitter.emit(EVENT_TYPES.GENERATION_START, {type: 'text'} );
             const id = this.text_gen_worker_id;
             let worker = this.workers.get(id);
             this.workerStates.set(id, 'busy');
@@ -119,7 +118,7 @@ export class LLMController {
 
     public async generateImage(text: string) {
         if (this.image_gen_worker_id) {
-            eventEmitter.emit(EVENT_TYPES.GENERATION_START);
+            eventEmitter.emit(EVENT_TYPES.GENERATION_START, {type:'image'});
             const id = this.image_gen_worker_id;
             let worker = this.workers.get(id);
             this.workerStates.set(id, 'busy');

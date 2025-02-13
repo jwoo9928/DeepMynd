@@ -12,10 +12,11 @@ function App() {
   });
   const navigate = useNavigate();
 
-  const isAllReady = Object.values(modelStatus).every(status => status === 'ready');
   
   useEffect(() => {
+    const isAllReady = Object.values(modelStatus).every(status => status === 'ready');
     if (isAllReady) {
+      console.log("isAllReady: ",isAllReady)
       navigate("/chat");
     }
   }, [modelStatus]);

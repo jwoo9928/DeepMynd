@@ -21,7 +21,7 @@ export class TextGenerationPipeline {
 }
 
 
-export class NomalPipeline {
+export class NormalPipeline {
     static model_id = "onnx-community/DeepSeek-R1-Distill-Qwen-1.5B-ONNX";
     static instance: TextGenerationPipeline | null = null;
 

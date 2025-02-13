@@ -83,26 +83,25 @@ export class ChatController {
       // throw new Error('No chat room selected');
       this.createDefaultChatRoom();
     }
-    console.log("send message", content)
+    const isImageCall = content.startsWith('/image');
     //@ts-ignore
     const room = this.getChatRoom(this.currentFocustRoomId);
-    const systemMessage: Message = { role: 'system', content: room.systemMessage };
     const boostThinking = boost? '' : 'Thinking Shortly!';
+    const systemMessage: Message = { role: 'system', content: boostThinking+room.systemMessage };
     const userMessage: Message = { role: 'user', content: content };
     const messages = this.currentMessages.length === 0 ? [systemMessage, userMessage] : [userMessage];
     this.currentMessages.push(userMessage);
-    eventEmitter.emit(EVENT_TYPES.CHAT_MESSAGE_RECEIVED, {...this.currentMessages, content: boostThinking + content});
-    if (content.startsWith('/image')) {
+    eventEmitter.emit(EVENT_TYPES.CHAT_MESSAGE_RECEIVED, [...this.currentMessages, messages]);
+    if (isImageCall) {
       this.llmController.generateImage(content);
     } else {
       this.llmController.generateText(messages);
     }
-    console.log("1")
   }
 
 
-  private handleGenerationStart(): void {
-    this.currentMessages.push({ role: 'assistant', content: '' });
+  private handleGenerationStart({type}:{type: string}): void {
+    this.currentMessages.push({ role: 'assistant', content: type == 'text' ? '' : '/image:'});
     eventEmitter.emit(EVENT_TYPES.CHAT_MESSAGE_RECEIVED, this.currentMessages);
     console.log("2")
   }
@@ -132,15 +131,16 @@ export class ChatController {
 
   private handleGenerationComplete(data:{
     output?: string;
-    blob?: string;
+    blob?: Blob;
   }): void {
     const roomId = this.currentFocustRoomId;
     console.log("data", data)
     if (roomId) {
       const room = this.getChatRoom(roomId);
       room.lastMessageTimestamp = Date.now();
-      if (data.blob) {
-        this.currentMessages[this.currentMessages.length - 1].content = `/image:${data.blob}`;
+      if (data?.blob) {
+        const url = URL.createObjectURL(data.blob);
+        this.currentMessages[this.currentMessages.length - 1].content = `/image:${url}`;
         eventEmitter.emit(EVENT_TYPES.CHAT_MESSAGE_RECEIVED, this.currentMessages);
       }
       this.chatRooms.set(roomId, { ...room, messages: [...this.currentMessages] });

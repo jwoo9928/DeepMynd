@@ -1,4 +1,4 @@
-import { ChevronUp, ChevronDown, Bot } from "lucide-react";
+import { ChevronUp, ChevronDown, Bot, Loader2 } from "lucide-react";
 import React, { useState } from "react";
 import LoadingDots from "./LoadingDots";
 import { Message } from "../../controllers/types";
@@ -12,45 +12,58 @@ interface MessageBubbleProps {
 
 const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isLast, isGenerating }) => {
   const [isThinkExpanded, setIsThinkExpanded] = useState(false);
+  const [isImageLoading, setIsImageLoading] = useState(true);
+  const isImage = message.content.startsWith('/image:');
 
-  const renderImageOrMarkdown = (content: string) => {
-    if (content.startsWith('/image:')) {
-      const imageData = content.replace('/image:', '');
-      return (
-        <img 
-          src={`data:image/jpeg;base64,${imageData}`} 
+  const renderImageOrMarkdown = () => {
+    const imageData = message.content.replace('/image:', '');
+    return (
+      <div className="relative">
+        {isImageLoading && (
+          <div className="flex items-center justify-center p-8 bg-gray-100 rounded-lg">
+            <Loader2 className="w-8 h-8 text-gray-400 animate-spin" />
+          </div>
+        )}
+        <img
+          src={imageData}
           alt="Generated content"
-          className="max-w-full rounded-lg"
+          className={`max-w-full rounded-lg transition-opacity duration-300 ${isImageLoading ? 'opacity-0' : 'opacity-100'}`}
+          onLoad={() => setIsImageLoading(false)}
         />
-      );
-    }
-    return <ReactMarkdown>{content}</ReactMarkdown>;
+      </div>
+    )
   };
+
 
   const renderContent = () => {
     const content = message.content;
+    
     const parts = content.split('</think>');
 
-    // </Think>가 없으면 모든 내용이 Think 영역
-    if (parts.length === 1) {
-      return (
-        <div className="relative">
-          <button
-            onClick={() => setIsThinkExpanded(!isThinkExpanded)}
-            className="flex items-center gap-2 p-2 bg-gray-700 rounded-lg text-sm"
-          >
-            <div className="flex items-center gap-2 text-gray-300">
-              <Bot className="w-5 h-5 text-gray-500" />
-              Thinking...
-              <div className="w-4 h-4">
-                {isThinkExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-              </div>
-            </div>
-          </button>
+    if (isImage == true) {
+      return renderImageOrMarkdown()
+    }
 
-          {isThinkExpanded && (
-            <div className="mt-2 italic text-sm">
-              {renderImageOrMarkdown(content.replace('<think>', ''))}
+    // </Think>가 없으면 모든 내용이 Think 영역
+    if (parts.length === 1 ) {
+      return (
+          <div className="relative">
+              <button
+                  onClick={() => setIsThinkExpanded(!isThinkExpanded)}
+                  className="flex items-center gap-2 p-2 bg-gray-700 rounded-lg text-sm"
+              >
+                  <div className="flex items-center gap-2 text-gray-300">
+                      <Bot className="w-5 h-5 text-gray-500" />
+                      Thinking...
+                      <div className="w-4 h-4">
+                          {isThinkExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                      </div>
+                  </div>
+              </button>
+
+              {isThinkExpanded && (
+                  <div className="mt-2 italic text-sm">
+              <ReactMarkdown>{content.replace('<think>', '')}</ReactMarkdown>
             </div>
           )}
         </div>
@@ -66,25 +79,25 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isLast, isGenera
           <button
             onClick={() => setIsThinkExpanded(!isThinkExpanded)}
             className="flex items-center gap-2 p-2 bg-gray-700/50 rounded-lg text-sm"
-          >
-            <div className="flex items-center gap-2 text-gray-300">
-              <Bot className="w-5 h-5 text-gray-500" />
-              Thinking...
-              <div className="w-4 h-4">
-                {isThinkExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-              </div>
-            </div>
-          </button>
+                >
+                    <div className="flex items-center gap-2 text-gray-300">
+                        <Bot className="w-5 h-5 text-gray-500" />
+                        Thinking...
+                        <div className="w-4 h-4">
+                            {isThinkExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                        </div>
+                    </div>
+                </button>
 
-          {isThinkExpanded && (
+                {isThinkExpanded && (
             <div className="mt-2 text-gray-500 italic text-sm">
-              {renderImageOrMarkdown(thinkContent.replace('<think>', ''))}
+              <ReactMarkdown>{thinkContent.replace('<think>', '')}</ReactMarkdown>
             </div>
           )}
         </div>
 
         {normalContent && (
-          renderImageOrMarkdown(normalContent)
+          <ReactMarkdown>{normalContent}</ReactMarkdown>
         )}
       </div>
     );
@@ -101,19 +114,19 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isLast, isGenera
           }
           ${isLast && isGenerating ? 'animate-[bubble_0.5s_ease-in-out_infinite]' : ''}
         `}
-      >
-        {message.role === 'user' ?
-          <ReactMarkdown>{message.content}</ReactMarkdown> 
-          : renderContent()
-        }
-        {isLast && isGenerating && <LoadingDots />}
-      </div>
-    </div>
-  );
+            >
+                {message.role === 'user' ?
+                    <ReactMarkdown>
+                        {message.content}
+                    </ReactMarkdown> : renderContent()}
+                {isLast && isGenerating && <LoadingDots />}
+            </div>
+        </div>
+    );
 };
 
 export default React.memo(MessageBubble, (prevProps, nextProps) => {
-  return prevProps.message.content === nextProps.message.content &&
-    prevProps.isLast === nextProps.isLast &&
-    prevProps.isGenerating === nextProps.isGenerating;
+    return prevProps.message.content === nextProps.message.content &&
+        prevProps.isLast === nextProps.isLast &&
+        prevProps.isGenerating === nextProps.isGenerating;
 });
