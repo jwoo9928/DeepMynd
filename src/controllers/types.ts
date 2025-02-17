@@ -11,6 +11,8 @@ export interface ChatRoom {
   lastMessageTimestamp?: number;
   isPin: boolean;
   boostThinking: boolean;
+  image: string,
+  name: string,
 }
 
 export interface ProgressItem {

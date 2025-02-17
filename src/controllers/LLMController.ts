@@ -1,3 +1,4 @@
+import { ModelStatus } from '../components/types';
 import { eventEmitter, EVENT_TYPES } from './events';
 import { Message } from './types';
 import { WORKER_EVENTS, WORKER_STATUS } from "./workers/event";
@@ -11,9 +12,14 @@ export class LLMController {
     private workers: Map<string, Worker> = new Map();
     private focusedWokerId: string | null = null;
     private workerStates: Map<string, 'idle' | 'busy'> = new Map();
+    private modelStatus: ModelStatus = {
+        text: null,
+        image: null
+    }
+    private isModelReady: boolean = false;
 
     private constructor() {
-        // this.initializeModel();
+       eventEmitter.on(EVENT_TYPES.MODEL_STATUS, this.handleModelStatus.bind(this));
 
     }
 
@@ -56,7 +62,12 @@ export class LLMController {
         const { type, status, data } = event.data;
         if (type !== undefined) {
             switch (type) {
-                case WORKER_STATUS.STATUS_LOADING: //모델 로딩 시작
+                case WORKER_STATUS.STATUS_LOADING:
+                    console.log("loading")
+                    // eventEmitter.emit(EVENT_TYPES.MODEL_STATUS, {
+                    //     type: modelType,
+                    //     status: 'loading'
+                    // });
                     break;
                 case WORKER_STATUS.STATUS_READY: //모델 준비 완료
                     break;

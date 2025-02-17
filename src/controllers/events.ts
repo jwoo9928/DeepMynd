@@ -15,6 +15,8 @@ export const EVENT_TYPES = {
   CREATE_NEW_PERSONA: 'create_new_persona',
   CREATE_NEW_CHAT: 'create_new_chat',
   IMPORTED_PERSONA: 'imported_persona',
+  MODEL_READY: 'model_ready',
+  ROOM_CHANGED: 'room_changed'
 } as const;
 
 export const eventEmitter = new EventEmitter();

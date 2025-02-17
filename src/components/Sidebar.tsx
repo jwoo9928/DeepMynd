@@ -120,7 +120,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   };
 
   const handleDeleteRoom = useCallback((roomId: string) => {
-    // setRooms(prev => prev.filter(room => room.roomId !== roomId));
+    setRooms(prev => prev.filter(room => room.roomId !== roomId));
     chatController.current.deleteChatRoom(roomId);
   }, []);
 
@@ -201,7 +201,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
         </div>
 
         <div className="overflow-y-auto h-[calc(100%-8rem)]">
-          {rooms.map((room, i) => {
+          {rooms.map((room) => {
             const isPinned = room.isPin;
             const isSelected = selectedRoomId === room.roomId;
             const swipeOffset = swipeState.roomId === room.roomId
@@ -262,12 +262,18 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
                   onTouchEnd={handleTouchEnd}
                 >
                   <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-gray-300 rounded-full"></div>
+                    <div className="w-12 h-12 bg-gray-300 rounded-full">
+                      <img
+                        src={room.image}
+                        alt="User"
+                        className="w-full h-full object-cover rounded-full"
+                      />
+                    </div>
                     <div className="flex-1">
                       <div className="flex justify-between items-center">
                         <h3 className="font-medium flex items-center gap-2">
                           {isPinned && <Pin className="h-3 w-3" />}
-                          User {i}
+                          {room.name}
                         </h3>
                         <div className="flex items-center gap-2">
                           <span className="text-xs text-gray-500">12:30 PM</span>

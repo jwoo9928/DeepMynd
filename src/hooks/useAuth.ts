@@ -1,13 +1,11 @@
 // src/hooks/useAuth.ts
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { UserSession } from '../components/types';
 
 export const useAuth = () => {
     const [session, setSession] = useState<UserSession['user']>(null);
     const [loading, setLoading] = useState(true);
-    const navigate = useNavigate();
 
     useEffect(() => {
         // Get initial session

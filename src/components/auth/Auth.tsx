@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Apple, LogIn } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
@@ -26,7 +26,7 @@ const features = [
 
 export default function Auth() {
     const [loading, setLoading] = useState(false);
-    const [currentFeature, setCurrentFeature] = useState(0);
+    const [, setCurrentFeature] = useState(0);
     const [showWarning, setShowWarning] = useState(false);
     const { session } = useAuth();
 

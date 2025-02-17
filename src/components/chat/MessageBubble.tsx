@@ -14,6 +14,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isLast, isGenera
   const [isThinkExpanded, setIsThinkExpanded] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(true);
   const isImage = message.content.startsWith('/image:');
+  console.log("message",message)
 
   const renderImageOrMarkdown = () => {
     const imageData = message.content.replace('/image:', '');

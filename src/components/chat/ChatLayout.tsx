@@ -5,7 +5,7 @@ import { EVENT_TYPES, eventEmitter } from '../../controllers/events';
 import Sidebar from '../Sidebar';
 import Chat from './Chat';
 import { Mode, ModeValues } from '../types';
-import ModelCustomization from '../ModelCustomization';
+import ModelCustomization from '../models/ModelCustomization';
 
 
 

@@ -54,6 +54,10 @@ export class ChatController {
 
   public createChatRoom(persona: Persona): void {
     const roomId = uuid();
+    if (!p_id) {
+      p_id = this.personaController.getDefaultId();
+    }
+    const model = this.personaController.getModel(p_id)
     const newRoom: ChatRoom = {
       messages: [],
       roomId,
@@ -61,6 +65,8 @@ export class ChatController {
       systemMessage: persona.system,
       isPin: false,
       boostThinking: false,
+      image: model?.image ?? '/assets/deepmynd_500.jpg',
+      name: model?.name ?? 'DeepMynd'
     };
 
     this.chatRooms.set(roomId, newRoom);
@@ -83,7 +89,7 @@ export class ChatController {
     this.currentFocustRoomId = roomId;
     const room = this.getChatRoom(roomId);
     this.currentMessages = room.messages;
-    // eventEmitter.emit(EVENT_TYPES.CHAT_MESSAGE_RECEIVED, this.currentMessages);
+    eventEmitter.emit(EVENT_TYPES.ROOM_CHANGED, roomId);
   }
 
   public createDefaultChatRoom(): boolean {
@@ -182,7 +188,12 @@ export class ChatController {
     if (this.currentFocustRoomId === roomId) {
       this.currentFocustRoomId = undefined;
       this.currentMessages = [];
-      this.changeChatRoom(this.getChatRooms()[0].roomId);
+      const newCurrentRoom = this.getChatRooms()?.[0];
+      if (newCurrentRoom) {
+        this.changeChatRoom(newCurrentRoom.roomId);
+      } else {
+        this.createDefaultChatRoom();
+      }
     }
     this.chatRooms.delete(roomId);
   }
@@ -201,6 +212,9 @@ export class ChatController {
     return this.currentMessages;
   }
 
+  // public isGenerating(roomId: string): boolean {
+  //   return this.getChatRoom(roomId).isRunning;
+  // }
 
   public getChatRooms(): ChatRoom[] {
     return Array.from(this.chatRooms.values());
