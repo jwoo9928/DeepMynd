@@ -19,7 +19,7 @@ export class LLMController {
     private isModelReady: boolean = false;
 
     private constructor() {
-       eventEmitter.on(EVENT_TYPES.MODEL_STATUS, this.handleModelStatus.bind(this));
+    //    eventEmitter.on(EVENT_TYPES.MODEL_STATUS, this.handleModelStatus.bind(this));
 
     }
 
@@ -64,12 +64,14 @@ export class LLMController {
             switch (type) {
                 case WORKER_STATUS.STATUS_LOADING:
                     console.log("loading")
+                    eventEmitter.emit(EVENT_TYPES.MODEL_INITIALIZING)
                     // eventEmitter.emit(EVENT_TYPES.MODEL_STATUS, {
                     //     type: modelType,
                     //     status: 'loading'
                     // });
                     break;
                 case WORKER_STATUS.STATUS_READY: //모델 준비 완료
+                    eventEmitter.emit(EVENT_TYPES.MODEL_READY);
                     break;
                 case WORKER_STATUS.STATUS_ERROR:
                     eventEmitter.emit(EVENT_TYPES.ERROR, data);
@@ -116,6 +118,11 @@ export class LLMController {
             worker?.postMessage({ type: WORKER_EVENTS.GENERATION, data: messages });
         }
     }
+
+    public getModelIsInitialized() {
+        return this.focusedWokerId !== null;
+    }
+
 
     // public async generateImage(text: string) {
     //     if (this.image_gen_worker_id) {

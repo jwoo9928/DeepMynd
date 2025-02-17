@@ -1,7 +1,8 @@
-export type ONNX = 'onnx';
-export type GGUF = 'gguf';
-export type MLC = 'mlc';
-export type ModelFormat = ONNX| GGUF | MLC;
+export enum ModelFormat {
+    ONNX = 'onnx',
+    GGUF = 'gguf',
+    MLC = 'mlc'
+}
 
 export interface Model {
     id: string;
@@ -9,4 +10,5 @@ export interface Model {
     format: ModelFormat;
     size: string;
     description: string;
+    vram_required_MB?:number;
 }

@@ -12,12 +12,12 @@ import WasmFromCDN from '@wllama/wllama/esm/wasm-from-cdn.js';
 function App() {
   const navigate = useNavigate();
 
-  const initProgressCallback = (initProgress:any) => {
+  const initProgressCallback = (initProgress: any) => {
     console.log(initProgress);
   }
 
-  const testing  = async () => {
-  
+  const testing = async () => {
+
     const selectedModel = "meta-llama/Llama-3.2-1B";
 
     const appConfig = {
@@ -29,23 +29,23 @@ function App() {
         }
       ],
     };
-    
-    const engine = await CreateMLCEngine(
-      selectedModel,
-      { appConfig,
-        initProgressCallback: initProgressCallback }, // engineConfig
-    );
-    
-    const messages = [
-      { role: "system", content: "You are a helpful AI assistant." },
-      { role: "user", content: "Hello!" },
-    ]
-    
-    const reply = await engine.chat.completions.create({
-      messages,
-    });
-    console.log(reply.choices[0].message);
-    console.log(reply.usage);
+
+    // const engine = await CreateMLCEngine(
+    //   selectedModel,
+    //   { appConfig,
+    //     initProgressCallback: initProgressCallback }, // engineConfig
+    // );
+
+    // const messages = [
+    //   { role: "system", content: "You are a helpful AI assistant." },
+    //   { role: "user", content: "Hello!" },
+    // ]
+
+    // const reply = await engine.chat.completions.create({
+    //   messages,
+    // });
+    // console.log(reply.choices[0].message);
+    // console.log(reply.usage);
   }
 
   const initWllama = async () => {
@@ -62,7 +62,7 @@ function App() {
     // Hugging Face에서 모델 로드 (분할된 경우 첫 번째 파일 지정)
     await instance.loadModelFromHF(
       'Ttimofeyka/MistralRP-Noromaid-NSFW-Mistral-7B-GGUF',
-            'MistralRP-Noromaid-NSFW-7B-Q8_0.gguf',
+      'MistralRP-Noromaid-NSFW-7B-Q8_0.gguf',
       // {
       //   progressCallback:initProgressCallback,
       // }
@@ -75,7 +75,7 @@ function App() {
         top_p: 0.9,
       },
       useCache: true,
-      
+
     });
     console.log(response)
 

@@ -1,44 +1,30 @@
-import React, { useState, useRef } from 'react';
-import { ArrowLeft, Upload, X, Bot, ChevronRight, Download } from 'lucide-react';
-import Modal from 'react-modal';
+import React, { useState, useRef, useEffect } from 'react';
+import { ArrowLeft, Upload, X, Bot, ChevronRight, Download, Search } from 'lucide-react';
 import { PersonaController } from '../../controllers/PersonaController';
 import { Model, ModelFormat } from './trypes';
 import HuggingfaceModal from './HuggingfaceModal';
+import ModelList from './ModelList';
 
 interface ModelCustomizationProps {
   onBack: () => void;
 }
-
-// 예시 모델 리스트
-const AVAILABLE_MODELS: Record<string, Model[]> = {
-  onnx: [
-    { id: 'onnx-community/DeepSeek-R1-Distill-Qwen-1.5B-ONNX', name: 'DeepSeek-R1-Distill-Qwen-1.5B-ONNX', format: 'onnx', size: '98MB', description: 'Standard ResNet model for image classification' },
-    { id: 'bert-base', name: 'BERT Base', format: 'onnx', size: '420MB', description: 'Base BERT model for NLP tasks' },
-  ],
-  gguf: [
-    { id: 'UnfilteredAI/NSFW-3B', name: 'nsfw-3b-iq4_xs-imat.gguf', format: 'gguf', size: '4.2GB', description: 'Compact but powerful language model' },
-    { id: 'mistral-7b', name: 'Mistral 7B', format: 'gguf', size: '4.1GB', description: 'Efficient language model for general use' },
-  ],
-  mlc: [
-    { id: 'phi2', name: 'Phi-2', format: 'mlc', size: '2.7GB', description: 'Optimized for MLC compilation' },
-    { id: 'gemma-7b', name: 'Gemma 7B', format: 'mlc', size: '3.8GB', description: "Google's open model in MLC format" },
-  ],
-};
 
 const ModelCustomization = ({ onBack }: ModelCustomizationProps) => {
   const [modelName, setModelName] = useState<string>('');
   const [systemInstruction, setSystemInstruction] = useState<string>('');
   const [firstMessage, setFirstMessage] = useState<string>('');
   const [profileImage, setProfileImage] = useState<string>('');
-  const [selectedFormat, setSelectedFormat] = useState<ModelFormat>('onnx');
+  const [selectedFormat, setSelectedFormat] = useState<ModelFormat>(ModelFormat.ONNX);
   const [selectedModel, setSelectedModel] = useState<Model | null>(null);
   const [isHuggingfaceModalOpen, setIsHuggingfaceModalOpen] = useState(false);
   const [huggingfaceModelId, setHuggingfaceModelId] = useState('');
   const [huggingfaceFileName, setHuggingfaceFileName] = useState('');
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const personaController = useRef(PersonaController.getInstance());
+
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -91,35 +77,6 @@ const ModelCustomization = ({ onBack }: ModelCustomizationProps) => {
     setSelectedModel(newModel);
     setIsHuggingfaceModalOpen(false);
   };
-
-  const ModelList = () => (
-    <div className="grid grid-cols-1 gap-4">
-      {AVAILABLE_MODELS[selectedFormat].map((model) => (
-        <div
-          key={model.id}
-          onClick={() => setSelectedModel(model)}
-          className={`p-4 border rounded-lg cursor-pointer transition-all ${
-            selectedModel?.id === model.id
-              ? 'border-blue-500 bg-blue-50'
-              : 'border-gray-200 hover:border-blue-500 hover:bg-blue-50'
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-medium text-gray-900">{model.name}</h3>
-              <p className="text-sm text-gray-500 mt-1">{model.description}</p>
-              <span className="text-xs text-gray-400 mt-2 inline-block">Size: {model.size}</span>
-            </div>
-            {selectedModel?.id === model.id && (
-              <div className="text-blue-500">
-                <ChevronRight className="h-5 w-5" />
-              </div>
-            )}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
 
 
   return (
@@ -204,7 +161,10 @@ const ModelCustomization = ({ onBack }: ModelCustomizationProps) => {
                       {['onnx', 'gguf', 'mlc'].map((format) => (
                         <button
                           key={format}
-                          onClick={() => setSelectedFormat(format as 'onnx' | 'gguf' | 'mlc')}
+                          onClick={() => {
+                            setSelectedFormat(format as 'onnx' | 'gguf' | 'mlc');
+                            setSearchQuery('');
+                          }}
                           className={`pb-2 px-4 text-sm font-medium transition-colors ${selectedFormat === format
                               ? 'text-blue-500 border-b-2 border-blue-500'
                               : 'text-gray-500 hover:text-gray-700'
@@ -215,8 +175,12 @@ const ModelCustomization = ({ onBack }: ModelCustomizationProps) => {
                       ))}
                     </div>
 
-                    {/* Model List */}
-                    <ModelList />
+                    {/* Model List with Search */}
+                    <ModelList 
+                      selectedFormat={selectedFormat} 
+                      selectedModel={selectedModel} 
+                      setSelectedModel={setSelectedModel}
+                    />
 
                     {/* Hugging Face Import Button */}
                     <button

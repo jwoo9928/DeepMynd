@@ -1,0 +1,101 @@
+import { ChevronRight, Search } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Model, ModelFormat } from "./trypes";
+import { prebuiltAppConfig } from "@mlc-ai/web-llm";
+
+
+const AVAILABLE_MODELS: Record<string, Model[]> = {
+  onnx: [
+    { id: 'onnx-community/DeepSeek-R1-Distill-Qwen-1.5B-ONNX', name: 'DeepSeek-R1-Distill-Qwen-1.5B-ONNX', format: ModelFormat.ONNX, size: '98MB', description: 'Standard ResNet model for image classification' },
+    { id: 'bert-base', name: 'BERT Base', format: ModelFormat.ONNX, size: '420MB', description: 'Base BERT model for NLP tasks' },
+  ],
+  gguf: [
+    // { id: 'UnfilteredAI/NSFW-3B', name: 'nsfw-3b-iq4_xs-imat.gguf', format: 'gguf', size: '4.2GB', description: 'Compact but powerful language model' },
+    // { id: 'mistral-7b', name: 'Mistral 7B', format: 'gguf', size: '4.1GB', description: 'Efficient language model for general use' },
+  ],
+  mlc: prebuiltAppConfig.model_list.map((model) => ({
+    id: model.model_id,
+    name: model.model_id.split('/').pop() || '',
+    format: ModelFormat.MLC,
+    size: model.overrides?.context_window_size?.toString() || 'Unknown',
+    description: model.model_lib,
+    vram_required_MB: model.vram_required_MB,
+  })),
+};
+
+const ModelList = ({
+  selectedFormat,
+  selectedModel,
+  setSelectedModel,
+}: {
+  selectedFormat: ModelFormat;
+  selectedModel: Model | null;
+  setSelectedModel: (model: Model) => void;
+}) => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredModels, setFilteredModels] = useState<Model[]>([]);
+
+  useEffect(() => {
+    if (searchQuery != '') {
+      const filtered = AVAILABLE_MODELS[selectedFormat].filter(model =>
+        model.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        model.description.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setFilteredModels(filtered);
+    } else {
+      setFilteredModels(AVAILABLE_MODELS[selectedFormat]);
+    }
+  }, [searchQuery, selectedFormat]);
+
+
+  return (
+    <div className="flex flex-col space-y-4">
+      {/* Search Bar */}
+      <div className="relative">
+        <input
+          type="text"
+          placeholder="Search models..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full p-3 pl-10 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <Search className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+      </div>
+
+      {/* Scrollable Model List */}
+      <div className="h-80 overflow-y-auto pr-2 space-y-4">
+        {filteredModels.length > 0 ? (
+          filteredModels.map((model) => (
+            <div
+              key={model.id}
+              onClick={() => setSelectedModel(model)}
+              className={`p-4 border rounded-lg cursor-pointer transition-all ${selectedModel?.id === model.id
+                ? 'border-blue-500 bg-blue-50'
+                : 'border-gray-200 hover:border-blue-500 hover:bg-blue-50'
+                }`}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-medium text-gray-900">{model.name}</h3>
+                  <p className="text-sm text-gray-500 mt-1">{model.description}</p>
+                  <span className="text-xs text-gray-400 mt-2 inline-block">Size: {model.size}</span>
+                </div>
+                {selectedModel?.id === model.id && (
+                  <div className="text-blue-500">
+                    <ChevronRight className="h-5 w-5" />
+                  </div>
+                )}
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="text-center py-6 text-gray-500">
+            No models match your search criteria
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default React.memo(ModelList);

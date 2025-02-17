@@ -89,7 +89,7 @@ async function generate(messages) {
     self.postMessage({ status: WORKER_STATUS.GENERATION_START });
 
     // @ts-ignore
-    const { past_key_values, sequences } = await model.generate({
+    const { past_key_values } = await model.generate({
         // @ts-ignore
         ...inputs,
         max_new_tokens: 2048,
@@ -100,8 +100,6 @@ async function generate(messages) {
     });
 
     past_key_values_cache = past_key_values;
-
-    const decoded = tokenizer.batch_decode(sequences, { skip_special_tokens: true });
 
     self.postMessage({type: WORKER_STATUS.GENERATION_COMPLETE});
 }

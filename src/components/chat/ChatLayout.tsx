@@ -6,6 +6,9 @@ import Sidebar from '../Sidebar';
 import Chat from './Chat';
 import { Mode, ModeValues } from '../types';
 import ModelCustomization from '../models/ModelCustomization';
+import { prebuiltAppConfig } from '@mlc-ai/web-llm';
+import { LLMController } from '../../controllers/LLMController';
+import LoadingProgressModal from './LoadingProgressModal';
 
 
 
@@ -32,7 +35,7 @@ const ChatLayout = () => {
   }, []);
 
   useEffect(() => {
-    chatController.current.initializeEventListeners();
+    // chatController.current.initializeEventListeners();
     const handleMessageReceived = (updatedMessages: Message[]) => {
       setMessages([...updatedMessages]);
       scrollToBottom();
@@ -46,17 +49,19 @@ const ChatLayout = () => {
       setIsGenerating(false);
     };
 
-    eventEmitter.on(EVENT_TYPES.CHAT_MESSAGE_RECEIVED, handleMessageReceived);
-    eventEmitter.on(EVENT_TYPES.GENERATION_START, handleGenerationStart);
-    eventEmitter.on(EVENT_TYPES.GENERATION_COMPLETE, handleGenerationComplete);
+    console.log(prebuiltAppConfig.model_list
+    )
+    // eventEmitter.on(EVENT_TYPES.CHAT_MESSAGE_RECEIVED, handleMessageReceived);
+    // eventEmitter.on(EVENT_TYPES.GENERATION_START, handleGenerationStart);
+    // eventEmitter.on(EVENT_TYPES.GENERATION_COMPLETE, handleGenerationComplete);
     eventEmitter.on(EVENT_TYPES.CREATE_NEW_PERSONA, setMode)
 
     return () => {
-      eventEmitter.off(EVENT_TYPES.CHAT_MESSAGE_RECEIVED);
-      eventEmitter.off(EVENT_TYPES.GENERATION_START);
-      eventEmitter.off(EVENT_TYPES.GENERATION_COMPLETE);
+      // eventEmitter.off(EVENT_TYPES.CHAT_MESSAGE_RECEIVED);
+      // eventEmitter.off(EVENT_TYPES.GENERATION_START);
+      // eventEmitter.off(EVENT_TYPES.GENERATION_COMPLETE);
       eventEmitter.off(EVENT_TYPES.CREATE_NEW_PERSONA);
-      chatController.current.removeEventListeners();
+      // chatController.current.removeEventListeners();
     };
   }, []);
 
@@ -98,6 +103,7 @@ const ChatLayout = () => {
         }
 
       </div>
+      <LoadingProgressModal/>
     </div>
   );
 };

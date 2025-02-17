@@ -46,18 +46,20 @@ export class ChatController {
       const roomMessages = roomsData[roomId];
       const messages = roomMessages.map((msg) => (msg.message));
       const personaId = roomMessages[1].sender;
-      const systemMessage = this.personaController.getModel(personaId)?.system ?? '';
-      this.chatRooms.set(roomId, { messages: messages, roomId, personaId, systemMessage, isPin: false, boostThinking: false });
+      const persona = this.personaController.getModel(personaId);
+      const systemMessage = persona?.system ?? '';
+      this.chatRooms.set(roomId, {
+        messages: messages, roomId, personaId, systemMessage, isPin: false, boostThinking: false,
+        image: '',
+        name: persona?.name ?? 'DeepMynd'
+      });
     }
     // this.createDefaultChatRoom();
   }
 
   public createChatRoom(persona: Persona): void {
     const roomId = uuid();
-    if (!p_id) {
-      p_id = this.personaController.getDefaultId();
-    }
-    const model = this.personaController.getModel(p_id)
+    const model = this.personaController.getModel(persona.id)
     const newRoom: ChatRoom = {
       messages: [],
       roomId,
@@ -92,9 +94,16 @@ export class ChatController {
     eventEmitter.emit(EVENT_TYPES.ROOM_CHANGED, roomId);
   }
 
-  public createDefaultChatRoom(): boolean {
+  public async createDefaultChatRoom(): Promise<boolean> {
     try {
       const persona = this.personaController.getDefaultPersona();
+      console.log("createDefaultChatRoom",persona)
+      if (!this.llmController.getModelIsInitialized() && persona) {
+        await this.llmController.initializeModel(
+          persona.model_id,
+          persona.model_type,
+        );
+      }
       if (!persona) {
         throw new Error('Default persona not found');
       } else {
@@ -109,7 +118,7 @@ export class ChatController {
 
   public async sendMessage(content: string, boost: boolean = false): Promise<void> {
     if (!this.currentFocustRoomId) {
-      this.createDefaultChatRoom();
+      await this.createDefaultChatRoom();
     }
     const isImageCall = content.startsWith('/image');
     //@ts-ignore

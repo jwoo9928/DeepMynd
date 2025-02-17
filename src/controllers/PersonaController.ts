@@ -3,6 +3,7 @@ import { Persona } from './types';
 import { EVENT_TYPES, eventEmitter } from './events';
 import { DBController } from './DBController';
 import { supabase } from '../lib/supabase';
+import { cat } from '@huggingface/transformers';
 
 export class PersonaController {
     private personaList: Map<string, Persona>;
@@ -20,25 +21,30 @@ export class PersonaController {
 
     public async initPersonas(): Promise<void> {
         const personas = await this.dbController.getPersonas();
+        console.log("personas", personas)
         if (personas.length > 0) {
             personas.forEach((persona) => {
                 this.personaList.set(persona.id, persona);
             });
         } else {
-            const { data, error } = await supabase
-                .from('persona')  // 'persona' 테이블에서 데이터 가져오기
-                .select('*');
+            try {
+                const { data, error } = await supabase
+                    .from('persona')  // 'persona' 테이블에서 데이터 가져오기
+                    .select('*');
 
-            if (error) {
-                console.error('Error fetching personas from Supabase:', error.message);
-                return;
-            }
+                if (error) {
+                    console.error('Error fetching personas from Supabase:', error.message);
+                    return;
+                }
 
-            if (data && data.length > 0) {
-                data.forEach((persona: Persona) => {
-                    this.personaList.set(persona.id, persona);
-                    this.dbController.addPersona(persona);
-                });
+                if (data && data.length > 0) {
+                    data.forEach((persona: Persona) => {
+                        this.personaList.set(persona.id, persona);
+                        this.dbController.addPersona(persona);
+                    });
+                }
+            } catch (error) {
+                console.error('Error fetching personas from Supabase:', error);
             }
         }
     }
