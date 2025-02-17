@@ -18,7 +18,7 @@ function App() {
     const isAllReady = Object.values(modelStatus).every(status => status === 'ready');
     if (isAllReady) {
       console.log("isAllReady: ", isAllReady)
-      navigate("/auth");
+      navigate("/chat");
     }
   }, [modelStatus]);
 

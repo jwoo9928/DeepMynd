@@ -1,14 +1,15 @@
 import { eventEmitter, EVENT_TYPES } from './events';
-import {  Message } from './types';
+import { Message } from './types';
 import { WORKER_EVENTS, WORKER_STATUS } from "./workers/event";
 import { v4 as uuid } from 'uuid';
+
+export type model_type = 'onnx' | 'gguf' | 'mlc'
 
 export class LLMController {
     private static instance: LLMController;
     // private generationStatus: GenerationStatus | null = null;
     private workers: Map<string, Worker> = new Map();
-    private text_gen_worker_id: string | undefined;
-    private image_gen_worker_id: string | undefined;
+    private focusedWokerId: string | null = null;
     private workerStates: Map<string, 'idle' | 'busy'> = new Map();
 
     private constructor() {
@@ -18,68 +19,51 @@ export class LLMController {
 
     public static getInstance(): LLMController {
         if (!LLMController.instance) {
-          LLMController.instance = new LLMController();
+            LLMController.instance = new LLMController();
         }
         return LLMController.instance;
-      }
+    }
 
-    public async initializeModel() {
+    public async initializeModel(
+        modelId: string,
+        type: model_type,
+        modelfile: string | undefined = undefined
+    ) {
         try {
-            console.log("testing")
-            const worker = new Worker(new URL("./workers/main-worker.js", import.meta.url), {
+            let workerUrl = '';
+            if (type == 'onnx') {
+                workerUrl = "./workers/main-worker.js";
+            } else if (type == 'gguf') {
+                workerUrl = "./workers/gguf-worker.js";
+            } else if (type == 'mlc') {
+                workerUrl = "./workers/mlc-worker.js";
+            }
+            const worker = new Worker(new URL(workerUrl, import.meta.url), {
                 type: "module",
             });
             const workerId = uuid();
-            this.text_gen_worker_id = workerId;
+            this.focusedWokerId = workerId;
             worker.onmessage = (e) => this.eventHandler(workerId, e);
             this.workers.set(workerId, worker);
             this.workerStates.set(workerId, 'idle');
-
-            
-            const image_worker = new Worker(new URL("./workers/image-worker.js", import.meta.url), {
-                type: "module",
-            });
-            const image_worker_id = uuid();
-            this.image_gen_worker_id = image_worker_id;
-            image_worker.onmessage = (e) => this.eventHandler(image_worker_id, e);
-            console.log("test2", image_worker_id)
-            this.workers.set(image_worker_id, image_worker);
-            this.workerStates.set(image_worker_id, 'idle');
-
-            worker.postMessage({ type: WORKER_EVENTS.CHECK });
-            worker.postMessage({ type: WORKER_EVENTS.LOAD });
-            image_worker.postMessage({ type: WORKER_EVENTS.CHECK });
-            image_worker.postMessage({ type: WORKER_EVENTS.LOAD });
+            worker.postMessage({ type: WORKER_EVENTS.LOAD, data: { modelId, modelfile } });
         } catch (error) {
-            eventEmitter.emit(EVENT_TYPES.ERROR, `${error}`);
-            return false;
+            console.log("error", error)
         }
     }
 
     private eventHandler(workerId: string, event: MessageEvent) {
         const { type, status, data } = event.data;
-        const modelType = workerId === this.text_gen_worker_id ? 'text' : 'image';
-        console.log("event", event)
         if (type !== undefined) {
             switch (type) {
-                case WORKER_STATUS.STATUS_LOADING:
-                case WORKER_STATUS.STATUS_LOADING:
-                    eventEmitter.emit(EVENT_TYPES.MODEL_STATUS, {
-                        type: modelType,
-                        status: 'loading'
-                    });
+                case WORKER_STATUS.STATUS_LOADING: //모델 로딩 시작
                     break;
-                case WORKER_STATUS.STATUS_READY:
-                    eventEmitter.emit(EVENT_TYPES.MODEL_STATUS, {
-                        type: modelType,
-                        status: 'ready'
-                    });
+                case WORKER_STATUS.STATUS_READY: //모델 준비 완료
                     break;
                 case WORKER_STATUS.STATUS_ERROR:
                     eventEmitter.emit(EVENT_TYPES.ERROR, data);
                     break;
                 case WORKER_STATUS.GENERATION_UPDATE:
-                    console.log("gen data", event)
                     eventEmitter.emit(EVENT_TYPES.GENERATION_UPDATE, data);
                     break;
                 case WORKER_STATUS.GENERATION_COMPLETE:
@@ -106,23 +90,29 @@ export class LLMController {
         }
     }
 
+    public async deleteWorker(workerId: string) {
+        const worker = this.workers.get(workerId);
+        worker?.terminate();
+        this.workers.delete(workerId);
+    }
+
     public async generateText(messages: Message[]) {
-        if (this.text_gen_worker_id) {
-            eventEmitter.emit(EVENT_TYPES.GENERATION_START, {type: 'text'} );
-            const id = this.text_gen_worker_id;
+        if (this.focusedWokerId) {
+            eventEmitter.emit(EVENT_TYPES.GENERATION_START, { type: 'text' });
+            const id = this.focusedWokerId;
             let worker = this.workers.get(id);
             this.workerStates.set(id, 'busy');
             worker?.postMessage({ type: WORKER_EVENTS.GENERATION, data: messages });
         }
     }
 
-    public async generateImage(text: string) {
-        if (this.image_gen_worker_id) {
-            eventEmitter.emit(EVENT_TYPES.GENERATION_START, {type:'image'});
-            const id = this.image_gen_worker_id;
-            let worker = this.workers.get(id);
-            this.workerStates.set(id, 'busy');
-            worker?.postMessage({ type: WORKER_EVENTS.GENERATION, data: text });
-        }
-    }
+    // public async generateImage(text: string) {
+    //     if (this.image_gen_worker_id) {
+    //         eventEmitter.emit(EVENT_TYPES.GENERATION_START, { type: 'image' });
+    //         const id = this.image_gen_worker_id;
+    //         let worker = this.workers.get(id);
+    //         this.workerStates.set(id, 'busy');
+    //         worker?.postMessage({ type: WORKER_EVENTS.GENERATION, data: text });
+    //     }
+    // }
 }

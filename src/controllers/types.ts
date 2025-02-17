@@ -1,14 +1,12 @@
 export interface Message {
   role: 'user' | 'assistant' | 'system';
   content: string;
-  answerIndex?: number;
-  timestamp?: number;
 }
 
 export interface ChatRoom {
   messages: Message[];
   roomId: string;
-  personaId?: string;
+  personaId: string;
   systemMessage: string;
   lastMessageTimestamp?: number;
   isPin: boolean;
@@ -41,4 +39,7 @@ export interface Persona {
   system: string;
   id: string;
   image?: string;
+  producer: string;
+  model_type: 'onnx' | 'gguf' | 'mlc';
+  model_id: string;
 }

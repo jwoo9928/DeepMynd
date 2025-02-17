@@ -24,7 +24,6 @@ async function check() {
 }
 
 async function load() {
-    self.postMessage({ type: 'test', data: 'test' });
     self.postMessage({ type: WORKER_STATUS.STATUS_LOADING });
 
     await TextGenerationPipeline.getInstance((x) => {
