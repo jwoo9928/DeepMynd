@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { Suspense, useEffect } from 'react'
 import './App.css'
 import ChatLayout from './components/chat/ChatLayout'
 import Initialize from './components/Initialize'

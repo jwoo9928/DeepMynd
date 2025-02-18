@@ -1,10 +1,9 @@
+import { ModelFormat } from '../components/models/trypes';
 import { ModelStatus } from '../components/types';
 import { eventEmitter, EVENT_TYPES } from './events';
 import { Message } from './types';
 import { WORKER_EVENTS, WORKER_STATUS } from "./workers/event";
 import { v4 as uuid } from 'uuid';
-
-export type model_type = 'onnx' | 'gguf' | 'mlc'
 
 export class LLMController {
     private static instance: LLMController;
@@ -19,7 +18,7 @@ export class LLMController {
     private isModelReady: boolean = false;
 
     private constructor() {
-    //    eventEmitter.on(EVENT_TYPES.MODEL_STATUS, this.handleModelStatus.bind(this));
+        eventEmitter.on(EVENT_TYPES.MODEL_INITIALIZING, this.initializeModel.bind(this));
 
     }
 
@@ -32,18 +31,19 @@ export class LLMController {
 
     public async initializeModel(
         modelId: string,
-        type: model_type,
+        type: ModelFormat,
         modelfile: string | undefined = undefined
     ) {
         try {
             let workerUrl = '';
-            if (type == 'onnx') {
-                workerUrl = "./workers/main-worker.js";
-            } else if (type == 'gguf') {
+            if (type == 'gguf') {
                 workerUrl = "./workers/gguf-worker.js";
             } else if (type == 'mlc') {
                 workerUrl = "./workers/mlc-worker.js";
+            } else { // onnx
+                workerUrl = "./workers/main-worker.js";
             }
+            console.log("workerUrl", workerUrl)
             const worker = new Worker(new URL(workerUrl, import.meta.url), {
                 type: "module",
             });
@@ -52,6 +52,7 @@ export class LLMController {
             worker.onmessage = (e) => this.eventHandler(workerId, e);
             this.workers.set(workerId, worker);
             this.workerStates.set(workerId, 'idle');
+            console.log("worker is initialized")
             worker.postMessage({ type: WORKER_EVENTS.LOAD, data: { modelId, modelfile } });
         } catch (error) {
             console.log("error", error)
@@ -64,7 +65,6 @@ export class LLMController {
             switch (type) {
                 case WORKER_STATUS.STATUS_LOADING:
                     console.log("loading")
-                    eventEmitter.emit(EVENT_TYPES.MODEL_INITIALIZING)
                     // eventEmitter.emit(EVENT_TYPES.MODEL_STATUS, {
                     //     type: modelType,
                     //     status: 'loading'
@@ -96,7 +96,7 @@ export class LLMController {
                 status === WORKER_STATUS.MODEL_PROGRESS ||
                 status === WORKER_STATUS.MODEL_DONE ||
                 status === WORKER_STATUS.MODEL_DOWNLOAD) {
-                console.log("event data", event.data)
+                console.log("model initial data", event.data)
                 eventEmitter.emit(EVENT_TYPES.PROGRESS_UPDATE, event.data);
                 return;
             }

@@ -5,7 +5,7 @@ import { Message, Persona } from './types';
 export interface ChatMessage {
     id?: number;
     roomId: string;
-    sender: string;
+    sender: string; //persona id
     message: Message;
     timestamp: number;
 }
@@ -19,7 +19,6 @@ export class DBController extends Dexie {
 
     private constructor() {
         super("ChatDatabase");
-
         this.version(2).stores({
             messages: "++id, roomId, timestamp",
             personas: "id, name, system" // id를 기본 키로 설정

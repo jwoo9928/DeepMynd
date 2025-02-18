@@ -26,7 +26,7 @@ const ChatLayout = () => {
     if (messagesEndRef.current) {
       // 메시지 컨테이너의 아래쪽 위치가 화면 하단에 있는지 확인
       const isScrolledToBottom = messagesEndRef.current.getBoundingClientRect().bottom <= window.innerHeight;
-      
+
       // 사용자가 이미 화면 하단에 있을 경우에만 스크롤을 맨 아래로 내림
       if (isScrolledToBottom) {
         messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -49,8 +49,6 @@ const ChatLayout = () => {
       setIsGenerating(false);
     };
 
-    console.log(prebuiltAppConfig.model_list
-    )
     // eventEmitter.on(EVENT_TYPES.CHAT_MESSAGE_RECEIVED, handleMessageReceived);
     // eventEmitter.on(EVENT_TYPES.GENERATION_START, handleGenerationStart);
     // eventEmitter.on(EVENT_TYPES.GENERATION_COMPLETE, handleGenerationComplete);
@@ -103,7 +101,7 @@ const ChatLayout = () => {
         }
 
       </div>
-      <LoadingProgressModal/>
+      <LoadingProgressModal />
     </div>
   );
 };

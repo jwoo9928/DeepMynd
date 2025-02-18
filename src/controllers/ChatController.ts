@@ -45,8 +45,8 @@ export class ChatController {
     for (const roomId in roomsData) {
       const roomMessages = roomsData[roomId];
       const messages = roomMessages.map((msg) => (msg.message));
-      const personaId = roomMessages[1].sender;
-      const persona = this.personaController.getModel(personaId);
+      const personaId = roomMessages[1]?.sender;
+      const persona = this.personaController.getPersona(personaId);
       const systemMessage = persona?.system ?? '';
       this.chatRooms.set(roomId, {
         messages: messages, roomId, personaId, systemMessage, isPin: false, boostThinking: false,
@@ -59,7 +59,6 @@ export class ChatController {
 
   public createChatRoom(persona: Persona): void {
     const roomId = uuid();
-    const model = this.personaController.getModel(persona.id)
     const newRoom: ChatRoom = {
       messages: [],
       roomId,
@@ -67,8 +66,8 @@ export class ChatController {
       systemMessage: persona.system,
       isPin: false,
       boostThinking: false,
-      image: model?.image ?? '/assets/deepmynd_500.jpg',
-      name: model?.name ?? 'DeepMynd'
+      image: persona?.avatar ?? '/assets/deepmynd_500.jpg',
+      name: persona.name ?? 'DeepMynd'
     };
 
     this.chatRooms.set(roomId, newRoom);
@@ -97,7 +96,6 @@ export class ChatController {
   public async createDefaultChatRoom(): Promise<boolean> {
     try {
       const persona = this.personaController.getDefaultPersona();
-      console.log("createDefaultChatRoom",persona)
       if (!this.llmController.getModelIsInitialized() && persona) {
         await this.llmController.initializeModel(
           persona.model_id,
@@ -117,9 +115,9 @@ export class ChatController {
   }
 
   public async sendMessage(content: string, boost: boolean = false): Promise<void> {
-    if (!this.currentFocustRoomId) {
-      await this.createDefaultChatRoom();
-    }
+    // if (!this.currentFocustRoomId) {
+    //   await this.createDefaultChatRoom();
+    // }
     const isImageCall = content.startsWith('/image');
     //@ts-ignore
     const room = this.getChatRoom(this.currentFocustRoomId);

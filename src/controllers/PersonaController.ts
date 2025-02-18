@@ -4,6 +4,7 @@ import { EVENT_TYPES, eventEmitter } from './events';
 import { DBController } from './DBController';
 import { supabase } from '../lib/supabase';
 import { cat } from '@huggingface/transformers';
+import { ModelFormat } from '../components/models/trypes';
 
 export class PersonaController {
     private personaList: Map<string, Persona>;
@@ -31,6 +32,7 @@ export class PersonaController {
                 const { data, error } = await supabase
                     .from('persona')  // 'persona' 테이블에서 데이터 가져오기
                     .select('*');
+                console.log("data", data)
 
                 if (error) {
                     console.error('Error fetching personas from Supabase:', error.message);
@@ -56,7 +58,7 @@ export class PersonaController {
         return PersonaController.instance;
     }
 
-    createNewPersona(name: string, system: string, model_id: string, model_type: 'onnx' | 'gguf' | 'mlc', image?: string): string {
+    createNewPersona(name: string, system: string, model_id: string, model_type: ModelFormat, image?: string): string {
         const description = "This is a new model";
         const newPersona: Persona = {
             name: name,
@@ -87,8 +89,12 @@ export class PersonaController {
     //     return Array.from(this.personaList.values()) ?? undefined
     // }
 
-    getModel(uuid: string): Persona | undefined {
+    getPersona(uuid: string): Persona | undefined {
         return this.personaList.get(uuid);
+    }
+
+    getPersonaList(): Persona[] {
+        return Array.from(this.personaList.values());
     }
 
 

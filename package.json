@@ -17,8 +17,8 @@
     "@mlc-ai/web-llm": "^0.2.78",
     "@supabase/supabase-js": "^2.48.1",
     "@types/react-modal": "^3.16.3",
-    "dexie": "^4.0.11",
     "@wllama/wllama": "^2.2.0",
+    "dexie": "^4.0.11",
     "eventemitter3": "^5.0.1",
     "gpt-tokenizer": "^2.8.1",
     "lucide-react": "^0.474.0",
@@ -30,6 +30,7 @@
     "react-markdown": "^9.0.3",
     "react-modal": "^3.16.3",
     "react-router-dom": "^7.1.5",
+    "recoil": "^0.7.7",
     "vite-plugin-wasm": "^3.4.1",
     "voy-search": "^0.6.3"
   },

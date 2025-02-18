@@ -1,3 +1,5 @@
+import { ModelFormat } from "../components/models/trypes";
+
 export interface Message {
   role: 'user' | 'assistant' | 'system';
   content: string;
@@ -40,8 +42,8 @@ export interface Persona {
   description: string;
   system: string;
   id: string;
-  image?: string;
+  avatar?: string;
   producer: string;
-  model_type: 'onnx' | 'gguf' | 'mlc';
+  model_type: ModelFormat
   model_id: string;
 }

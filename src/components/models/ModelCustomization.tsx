@@ -43,13 +43,13 @@ const ModelCustomization = ({ onBack }: ModelCustomizationProps) => {
   const simulateDownload = async () => {
     setIsDownloading(true);
     setDownloadProgress(0);
-    
+
     // 다운로드 시뮬레이션
     for (let i = 0; i <= 100; i += 5) {
       await new Promise(resolve => setTimeout(resolve, 200));
       setDownloadProgress(i);
     }
-    
+
     setIsDownloading(false);
     setDownloadProgress(100);
   };
@@ -57,8 +57,8 @@ const ModelCustomization = ({ onBack }: ModelCustomizationProps) => {
   const handleSubmit = async () => {
     await simulateDownload();
     personaController.current.createNewPersona(
-      modelName, 
-      systemInstruction, 
+      modelName,
+      systemInstruction,
       profileImage,
       // selectedModel,
       // firstMessage
@@ -162,12 +162,12 @@ const ModelCustomization = ({ onBack }: ModelCustomizationProps) => {
                         <button
                           key={format}
                           onClick={() => {
-                            setSelectedFormat(format as 'onnx' | 'gguf' | 'mlc');
+                            setSelectedFormat(format as ModelFormat);
                             setSearchQuery('');
                           }}
                           className={`pb-2 px-4 text-sm font-medium transition-colors ${selectedFormat === format
-                              ? 'text-blue-500 border-b-2 border-blue-500'
-                              : 'text-gray-500 hover:text-gray-700'
+                            ? 'text-blue-500 border-b-2 border-blue-500'
+                            : 'text-gray-500 hover:text-gray-700'
                             }`}
                         >
                           {format.toUpperCase()}
@@ -176,9 +176,9 @@ const ModelCustomization = ({ onBack }: ModelCustomizationProps) => {
                     </div>
 
                     {/* Model List with Search */}
-                    <ModelList 
-                      selectedFormat={selectedFormat} 
-                      selectedModel={selectedModel} 
+                    <ModelList
+                      selectedFormat={selectedFormat}
+                      selectedModel={selectedModel}
                       setSelectedModel={setSelectedModel}
                     />
 

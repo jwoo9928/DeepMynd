@@ -4,7 +4,7 @@ import { EVENT_TYPES, eventEmitter } from "../../controllers/events";
 
 
 const LoadingProgressModal = () => {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const [progress, setProgress] = useState(0);
   const [currentPromoIndex, setCurrentPromoIndex] = useState(0);
 
