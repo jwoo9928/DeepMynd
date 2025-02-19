@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Persona } from "../../controllers/types";
 import { PersonaController } from "../../controllers/PersonaController";
+import { EVENT_TYPES, eventEmitter } from "../../controllers/events";
 
 // const personaList: any[] = [
 //   {
@@ -66,7 +67,7 @@ const PersonaSelection = ({
 }) => {
   const personaController = PersonaController.getInstance();
   const [isMobile, setIsMobile] = useState<boolean>(false);
-  const personas: Persona[] = React.useMemo(() => personaController.getPersonaList(), [])
+  const [personas, setPersona] = useState<Persona[]>([])
 
   // Check if viewport is mobile size
   useEffect(() => {
@@ -74,11 +75,18 @@ const PersonaSelection = ({
       setIsMobile(window.innerWidth < 640);
     };
 
+    const handlePersonaList = (personaList: Map<string, Persona>) => {
+      console.log("personaList", personaList)
+      setPersona(Array.from(personaList.values()));
+    }
+
     checkMobile();
     window.addEventListener('resize', checkMobile);
+    eventEmitter.on(EVENT_TYPES.IMPORTED_PERSONA, handlePersonaList);
 
     return () => {
       window.removeEventListener('resize', checkMobile);
+      eventEmitter.off(EVENT_TYPES.IMPORTED_PERSONA, handlePersonaList);
     };
   }, []);
 

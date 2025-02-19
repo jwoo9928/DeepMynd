@@ -50,8 +50,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   }, []);
 
   useEffect(() => {
-    if (selectedRoomId) {
-      chatController.current.changeChatRoom(selectedRoomId);
+    let focusedRoomId = chatController.current.getFocusedRoomId();
+    console.log("#0 focusedRoomId: ", focusedRoomId, selectedRoomId);
+    if (selectedRoomId && focusedRoomId) {
+      if (focusedRoomId !== selectedRoomId) {
+        chatController.current.changeChatRoom(selectedRoomId);
+      }
     }
   }, [selectedRoomId]);
 

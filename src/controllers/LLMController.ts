@@ -1,5 +1,4 @@
 import { ModelFormat } from '../components/models/trypes';
-import { ModelStatus } from '../components/types';
 import { eventEmitter, EVENT_TYPES } from './events';
 import { Message } from './types';
 import { WORKER_EVENTS, WORKER_STATUS } from "./workers/event";
@@ -11,11 +10,11 @@ export class LLMController {
     private workers: Map<string, Worker> = new Map();
     private focusedWokerId: string | null = null;
     private workerStates: Map<string, 'idle' | 'busy'> = new Map();
-    private modelStatus: ModelStatus = {
-        text: null,
-        image: null
-    }
-    private isModelReady: boolean = false;
+    private focused_model_id: string | null = null;
+    // private modelStatus: ModelStatus = {
+    //     text: null,
+    //     image: null
+    // }
 
     private constructor() {
         eventEmitter.on(EVENT_TYPES.MODEL_INITIALIZING, this.initializeModel.bind(this));
@@ -54,6 +53,7 @@ export class LLMController {
             this.workerStates.set(workerId, 'idle');
             console.log("worker is initialized")
             worker.postMessage({ type: WORKER_EVENTS.LOAD, data: { modelId, modelfile } });
+            this.focused_model_id = modelId;
         } catch (error) {
             console.log("error", error)
         }
@@ -76,6 +76,9 @@ export class LLMController {
                 case WORKER_STATUS.STATUS_ERROR:
                     eventEmitter.emit(EVENT_TYPES.ERROR, data);
                     break;
+                // case WORKER_STATUS.GENERATION_START:
+                //     eventEmitter.emit(EVENT_TYPES.GENERATION_START, { type: 'text' });
+                //     break;
                 case WORKER_STATUS.GENERATION_UPDATE:
                     eventEmitter.emit(EVENT_TYPES.GENERATION_UPDATE, data);
                     break;
@@ -111,7 +114,9 @@ export class LLMController {
 
     public async generateText(messages: Message[]) {
         if (this.focusedWokerId) {
-            eventEmitter.emit(EVENT_TYPES.GENERATION_START, { type: 'text' });
+            console.log("generateText testing")
+            console.log("이벤트 발생 시 타입:", EVENT_TYPES.GENERATION_STARTING);
+            eventEmitter.emit(EVENT_TYPES.GENERATION_STARTING, { type: 'text' });
             const id = this.focusedWokerId;
             let worker = this.workers.get(id);
             this.workerStates.set(id, 'busy');
@@ -121,6 +126,10 @@ export class LLMController {
 
     public getModelIsInitialized() {
         return this.focusedWokerId !== null;
+    }
+
+    public getFocusedModelId() {
+        return this.focused_model_id;
     }
 
 

@@ -2,42 +2,83 @@ import { Paperclip, Send, X, Heart } from "lucide-react";
 import { Message, Persona } from "../../controllers/types";
 import ChatHeader from "./ChatHeader";
 import MessageBubble from "./MessageBubble";
-import React, { useMemo, useState, useEffect, useCallback } from "react";
+import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import PersonaSelection from "../persona/PersonaSelection";
 import PersonaModal from "../persona/PersonaModal";
 import { LLMController } from "../../controllers/LLMController";
 import { EVENT_TYPES, eventEmitter } from "../../controllers/events";
+import { ChatController } from "../../controllers/ChatController";
 
 interface ChatProps {
     isSidebarOpen: boolean;
     setIsSidebarOpen: (isOpen: boolean) => void;
-    messages: Message[];
-    isGenerating: boolean;
-    inputValue: string;
-    setInputValue: (value: string) => void;
-    handleKeyPress: (e: React.KeyboardEvent<HTMLInputElement>) => void;
-    handleSendMessage: () => void;
-    messagesEndRef: React.RefObject<HTMLDivElement>;
-    boost: boolean;
-    setBoost: React.Dispatch<React.SetStateAction<boolean>>
 }
 
 const Chat = ({
     isSidebarOpen,
     setIsSidebarOpen,
-    messages,
-    isGenerating,
-    inputValue,
-    setInputValue,
-    handleKeyPress,
-    handleSendMessage,
-    messagesEndRef,
-    boost,
-    setBoost
 }: ChatProps) => {
     const [showPersonaSelection, setShowPersonaSelection] = useState(true);
     const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null);
     const [showPersonaModal, setShowPersonaModal] = useState(false);
+
+    const [messages, setMessages] = useState<Message[]>([]);
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [inputValue, setInputValue] = useState('');
+
+    const chatController = useRef(ChatController.getInstance());
+
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+    // const [boost, setBoost] = useState<boolean>(false);
+
+    const scrollToBottom = useCallback(() => {
+        if (messagesEndRef.current) {
+            // 메시지 컨테이너의 아래쪽 위치가 화면 하단에 있는지 확인
+            const isScrolledToBottom = messagesEndRef.current.getBoundingClientRect().bottom <= window.innerHeight;
+
+            // 사용자가 이미 화면 하단에 있을 경우에만 스크롤을 맨 아래로 내림
+            if (isScrolledToBottom) {
+                messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+    }, []);
+
+
+    const handleSendMessage = useCallback(() => {
+        if (!inputValue.trim()) return;
+        chatController.current.sendMessage(inputValue.trim());
+        setInputValue('');
+    }, [inputValue]);
+
+    const handleKeyPress = useCallback((e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSendMessage();
+        }
+    }, [handleSendMessage]);
+
+    useEffect(() => {
+        const handleMessageReceived = (updatedMessages: Message[]) => {
+            setMessages([...updatedMessages]);
+            scrollToBottom();
+        };
+
+        const handleGenerationStart = () => {
+            setIsGenerating(true);
+        };
+
+        const handleGenerationComplete = () => {
+            setIsGenerating(false);
+        };//hikr215
+        eventEmitter.on(EVENT_TYPES.MESSAGE_UPDATE, handleMessageReceived);
+        eventEmitter.on(EVENT_TYPES.GENERATION_STARTING, handleGenerationStart);
+        eventEmitter.on(EVENT_TYPES.GENERATION_COMPLETE, handleGenerationComplete);
+        return () => {
+            eventEmitter.off(EVENT_TYPES.MESSAGE_UPDATE, handleMessageReceived);
+            eventEmitter.off(EVENT_TYPES.GENERATION_STARTING, handleGenerationStart);
+            eventEmitter.off(EVENT_TYPES.GENERATION_COMPLETE, handleGenerationComplete);
+        }
+    }, []);
 
     const handlePersonaSelection = (persona: Persona) => {
         setSelectedPersona(persona);
@@ -47,6 +88,7 @@ const Chat = ({
     // Start chat with selected persona
     const startChat = async () => {
         if (selectedPersona) {
+            chatController.current.createChatRoom(selectedPersona);
             eventEmitter.emit(EVENT_TYPES.MODEL_INITIALIZING, selectedPersona.model_id, selectedPersona.model_type);
             setShowPersonaSelection(false);
             setShowPersonaModal(false);
@@ -114,8 +156,8 @@ const Chat = ({
                 {/* Boost Thinking toggle button - only shown when chat is active */}
                 {!showPersonaSelection && (
                     <button
-                        onClick={() => setBoost(prev => !prev)}
-                        className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors duration-200 ${boost
+                        onClick={() => { }}//setBoost(prev => !prev)}
+                        className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors duration-200 ${true //boost
                             ? 'bg-gray-800 text-white'
                             : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                             }`}

@@ -11,12 +11,13 @@ export class PersonaController {
     private static instance: PersonaController | null = null;
     private readonly dbController: DBController;
     private default_p_id = '3024e662-edcd-40d2-940e-d0919ad5170b';
+    private focused_p_id: string | undefined;
 
     constructor() {
         this.personaList = new Map();
         this.dbController = DBController.getDatabase();
-        this.initPersonas();
-        // const id = this.createNewPersona('Default', '', '/assets/deepmynd_500.jpg')
+        this.initPersonas.bind(this)();
+        eventEmitter.on(EVENT_TYPES.CHANGE_PERSONA, this.setFocusedPersona.bind(this));
 
     }
 
@@ -32,7 +33,6 @@ export class PersonaController {
                 const { data, error } = await supabase
                     .from('persona')  // 'persona' 테이블에서 데이터 가져오기
                     .select('*');
-                console.log("data", data)
 
                 if (error) {
                     console.error('Error fetching personas from Supabase:', error.message);
@@ -49,6 +49,7 @@ export class PersonaController {
                 console.error('Error fetching personas from Supabase:', error);
             }
         }
+        eventEmitter.emit(EVENT_TYPES.IMPORTED_PERSONA, this.personaList);
     }
 
     public static getInstance(): PersonaController {
@@ -65,14 +66,14 @@ export class PersonaController {
             description: description,
             system: system,
             id: uuid(),
-            image: image,
+            avatar: image,
             producer: 'user',
             model_id,
             model_type
         }
         this.personaList.set(newPersona.id, newPersona);
         this.dbController.addPersona(newPersona);
-        eventEmitter.emit(EVENT_TYPES.IMPORTED_PERSONA, newPersona.id);
+        eventEmitter.emit(EVENT_TYPES.IMPORTED_PERSONA, this.personaList);
         return newPersona.id;
     }
 
@@ -91,6 +92,17 @@ export class PersonaController {
 
     getPersona(uuid: string): Persona | undefined {
         return this.personaList.get(uuid);
+    }
+
+    getFocusedPersona(): Persona | undefined {
+        if (this.focused_p_id) {
+            return this.personaList.get(this.focused_p_id);
+        }
+        throw new Error('No focused persona');
+    }
+
+    setFocusedPersona(persona: Persona): void {
+        this.focused_p_id = persona.id;
     }
 
     getPersonaList(): Persona[] {
