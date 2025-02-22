@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { ArrowLeft, Upload, X, Bot, ChevronRight, Download } from 'lucide-react';
+import React, { useState } from 'react';
+import { X } from 'lucide-react';
 import Modal from 'react-modal';
 
 const modalStyles: Modal.Styles = {

@@ -1,4 +1,4 @@
-import { ModelFormat } from "../components/models/trypes";
+import { ModelFormat } from "../components/models/types";
 
 export interface Message {
   role: 'user' | 'assistant' | 'system';
@@ -35,6 +35,7 @@ export interface GenerationUpdateData {
   output: string;
   state: 'answering' | 'complete' | 'error';
   cache: any;
+  format?: ModelFormat;
 }
 
 export interface Persona {

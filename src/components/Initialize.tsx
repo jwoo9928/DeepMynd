@@ -1,5 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
-import { LLMController } from "../controllers/LLMController";
+import React, { useEffect, useState } from "react";
 import { EVENT_TYPES, eventEmitter } from "../controllers/events";
 import { Bot, Sparkles } from "lucide-react";
 
@@ -16,7 +15,6 @@ const Initialize = () => {
   const [progress, setProgress] = useState(0);
   const [currentPromoIndex, setCurrentPromoIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  const llmController = useRef(LLMController.getInstance());
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -54,7 +52,7 @@ const Initialize = () => {
   }, []);
 
   const handleLoadModel = async () => {
-    await llmController.current.initializeModel();
+    //await llmController.current.initializeModel();
   };
 
   if (error) {

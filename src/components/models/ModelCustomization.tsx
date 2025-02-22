@@ -1,7 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { ArrowLeft, Upload, X, Bot, ChevronRight, Download, Search } from 'lucide-react';
-import { PersonaController } from '../../controllers/PersonaController';
-import { Model, ModelFormat } from './trypes';
+import React, { useState, useRef } from 'react';
+import { ArrowLeft, Upload, X, Bot, Download } from 'lucide-react';
+// import { PersonaController } from '../../controllers/PersonaController';
+import { Model, ModelFormat } from './types';
 import HuggingfaceModal from './HuggingfaceModal';
 import ModelList from './ModelList';
 
@@ -16,14 +16,14 @@ const ModelCustomization = ({ onBack }: ModelCustomizationProps) => {
   const [profileImage, setProfileImage] = useState<string>('');
   const [selectedFormat, setSelectedFormat] = useState<ModelFormat>(ModelFormat.ONNX);
   const [selectedModel, setSelectedModel] = useState<Model | null>(null);
-  const [isHuggingfaceModalOpen, setIsHuggingfaceModalOpen] = useState(false);
-  const [huggingfaceModelId, setHuggingfaceModelId] = useState('');
-  const [huggingfaceFileName, setHuggingfaceFileName] = useState('');
+  const [, setIsHuggingfaceModalOpen] = useState(false);
+  const [huggingfaceModelId] = useState('');
+  const [huggingfaceFileName] = useState('');
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
-  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [, setSearchQuery] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const personaController = useRef(PersonaController.getInstance());
+  // const personaController = useRef(PersonaController.getInstance());
 
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -56,13 +56,13 @@ const ModelCustomization = ({ onBack }: ModelCustomizationProps) => {
 
   const handleSubmit = async () => {
     await simulateDownload();
-    personaController.current.createNewPersona(
-      modelName,
-      systemInstruction,
-      profileImage,
-      // selectedModel,
-      // firstMessage
-    );
+    // personaController.current.createNewPersona(
+    //   modelName,
+    //   systemInstruction,
+    //   profileImage,
+    //   // selectedModel,
+    //   // firstMessage
+    // );
     onBack();
   };
 
@@ -72,7 +72,8 @@ const ModelCustomization = ({ onBack }: ModelCustomizationProps) => {
       name: huggingfaceModelId.split('/').pop() || '',
       format: selectedFormat,
       size: 'Unknown',
-      description: `Imported from Hugging Face: ${huggingfaceFileName}`
+      description: `Imported from Hugging Face: ${huggingfaceFileName}`,
+      model_id: ''
     };
     setSelectedModel(newModel);
     setIsHuggingfaceModalOpen(false);

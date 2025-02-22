@@ -4,6 +4,7 @@ import { LLMController } from './LLMController';
 import { v4 as uuid } from 'uuid';
 import { PersonaController } from './PersonaController';
 import { DBController } from './DBController';
+import { ModelFormat } from '../components/models/types';
 
 export class ChatController {
   private static instance: ChatController | null = null;
@@ -84,9 +85,9 @@ export class ChatController {
     try {
       const persona = this.personaController.getDefaultPersona();
       if (!this.llmController.getModelIsInitialized() && persona) {
+
         await this.llmController.initializeModel(
           persona.model_id,
-          persona.model_type,
         );
       }
       if (!persona) {
@@ -101,7 +102,7 @@ export class ChatController {
     }
   }
 
-  public async sendMessage(content: string, boost: boolean = false): Promise<void> {
+  public async sendMessage(content: string): Promise<void> {
     console.log("#4 sendMessage: ", content, this.currentFocustRoomId);
     if (!this.currentFocustRoomId) {
       return;
@@ -133,8 +134,9 @@ export class ChatController {
   }
 
   private handleGenerationUpdate(data: GenerationUpdateData): void {
-    const { output, state } = data;
+    const { output, state, format } = data;
     const messages = this.getMessages();
+    console.log("state",state)
 
     if (messages.length === 0) {
       return;
@@ -145,7 +147,7 @@ export class ChatController {
 
     const updatedMessage: Message = {
       ...lastMessage,
-      content: lastMessage.content + output,
+      content: format == ModelFormat.GGUF ? output :lastMessage.content + output,
       // ...(state === 'answering' && lastMessage.answerIndex === undefined && {
       //   answerIndex: lastMessage.content.length
       // })

@@ -1,11 +1,10 @@
-import { Paperclip, Send, X, Heart } from "lucide-react";
+import { Paperclip, Send } from "lucide-react";
 import { Message, Persona } from "../../controllers/types";
 import ChatHeader from "./ChatHeader";
 import MessageBubble from "./MessageBubble";
 import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import PersonaSelection from "../persona/PersonaSelection";
 import PersonaModal from "../persona/PersonaModal";
-import { LLMController } from "../../controllers/LLMController";
 import { EVENT_TYPES, eventEmitter } from "../../controllers/events";
 import { ChatController } from "../../controllers/ChatController";
 
@@ -89,7 +88,7 @@ const Chat = ({
     const startChat = async () => {
         if (selectedPersona) {
             chatController.current.createChatRoom(selectedPersona);
-            eventEmitter.emit(EVENT_TYPES.MODEL_INITIALIZING, selectedPersona.model_id, selectedPersona.model_type);
+            eventEmitter.emit(EVENT_TYPES.MODEL_INITIALIZING, selectedPersona.model_id)
             setShowPersonaSelection(false);
             setShowPersonaModal(false);
         }

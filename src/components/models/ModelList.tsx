@@ -1,29 +1,10 @@
 import { ChevronRight, Search } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import { Model, ModelFormat } from "./trypes";
-import { prebuiltAppConfig } from "@mlc-ai/web-llm";
+import { Model, ModelFormat, ModelList } from "./types";
+import { EVENT_TYPES, eventEmitter } from "../../controllers/events";
+import { LLMController } from "../../controllers/LLMController";
 
-
-const AVAILABLE_MODELS: Record<string, Model[]> = {
-  onnx: [
-    { id: 'onnx-community/DeepSeek-R1-Distill-Qwen-1.5B-ONNX', name: 'DeepSeek-R1-Distill-Qwen-1.5B-ONNX', format: ModelFormat.ONNX, size: '98MB', description: 'Standard ResNet model for image classification' },
-    { id: 'bert-base', name: 'BERT Base', format: ModelFormat.ONNX, size: '420MB', description: 'Base BERT model for NLP tasks' },
-  ],
-  gguf: [
-    // { id: 'UnfilteredAI/NSFW-3B', name: 'nsfw-3b-iq4_xs-imat.gguf', format: 'gguf', size: '4.2GB', description: 'Compact but powerful language model' },
-    // { id: 'mistral-7b', name: 'Mistral 7B', format: 'gguf', size: '4.1GB', description: 'Efficient language model for general use' },
-  ],
-  mlc: prebuiltAppConfig.model_list.map((model) => ({
-    id: model.model_id,
-    name: model.model_id.split('/').pop() || '',
-    format: ModelFormat.MLC,
-    size: model.overrides?.context_window_size?.toString() || 'Unknown',
-    description: model.model_lib,
-    vram_required_MB: model.vram_required_MB,
-  })),
-};
-
-const ModelList = ({
+const ModelListSection = ({
   selectedFormat,
   selectedModel,
   setSelectedModel,
@@ -34,6 +15,22 @@ const ModelList = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredModels, setFilteredModels] = useState<Model[]>([]);
+  const [AVAILABLE_MODELS, setAVAILABLE_MODELS] = useState<ModelList>({
+    onnx: [],
+    gguf: [],
+    mlc: [],
+  });
+
+  useEffect(() => {
+    let list = LLMController.getInstance().getModelList();
+    if (list) {
+      setAVAILABLE_MODELS(list);
+    }
+    eventEmitter.on(EVENT_TYPES.MODELS_UPDATED,setAVAILABLE_MODELS);
+    return () => {
+      eventEmitter.off(EVENT_TYPES.MODELS_UPDATED,setAVAILABLE_MODELS);
+    };
+  }, []);
 
   useEffect(() => {
     if (searchQuery != '') {
@@ -98,4 +95,4 @@ const ModelList = ({
   );
 }
 
-export default React.memo(ModelList);
+export default React.memo(ModelListSection);

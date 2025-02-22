@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Bot, X } from "lucide-react";
 import { EVENT_TYPES, eventEmitter } from "../../controllers/events";
 
@@ -28,6 +28,7 @@ const LoadingProgressModal = () => {
     }
 
     const onClose = () => {
+      console.log("onClose")
       setIsOpen(false);
     };
 

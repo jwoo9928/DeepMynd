@@ -3,8 +3,7 @@ import { Persona } from './types';
 import { EVENT_TYPES, eventEmitter } from './events';
 import { DBController } from './DBController';
 import { supabase } from '../lib/supabase';
-import { cat } from '@huggingface/transformers';
-import { ModelFormat } from '../components/models/trypes';
+import { ModelFormat } from '../components/models/types';
 
 export class PersonaController {
     private personaList: Map<string, Persona>;
@@ -41,6 +40,7 @@ export class PersonaController {
 
                 if (data && data.length > 0) {
                     data.forEach((persona: Persona) => {
+                        if (!persona.avatar) persona.avatar = '/assets/default.png';
                         this.personaList.set(persona.id, persona);
                         this.dbController.addPersona(persona);
                     });

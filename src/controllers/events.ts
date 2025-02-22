@@ -19,7 +19,9 @@ export const EVENT_TYPES = {
   IMPORTED_PERSONA: 'imported_persona',
   CHANGE_PERSONA: 'change_persona',
 
-  ROOM_CHANGED: 'room_changed'
+  ROOM_CHANGED: 'room_changed',
+
+  MODELS_UPDATED: 'models_updated',
 } as const;
 
 export const eventEmitter = new EventEmitter();

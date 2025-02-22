@@ -1,4 +1,6 @@
-import { ModelFormat } from '../components/models/trypes';
+import { prebuiltAppConfig } from '@mlc-ai/web-llm';
+import { ModelFormat, ModelList } from '../components/models/types';
+import { supabase } from '../lib/supabase';
 import { eventEmitter, EVENT_TYPES } from './events';
 import { Message } from './types';
 import { WORKER_EVENTS, WORKER_STATUS } from "./workers/event";
@@ -11,6 +13,7 @@ export class LLMController {
     private focusedWokerId: string | null = null;
     private workerStates: Map<string, 'idle' | 'busy'> = new Map();
     private focused_model_id: string | null = null;
+    private model_list: ModelList | null = null;
     // private modelStatus: ModelStatus = {
     //     text: null,
     //     image: null
@@ -18,7 +21,7 @@ export class LLMController {
 
     private constructor() {
         eventEmitter.on(EVENT_TYPES.MODEL_INITIALIZING, this.initializeModel.bind(this));
-
+        this.getModelsList.bind(this)();
     }
 
     public static getInstance(): LLMController {
@@ -28,16 +31,49 @@ export class LLMController {
         return LLMController.instance;
     }
 
-    public async initializeModel(
-        modelId: string,
-        type: ModelFormat,
-        modelfile: string | undefined = undefined
-    ) {
+    private async getModelsList() {
+        const { data, error } = await supabase.from('models').select('*');
+        if (error) {
+            console.error('Error fetching models:', error);
+            return;
+        }
+        const categorizedModels = data.reduce((acc, model) => {
+            const format = model.format.toLowerCase();
+            if (!acc[format]) {
+                acc[format] = [];
+            }
+            acc[format].push(model);
+            return acc;
+        }, { onnx: [], gguf: [], mlc: [] });
+        categorizedModels.mlc = categorizedModels.mlc.concat(prebuiltAppConfig.model_list.map((model) => ({
+            id: uuid(),
+            model_id: model.model_id,
+            name: model.model_id.split('/').pop() || '',
+            format: ModelFormat.MLC,
+            size: model.overrides?.context_window_size?.toString() || 'Unknown',
+            description: model.model_lib,
+            vram_required_MB: model.vram_required_MB,
+          })))
+          this.model_list = categorizedModels;
+        eventEmitter.emit(EVENT_TYPES.MODELS_UPDATED, categorizedModels); 
+    }
+
+    public getModelList() {
+        return this.model_list;
+    }
+
+    public async initializeModel(id: string) {
         try {
+            if (!this.model_list) {
+                throw new Error('Model list is not initialized');
+            }
             let workerUrl = '';
-            if (type == 'gguf') {
-                workerUrl = "./workers/gguf-worker.js";
-            } else if (type == 'mlc') {
+            const model = Object.values(this.model_list).flat().find((model) => model.id === id);
+            //@ts-ignore
+            const {model_id, format, file} = model;
+            if (format == ModelFormat.GGUF) {
+                workerUrl = "./workers/wllama-worker.js";
+            } else if (format == ModelFormat.MLC) {
                 workerUrl = "./workers/mlc-worker.js";
             } else { // onnx
                 workerUrl = "./workers/main-worker.js";
@@ -52,8 +88,8 @@ export class LLMController {
             this.workers.set(workerId, worker);
             this.workerStates.set(workerId, 'idle');
             console.log("worker is initialized")
-            worker.postMessage({ type: WORKER_EVENTS.LOAD, data: { modelId, modelfile } });
-            this.focused_model_id = modelId;
+            worker.postMessage({ type: WORKER_EVENTS.LOAD, data: { modelId: model_id, modelfile: file } });
+            this.focused_model_id = model_id;
         } catch (error) {
             console.log("error", error)
         }

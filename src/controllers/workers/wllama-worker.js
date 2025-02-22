@@ -4,6 +4,7 @@ import {
 } from "@huggingface/transformers";
 import { WLLAMATextGenPipeline , TextGenerationPipeline } from "../../pipelines/TextGenerationPipeline";
 import { WORKER_STATUS, WORKER_EVENTS } from "./event";
+import { ModelFormat } from '../../components/models/types';
 
 async function check() {
     try {
@@ -20,10 +21,11 @@ async function check() {
     }
 }
 
-async function load() {
+async function load(data) {
+    const { modelId, modelfile } = data;
     self.postMessage({ type: WORKER_STATUS.STATUS_LOADING });
 
-    await WLLAMATextGenPipeline.getInstance((x) => {
+    await WLLAMATextGenPipeline.getInstance(modelId, modelfile, (x) => {
         self.postMessage(x);
     });
 
@@ -36,10 +38,16 @@ let past_key_values_cache = null;
 
 async function generate(messages) {
     const model = await WLLAMATextGenPipeline.getInstance();
+    // model.exit();
+    let message = ''
+    if (messages.length === 2) {
+        message += messages[0].content + '\n' + messages[1].content;
+    }
+    console.log('message test:', message);
 
     self.postMessage({ status: WORKER_STATUS.GENERATION_START });
 
-    const outputText = await model.createCompletion(messages[messages.length - 1], {
+    const outputText = await model.createCompletion(message, {
         nPredict: 50,
         sampling: {
           temp: 0.5,
@@ -47,6 +55,16 @@ async function generate(messages) {
           top_p: 0.9,
         },
         useCache: true,
+        onNewToken: (token, piece, currentText, optionals) => {
+            self.postMessage({
+                type: WORKER_STATUS.GENERATION_UPDATE,
+                data: {
+                output: currentText,
+                status: 'answering',
+                format: ModelFormat.GGUF
+                }
+            });
+            }
       });
       console.log(outputText);
       self.postMessage({
@@ -67,7 +85,7 @@ self.addEventListener("message", async (e) => {
             check();
             break;
         case WORKER_EVENTS.LOAD:
-            load();
+            load(data);
             break;
         case WORKER_EVENTS.GENERATION:
             stopping_criteria.reset();
