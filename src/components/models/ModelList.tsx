@@ -26,9 +26,9 @@ const ModelListSection = ({
     if (list) {
       setAVAILABLE_MODELS(list);
     }
-    eventEmitter.on(EVENT_TYPES.MODELS_UPDATED,setAVAILABLE_MODELS);
+    eventEmitter.on(EVENT_TYPES.MODELS_UPDATED, setAVAILABLE_MODELS);
     return () => {
-      eventEmitter.off(EVENT_TYPES.MODELS_UPDATED,setAVAILABLE_MODELS);
+      eventEmitter.off(EVENT_TYPES.MODELS_UPDATED, setAVAILABLE_MODELS);
     };
   }, []);
 
@@ -36,7 +36,7 @@ const ModelListSection = ({
     if (searchQuery != '') {
       const filtered = AVAILABLE_MODELS[selectedFormat].filter(model =>
         model.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        model.description.toLowerCase().includes(searchQuery.toLowerCase())
+        model.description?.toLowerCase().includes(searchQuery.toLowerCase())
       );
       setFilteredModels(filtered);
     } else {

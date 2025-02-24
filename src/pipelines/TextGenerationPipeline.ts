@@ -4,7 +4,7 @@ import { Wllama } from "@wllama/wllama";
 import WasmFromCDN from '@wllama/wllama/esm/wasm-from-cdn.js';
 
 export class TextGenerationPipeline {
-    static model_id: string| null = null //"onnx-community/DeepSeek-R1-Distill-Qwen-1.5B-ONNX";
+    static model_id: string | null = null //"onnx-community/DeepSeek-R1-Distill-Qwen-1.5B-ONNX";
     static tokenizer: Promise<PreTrainedTokenizer> | null = null;
     static model: Promise<AutoModelForCausalLM> | null = null;
 
@@ -45,7 +45,7 @@ export class WLLAMATextGenPipeline {
     static modelfile: string | null = null;
     static model: Wllama | null = null;
 
-    static async getInstance(model_id: string,modelfile: string, progress_callback: ((x: any) => void) | null = null): Promise<Wllama> {
+    static async getInstance(model_id: string, modelfile: string, progress_callback: ((x: any) => void) | null = null): Promise<Wllama> {
         this.model_id = model_id;
         this.modelfile = modelfile;
         if (this.model === null) {
@@ -60,14 +60,14 @@ export class WLLAMATextGenPipeline {
                 {
                     progressCallback: (value) => {
                         let fitlered_value = {
-                            name:  this.model_id,
+                            name: this.model_id,
                             loaded: value.loaded,
                             total: value.total,
                             progress: value.loaded / value.total * 100,
                             status: value.loaded != value.total ? 'progress' : 'done',
                             file: this.modelfile
                         }
-                        console.log("value",value)
+                        console.log("value", value)
                         if (progress_callback) {
                             progress_callback(fitlered_value);
                         }

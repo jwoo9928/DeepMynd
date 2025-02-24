@@ -2,6 +2,8 @@ import { Bot, ChevronLeft, ChevronRight, PlusCircle, X } from "lucide-react";
 import React, { useState } from "react";
 import Modal from 'react-modal';
 
+Modal.setAppElement('#root');
+
 const modalStyles: Modal.Styles = {
   overlay: {
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -159,6 +161,7 @@ const NewChatModal = ({ isOpen, onClose, onSelectModel, onCreateModel, onSkip }:
     onRequestClose={onClose}
     style={modalStyles}
     closeTimeoutMS={300}
+    appElement={document.getElementById('root') || undefined}
   >
     <div className="flex flex-col h-full">
       <div className="flex justify-between items-center mb-6">

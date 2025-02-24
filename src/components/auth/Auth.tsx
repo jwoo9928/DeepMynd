@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Apple, LogIn } from 'lucide-react';
 import { AuthButton } from './AuthButton';
-import { useAuth } from '../../hooks/useAuth';
+// import { useAuth } from '../../hooks/useAuth';
 
 const features = [
     {
@@ -27,7 +27,7 @@ export default function Auth() {
     const [loading, setLoading] = useState(false);
     const [, setCurrentFeature] = useState(0);
     const [showWarning, setShowWarning] = useState(false);
-    const { session } = useAuth();
+    // const { session } = useAuth();
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -37,9 +37,9 @@ export default function Auth() {
     }, []);
 
     // Redirect if already logged in
-    if (session) {
-        return <Navigate to="/init" replace />;
-    }
+    // if (session) {
+    //     return <Navigate to="/init" replace />;
+    // }
 
     const handleSocialLogin = async (provider: 'google' | 'apple') => {
 

@@ -5,13 +5,15 @@ import Chat from './Chat';
 import { Mode, ModeValues } from '../types';
 import ModelCustomization from '../models/ModelCustomization';
 import LoadingProgressModal from './LoadingProgressModal';
+import { useRecoilState, useRecoilValue } from 'recoil';
+import { uiModeState } from '../../stores/ui.store';
 // import { DBController } from '../../controllers/DBController';
 
 
 
 const ChatLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [mode, setMode] = useState<Mode>(ModeValues.Chat);
+  const mode = useRecoilValue(uiModeState);
   // DBController.getDatabase().delete()
 
   useEffect(() => {
@@ -21,10 +23,6 @@ const ChatLayout = () => {
     //   eventEmitter.off(EVENT_TYPES.CREATE_NEW_PERSONA);
     // };
   }, []);
-
-  const onBack = useCallback(() => {
-    setMode(ModeValues.Chat)
-  }, [])
 
   return (
     <div className="h-screen w-full bg-gray-100">
@@ -37,7 +35,7 @@ const ChatLayout = () => {
           mode == ModeValues.Chat ? <Chat
             isSidebarOpen={isSidebarOpen}
             setIsSidebarOpen={setIsSidebarOpen}
-          /> : <ModelCustomization onBack={onBack} />
+          /> : <ModelCustomization />
         }
 
       </div>

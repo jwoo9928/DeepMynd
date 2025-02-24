@@ -47,4 +47,5 @@ export interface Persona {
   producer: string;
   model_type: ModelFormat
   model_id: string;
+  first_message?: string;
 }

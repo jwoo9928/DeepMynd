@@ -5,6 +5,8 @@ import { ModeValues } from "./types";
 import { ChatController } from "../controllers/ChatController";
 import NewChatModal from "./NewChatModal";
 import { ChatRoom } from "../controllers/types";
+import { useSetRecoilState } from "recoil";
+import { uiModeState } from "../stores/ui.store";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -28,6 +30,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   const [rooms, setRooms] = useState<ChatRoom[]>(chatController.current.getChatRooms());
   const [dropdownOpen, setDropdownOpen] = useState<string | null>(null);
   const isDesktop = window.matchMedia("(min-width: 768px)").matches;
+  const setUIMode = useSetRecoilState(uiModeState);
 
   const [swipeState, setSwipeState] = useState<SwipeState>({
     roomId: null,
@@ -67,7 +70,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   const handleCreateModel = useCallback(() => {
     setIsModalOpen(false);
     console.log('Creating new model');
-    // eventEmitter.emit(EVENT_TYPES.CREATE_NEW_PERSONA, ModeValues.Create);
+    setUIMode(ModeValues.Create);
   }, []);
 
   const onSkip = useCallback(() => {

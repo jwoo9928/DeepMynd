@@ -1,16 +1,18 @@
 import React, { useState, useRef } from 'react';
 import { ArrowLeft, Upload, X, Bot, Download } from 'lucide-react';
-// import { PersonaController } from '../../controllers/PersonaController';
 import { Model, ModelFormat } from './types';
 import HuggingfaceModal from './HuggingfaceModal';
 import ModelList from './ModelList';
+import { useSetRecoilState } from 'recoil';
+import { uiModeState } from '../../stores/ui.store';
+import { ModeValues } from '../types';
+import { PersonaController } from '../../controllers/PersonaController';
+import { Persona } from '../../controllers/types';
 
-interface ModelCustomizationProps {
-  onBack: () => void;
-}
 
-const ModelCustomization = ({ onBack }: ModelCustomizationProps) => {
-  const [modelName, setModelName] = useState<string>('');
+const ModelCustomization = () => {
+  const [name, setName] = useState<string>('');
+  const [description, setDescription] = useState<string>('');
   const [systemInstruction, setSystemInstruction] = useState<string>('');
   const [firstMessage, setFirstMessage] = useState<string>('');
   const [profileImage, setProfileImage] = useState<string>('');
@@ -23,7 +25,8 @@ const ModelCustomization = ({ onBack }: ModelCustomizationProps) => {
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [, setSearchQuery] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
-  // const personaController = useRef(PersonaController.getInstance());
+  const setUIMode = useSetRecoilState(uiModeState);
+  const personaController = useRef(PersonaController.getInstance());
 
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -54,16 +57,29 @@ const ModelCustomization = ({ onBack }: ModelCustomizationProps) => {
     setDownloadProgress(100);
   };
 
+  const onBack = () => {
+    setUIMode(ModeValues.Chat);
+  };
+
   const handleSubmit = async () => {
     await simulateDownload();
-    // personaController.current.createNewPersona(
-    //   modelName,
-    //   systemInstruction,
-    //   profileImage,
-    //   // selectedModel,
-    //   // firstMessage
-    // );
-    onBack();
+    if (selectedModel) {
+      const persona: Persona = {
+        name,
+        description,
+        system: systemInstruction,
+        first_message: firstMessage,
+        avatar: profileImage,
+        model_id: selectedModel.id,
+        model_type: selectedModel.format,
+        producer: 'local',
+        id: ''
+      };
+      await personaController.current.createNewPersona(persona);
+      onBack();
+    } else {
+      throw new Error('No model selected');
+    }
   };
 
   const handleHuggingfaceImport = async () => {
@@ -98,7 +114,7 @@ const ModelCustomization = ({ onBack }: ModelCustomizationProps) => {
           {/* Main Content */}
           <div className="flex-1 overflow-y-auto p-6">
             <div className="max-w-2xl mx-auto space-y-8">
-              <h1 className="text-2xl font-bold text-gray-900">Create Custom Persona</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Create my own persona</h1>
 
               {/* Profile Image Upload */}
               <div className="bg-white rounded-lg shadow-sm">
@@ -270,8 +286,21 @@ const ModelCustomization = ({ onBack }: ModelCustomizationProps) => {
                   <h2 className="text-lg font-semibold mb-4">Persona Name</h2>
                   <input
                     type="text"
-                    value={modelName}
-                    onChange={(e) => setModelName(e.target.value)}
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Enter model name..."
+                    className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg shadow-sm">
+                <div className="p-6">
+                  <h2 className="text-lg font-semibold mb-4">description</h2>
+                  <input
+                    type="text"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
                     placeholder="Enter model name..."
                     className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
@@ -313,10 +342,10 @@ const ModelCustomization = ({ onBack }: ModelCustomizationProps) => {
             <div className="max-w-2xl mx-auto">
               <button
                 onClick={handleSubmit}
-                disabled={!modelName || !systemInstruction || !selectedFormat}
+                disabled={!name || !systemInstruction || !selectedFormat}
                 className="w-full py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Create Model
+                Create own persona
               </button>
             </div>
           </div>

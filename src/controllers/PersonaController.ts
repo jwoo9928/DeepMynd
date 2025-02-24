@@ -26,17 +26,9 @@ export class PersonaController {
         return PersonaController.instance;
     }
 
-    createNewPersona(name: string, system: string, model_id: string, model_type: ModelFormat, image?: string): string {
-        const description = "This is a new model";
-        const newPersona: Persona = {
-            name: name,
-            description: description,
-            system: system,
-            id: uuid(),
-            avatar: image,
-            producer: 'user',
-            model_id,
-            model_type
+    createNewPersona(newPersona: Persona): string {
+        if (newPersona.id == '') {
+            newPersona.id = uuid()
         }
         this.personaList.set(newPersona.id, newPersona);
         this.dbController.addPersona(newPersona);
