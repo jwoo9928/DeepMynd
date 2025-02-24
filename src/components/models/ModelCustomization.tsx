@@ -1,29 +1,27 @@
 import React, { useState, useRef } from 'react';
 import { ArrowLeft, Upload, X, Bot, Download } from 'lucide-react';
 import { Model, ModelFormat } from './types';
-import HuggingfaceModal from './HuggingfaceModal';
-import ModelList from './ModelList';
 import { useSetRecoilState } from 'recoil';
 import { uiModeState } from '../../stores/ui.store';
 import { ModeValues } from '../types';
 import { PersonaController } from '../../controllers/PersonaController';
 import { Persona } from '../../controllers/types';
+import ModelSelectionModal from './ModelSelectionModal';
+import LoadingModal from './LoadingModal';
 
 
 const ModelCustomization = () => {
-  const [name, setName] = useState<string>('');
-  const [description, setDescription] = useState<string>('');
-  const [systemInstruction, setSystemInstruction] = useState<string>('');
-  const [firstMessage, setFirstMessage] = useState<string>('');
-  const [profileImage, setProfileImage] = useState<string>('');
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [systemInstruction, setSystemInstruction] = useState('');
+  const [firstMessage, setFirstMessage] = useState('');
+  const [profileImage, setProfileImage] = useState('');
   const [selectedFormat, setSelectedFormat] = useState<ModelFormat>(ModelFormat.ONNX);
-  const [selectedModel, setSelectedModel] = useState<Model | null>(null);
-  const [, setIsHuggingfaceModalOpen] = useState(false);
-  const [huggingfaceModelId] = useState('');
-  const [huggingfaceFileName] = useState('');
-  const [isDownloading, setIsDownloading] = useState(false);
-  const [downloadProgress, setDownloadProgress] = useState(0);
-  const [, setSearchQuery] = useState<string>('');
+  const [selectedTextModel, setSelectedTextModel] = useState<Model | null>(null);
+  const [selectedImageModel, setSelectedImageModel] = useState<Model | null>(null);
+  const [isTextModelModalOpen, setIsTextModelModalOpen] = useState(false);
+  const [isImageModelModalOpen, setIsImageModelModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const setUIMode = useSetRecoilState(uiModeState);
   const personaController = useRef(PersonaController.getInstance());
@@ -43,56 +41,42 @@ const ModelCustomization = () => {
     }
   };
 
-  const simulateDownload = async () => {
-    setIsDownloading(true);
-    setDownloadProgress(0);
+  // const simulateDownload = async () => {
+  //   setIsDownloading(true);
+  //   setDownloadProgress(0);
 
-    // 다운로드 시뮬레이션
-    for (let i = 0; i <= 100; i += 5) {
-      await new Promise(resolve => setTimeout(resolve, 200));
-      setDownloadProgress(i);
-    }
+  //   // 다운로드 시뮬레이션
+  //   for (let i = 0; i <= 100; i += 5) {
+  //     await new Promise(resolve => setTimeout(resolve, 200));
+  //     setDownloadProgress(i);
+  //   }
 
-    setIsDownloading(false);
-    setDownloadProgress(100);
-  };
+  //   setIsDownloading(false);
+  //   setDownloadProgress(100);
+  // };
 
   const onBack = () => {
     setUIMode(ModeValues.Chat);
   };
 
   const handleSubmit = async () => {
-    await simulateDownload();
-    if (selectedModel) {
-      const persona: Persona = {
-        name,
-        description,
-        system: systemInstruction,
-        first_message: firstMessage,
-        avatar: profileImage,
-        model_id: selectedModel.id,
-        model_type: selectedModel.format,
-        producer: 'local',
-        id: ''
-      };
-      await personaController.current.createNewPersona(persona);
-      onBack();
-    } else {
-      throw new Error('No model selected');
-    }
-  };
-
-  const handleHuggingfaceImport = async () => {
-    const newModel: Model = {
-      id: huggingfaceModelId,
-      name: huggingfaceModelId.split('/').pop() || '',
-      format: selectedFormat,
-      size: 'Unknown',
-      description: `Imported from Hugging Face: ${huggingfaceFileName}`,
-      model_id: ''
-    };
-    setSelectedModel(newModel);
-    setIsHuggingfaceModalOpen(false);
+    // if (selectedModel) {
+    //   const persona: Persona = {
+    //     name,
+    //     description,
+    //     system: systemInstruction,
+    //     first_message: firstMessage,
+    //     avatar: profileImage,
+    //     model_id: selectedModel.id,
+    //     model_type: selectedModel.format,
+    //     producer: 'local',
+    //     id: ''
+    //   };
+    //   await personaController.current.createNewPersona(persona);
+    //   onBack();
+    // } else {
+    //   throw new Error('No model selected');
+    // }
   };
 
 
@@ -168,114 +152,66 @@ const ModelCustomization = () => {
                 </div>
               </div>
 
-              {/* Model Selection */}
+              {/* Model Selection Cards */}
               <div className="bg-white rounded-lg shadow-sm">
                 <div className="p-6">
-                  <h2 className="text-lg font-semibold mb-4">Select Model</h2>
-                  <div className="space-y-6">
-                    {/* Format Tabs */}
-                    <div className="flex space-x-4 border-b border-gray-200">
-                      {['onnx', 'gguf', 'mlc'].map((format) => (
-                        <button
-                          key={format}
-                          onClick={() => {
-                            setSelectedFormat(format as ModelFormat);
-                            setSearchQuery('');
-                          }}
-                          className={`pb-2 px-4 text-sm font-medium transition-colors ${selectedFormat === format
-                            ? 'text-blue-500 border-b-2 border-blue-500'
-                            : 'text-gray-500 hover:text-gray-700'
-                            }`}
-                        >
-                          {format.toUpperCase()}
-                        </button>
-                      ))}
-                    </div>
-
-                    {/* Model List with Search */}
-                    <ModelList
-                      selectedFormat={selectedFormat}
-                      selectedModel={selectedModel}
-                      setSelectedModel={setSelectedModel}
-                    />
-
-                    {/* Hugging Face Import Button */}
-                    <button
-                      onClick={() => setIsHuggingfaceModalOpen(true)}
-                      className="w-full p-4 border-2 border-dashed border-gray-300 rounded-lg 
-                             hover:border-blue-500 hover:bg-blue-50 transition-all group"
+                  <h2 className="text-lg font-semibold mb-4">Select Models</h2>
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Text Generation Model Card */}
+                    <div
+                      onClick={() => setIsTextModelModalOpen(true)}
+                      className="border rounded-lg p-4 cursor-pointer hover:border-blue-500 transition-colors"
                     >
-                      <div className="flex items-center justify-center space-x-2">
-                        <Bot className="w-5 h-5 text-gray-400 group-hover:text-blue-500" />
-                        <span className="font-medium text-gray-600 group-hover:text-blue-500">
-                          Import from Hugging Face
-                        </span>
-                      </div>
-                    </button>
-
-                    {/* Selected Model Info */}
-                    {selectedModel && (
-                      <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                        <div className="space-y-4">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <h3 className="font-medium text-gray-900">Selected Model</h3>
-                              <p className="text-sm text-gray-500 mt-1">{selectedModel.name}</p>
-                            </div>
-                            <button
-                              onClick={() => setSelectedModel(null)}
-                              className="p-1 hover:bg-gray-200 rounded-full transition-colors"
-                            >
-                              <X className="h-4 w-4 text-gray-500" />
-                            </button>
-                          </div>
-
-                          <div className="grid grid-cols-3 gap-4 text-sm">
-                            <div>
-                              <span className="text-gray-500">Format</span>
-                              <p className="font-medium text-gray-900 mt-1">
-                                {selectedModel.format.toUpperCase()}
-                              </p>
-                            </div>
-                            <div>
-                              <span className="text-gray-500">Size</span>
-                              <p className="font-medium text-gray-900 mt-1">
-                                {selectedModel.size}
-                              </p>
-                            </div>
-                            <div>
-                              <span className="text-gray-500">Source</span>
-                              <p className="font-medium text-gray-900 mt-1">
-                                {selectedModel.id.includes('/') ? 'Hugging Face' : 'Local Library'}
-                              </p>
-                            </div>
-                          </div>
-
-                          {isDownloading && (
-                            <div className="space-y-2">
-                              <div className="flex justify-between text-sm">
-                                <span className="text-gray-500">Downloading...</span>
-                                <span className="text-gray-900 font-medium">{downloadProgress}%</span>
-                              </div>
-                              <div className="w-full bg-gray-200 rounded-full h-2">
-                                <div
-                                  className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                                  style={{ width: `${downloadProgress}%` }}
-                                />
-                              </div>
-                            </div>
-                          )}
-
-                          {downloadProgress === 100 && !isDownloading && (
-                            <div className="flex items-center text-sm text-green-600">
-                              <Download className="h-4 w-4 mr-1" />
-                              Download Complete
-                            </div>
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="font-medium text-gray-900">Text Generation Model</h3>
+                          {selectedTextModel ? (
+                            <p className="text-sm text-gray-500 mt-1">{selectedTextModel.name}</p>
+                          ) : (
+                            <p className="text-sm text-gray-500 mt-1">Click to select model</p>
                           )}
                         </div>
+                        {selectedTextModel && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedTextModel(null);
+                            }}
+                            className="p-1 hover:bg-gray-100 rounded-full"
+                          >
+                            <X className="h-4 w-4 text-gray-500" />
+                          </button>
+                        )}
                       </div>
-                    )}
+                    </div>
 
+                    {/* Image Generation Model Card */}
+                    <div
+                      onClick={() => setIsImageModelModalOpen(true)}
+                      className="border rounded-lg p-4 cursor-pointer hover:border-blue-500 transition-colors"
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="font-medium text-gray-900">Image Generation Model</h3>
+                          {selectedImageModel ? (
+                            <p className="text-sm text-gray-500 mt-1">{selectedImageModel.name}</p>
+                          ) : (
+                            <p className="text-sm text-gray-500 mt-1">Click to select model</p>
+                          )}
+                        </div>
+                        {selectedImageModel && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedImageModel(null);
+                            }}
+                            className="p-1 hover:bg-gray-100 rounded-full"
+                          >
+                            <X className="h-4 w-4 text-gray-500" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -352,7 +288,28 @@ const ModelCustomization = () => {
         </div>
       </div>
 
-      <HuggingfaceModal handleHuggingfaceImport={handleHuggingfaceImport} />
+      {/* Modals */}
+      <ModelSelectionModal
+        isOpen={isTextModelModalOpen}
+        onClose={() => setIsTextModelModalOpen(false)}
+        selectedFormat={selectedFormat}
+        setSelectedFormat={setSelectedFormat}
+        selectedModel={selectedTextModel}
+        setSelectedModel={setSelectedTextModel}
+        onConfirm={() => { }}
+      />
+
+      <ModelSelectionModal
+        isOpen={isImageModelModalOpen}
+        onClose={() => setIsImageModelModalOpen(false)}
+        selectedFormat={selectedFormat}
+        setSelectedFormat={setSelectedFormat}
+        selectedModel={selectedImageModel}
+        setSelectedModel={setSelectedImageModel}
+        onConfirm={() => { }}
+      />
+
+      <LoadingModal isOpen={isLoading} isComplete={false} />
     </div>
   );
 };

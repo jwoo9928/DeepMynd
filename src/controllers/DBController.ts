@@ -33,9 +33,10 @@ export class DBController extends Dexie {
         }
 
         this.supabase = createClient(supabaseUrl, supabaseAnonKey);
-        this.version(2).stores({
+        this.version(3).stores({
             messages: "++id, roomId, timestamp",
-            personas: "id, name, system" // id를 기본 키로 설정
+            personas: "id, name, system", // id를 기본 키로 설정
+            images: "id, imageUrl"
         });
 
         this.getModelsList();
@@ -142,11 +143,42 @@ export class DBController extends Dexie {
                 }
 
                 if (data && data.length > 0) {
-                    data.forEach((persona: Persona) => {
-                        if (!persona.avatar) persona.avatar = './assets/default.png';
-                        personaList.set(persona.id, persona);
-                        this.addPersona(persona);
-                    });
+                    await Promise.all(
+                        data.map(async (persona) => {
+                            // avatar가 없는 경우 기본 이미지 경로로 설정
+                            if (!persona.avatar) {
+                                persona.avatar = './assets/default.png';
+                            } else {
+                                try {
+                                    // avatar가 있으면, 해당 URL에서 이미지를 다운로드
+                                    const response = await axios.get(persona.avatar, {
+                                        responseType: 'blob',
+                                    });
+                                    const imageBlob = response.data;
+
+                                    // uuid()로 고유 id 생성
+                                    const imageId = uuid();
+
+                                    // images 테이블에 저장 (예: Dexie 인스턴스 db)
+                                    await this.db.images.put({
+                                        id: imageId,
+                                        imageUrl: URL.createObjectURL(imageBlob), // 혹은 저장한 이미지 URL 사용
+                                    });
+
+                                    // persona.avatar 값을 images 테이블의 id로 치환
+                                    persona.avatar = imageId;
+                                } catch (error) {
+                                    console.error('Error downloading image for persona:', persona.id, error);
+                                    // 실패 시 기본 이미지 사용
+                                    persona.avatar = './assets/default.png';
+                                }
+                            }
+
+                            // personaList에 저장 및 추가 로직 호출
+                            personaList.set(persona.id, persona);
+                            this.addPersona(persona);
+                        })
+                    );
                 }
             } catch (error) {
                 console.error('Error fetching personas from Supabase:', error);

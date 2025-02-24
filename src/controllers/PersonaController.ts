@@ -2,7 +2,6 @@ import { v4 as uuid } from 'uuid';
 import { Persona } from './types';
 import { EVENT_TYPES, eventEmitter } from './events';
 import { DBController } from './DBController';
-import { ModelFormat } from '../components/models/types';
 
 export class PersonaController {
     private personaList: Map<string, Persona>;
@@ -29,6 +28,10 @@ export class PersonaController {
     createNewPersona(newPersona: Persona): string {
         if (newPersona.id == '') {
             newPersona.id = uuid()
+        }
+        if (newPersona.avatar !== null || newPersona.avatar !== undefined) {
+
+
         }
         this.personaList.set(newPersona.id, newPersona);
         this.dbController.addPersona(newPersona);
