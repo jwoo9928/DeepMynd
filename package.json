@@ -32,6 +32,7 @@
     "react-modal": "^3.16.3",
     "react-router-dom": "^7.1.5",
     "recoil": "^0.7.7",
+    "vite-plugin-cross-origin-isolation": "^0.1.6",
     "vite-plugin-wasm": "^3.4.1",
     "voy-search": "^0.6.3"
   },

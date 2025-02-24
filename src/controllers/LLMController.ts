@@ -4,6 +4,9 @@ import { eventEmitter, EVENT_TYPES } from './events';
 import { Message } from './types';
 import { WORKER_EVENTS, WORKER_STATUS } from "./workers/event";
 import { v4 as uuid } from 'uuid';
+import ONNX_Worker from "./workers/main-worker?worker";
+import GGUF_Worker from "./workers/wllama-worker?worker";
+// import MLC_Worker from "./workers/mlc-worker?worker";
 
 export class LLMController {
     private static instance: LLMController;
@@ -38,26 +41,28 @@ export class LLMController {
         return this.model_list;
     }
 
+    private getWokerker(format: ModelFormat) {
+        if (format == ModelFormat.GGUF) {
+            return new GGUF_Worker()
+        //} else if (format == ModelFormat.MLC) {
+            // return new Worker(new URL("./workers/mlc-worker.js", import.meta.url));
+        } else { // onnx
+            return new ONNX_Worker()
+        }
+    }
+
     public async initializeModel(id: string) {
         try {
             if (!this.model_list) {
                 throw new Error('Model list is not initialized');
             }
-            let workerUrl = '';
             const model = Object.values(this.model_list).flat().find((model) => model.id === id);
             //@ts-ignore
-            const { model_id, format, file } = model;
-            if (format == ModelFormat.GGUF) {
-                workerUrl = "./workers/wllama-worker.js";
-            } else if (format == ModelFormat.MLC) {
-                workerUrl = "./workers/mlc-worker.js";
-            } else { // onnx
-                workerUrl = "./workers/main-worker.js";
-            }
-            console.log("workerUrl", workerUrl)
-            const worker = new Worker(new URL(workerUrl, import.meta.url), {
-                type: "module",
-            });
+            const {model_id, format, file} = model;
+            const worker = this.getWokerker(format);
+            // const worker = new Worker(new URL("./workers/main-worker.js", import.meta.url), {
+            //     type: "module",
+            // });
             const workerId = uuid();
             this.focusedWokerId = workerId;
             worker.onmessage = (e) => this.eventHandler(workerId, e);

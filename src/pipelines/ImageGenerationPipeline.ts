@@ -4,6 +4,8 @@ import {
   MultiModalityCausalLM,
   Processor,
 } from "@huggingface/transformers";
+import { Wllama } from "@wllama/wllama";
+import WasmFromCDN from "@wllama/wllama/esm/wasm-from-cdn";
 
 
 export class ImageGenerationPipeline {
@@ -52,3 +54,46 @@ export class ImageGenerationPipeline {
       return Promise.all([this.processor, this.model]);
     }
   }
+
+
+  export class WLLAMImageGenPipeline {
+    static model_id: string | null = null;
+    static modelfile: string | null = null;
+    static model: Wllama | null = null;
+
+    static async getInstance(model_id: string,modelfile: string, progress_callback: ((x: any) => void) | null = null): Promise<Wllama> {
+        this.model_id = model_id;
+        this.modelfile = modelfile;
+        if (this.model === null) {
+            this.model = new Wllama(WasmFromCDN, {
+                parallelDownloads: 3,
+                logger: console,
+            });
+
+            await this.model.loadModelFromHF(
+                this.model_id,
+                this.modelfile,
+                {
+                    progressCallback: (value) => {
+                        let fitlered_value = {
+                            name:  this.model_id,
+                            loaded: value.loaded,
+                            total: value.total,
+                            progress: value.loaded / value.total * 100,
+                            status: value.loaded != value.total ? 'progress' : 'done',
+                            file: this.modelfile
+                        }
+                        if (progress_callback) {
+                            progress_callback(fitlered_value);
+                        }
+                    },
+                    n_ctx: 4096,
+                }
+            );
+        }
+
+        return this.model;
+    }
+
+
+}

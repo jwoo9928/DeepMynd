@@ -73,6 +73,7 @@ export class WLLAMATextGenPipeline {
                         }
                     },
                     n_ctx: 4096,
+                    useCache: true,
                 }
             );
         }
