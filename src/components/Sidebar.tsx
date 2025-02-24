@@ -67,7 +67,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   const handleCreateModel = useCallback(() => {
     setIsModalOpen(false);
     console.log('Creating new model');
-    eventEmitter.emit(EVENT_TYPES.CREATE_NEW_PERSONA, ModeValues.Create);
+    // eventEmitter.emit(EVENT_TYPES.CREATE_NEW_PERSONA, ModeValues.Create);
   }, []);
 
   const onSkip = useCallback(() => {

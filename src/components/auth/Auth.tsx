@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Apple, LogIn } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
 import { AuthButton } from './AuthButton';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -43,21 +42,7 @@ export default function Auth() {
     }
 
     const handleSocialLogin = async (provider: 'google' | 'apple') => {
-        try {
-            setLoading(true);
-            const { error } = await supabase.auth.signInWithOAuth({
-                provider,
-                options: {
-                    redirectTo: `${window.location.origin}/init`
-                }
-            });
-            if (error) throw error;
-        } catch (error) {
-            console.error('Error:', error);
-            alert('Error signing in. Please try again.');
-        } finally {
-            setLoading(false);
-        }
+
     };
 
     const handleGuestLogin = () => {

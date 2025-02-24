@@ -15,11 +15,11 @@ const ChatLayout = () => {
   // DBController.getDatabase().delete()
 
   useEffect(() => {
-    eventEmitter.on(EVENT_TYPES.CREATE_NEW_PERSONA, setMode)
+    // eventEmitter.on(EVENT_TYPES.CREATE_NEW_PERSONA, setMode)
 
-    return () => {
-      eventEmitter.off(EVENT_TYPES.CREATE_NEW_PERSONA);
-    };
+    // return () => {
+    //   eventEmitter.off(EVENT_TYPES.CREATE_NEW_PERSONA);
+    // };
   }, []);
 
   const onBack = useCallback(() => {

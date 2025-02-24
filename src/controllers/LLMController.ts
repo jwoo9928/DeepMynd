@@ -1,6 +1,5 @@
 import { prebuiltAppConfig } from '@mlc-ai/web-llm';
 import { ModelFormat, ModelList } from '../components/models/types';
-import { supabase } from '../lib/supabase';
 import { eventEmitter, EVENT_TYPES } from './events';
 import { Message } from './types';
 import { WORKER_EVENTS, WORKER_STATUS } from "./workers/event";
@@ -21,7 +20,7 @@ export class LLMController {
 
     private constructor() {
         eventEmitter.on(EVENT_TYPES.MODEL_INITIALIZING, this.initializeModel.bind(this));
-        this.getModelsList.bind(this)();
+        eventEmitter.on(EVENT_TYPES.MODELS_UPDATED, this.setModelList.bind(this));
     }
 
     public static getInstance(): LLMController {
@@ -31,31 +30,8 @@ export class LLMController {
         return LLMController.instance;
     }
 
-    private async getModelsList() {
-        const { data, error } = await supabase.from('models').select('*');
-        if (error) {
-            console.error('Error fetching models:', error);
-            return;
-        }
-        const categorizedModels = data.reduce((acc, model) => {
-            const format = model.format.toLowerCase();
-            if (!acc[format]) {
-                acc[format] = [];
-            }
-            acc[format].push(model);
-            return acc;
-        }, { onnx: [], gguf: [], mlc: [] });
-        categorizedModels.mlc = categorizedModels.mlc.concat(prebuiltAppConfig.model_list.map((model) => ({
-            id: uuid(),
-            model_id: model.model_id,
-            name: model.model_id.split('/').pop() || '',
-            format: ModelFormat.MLC,
-            size: model.overrides?.context_window_size?.toString() || 'Unknown',
-            description: model.model_lib,
-            vram_required_MB: model.vram_required_MB,
-          })))
-          this.model_list = categorizedModels;
-        eventEmitter.emit(EVENT_TYPES.MODELS_UPDATED, categorizedModels); 
+    private setModelList(modelList: ModelList) {
+        this.model_list = modelList;
     }
 
     public getModelList() {
@@ -70,7 +46,7 @@ export class LLMController {
             let workerUrl = '';
             const model = Object.values(this.model_list).flat().find((model) => model.id === id);
             //@ts-ignore
-            const {model_id, format, file} = model;
+            const { model_id, format, file } = model;
             if (format == ModelFormat.GGUF) {
                 workerUrl = "./workers/wllama-worker.js";
             } else if (format == ModelFormat.MLC) {
