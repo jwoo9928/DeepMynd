@@ -25,7 +25,7 @@ export class TextGenerationPipeline {
 }
 
 
-export class NormalTextGenePipeline {
+export class MLCTextGenePipeline {
     static model_id = "meta-llama/Llama-3.2-1B"//"onnx-community/DeepSeek-R1-Distill-Qwen-1.5B-ONNX";
     static model: Promise<MLCEngine> | null = null;
 

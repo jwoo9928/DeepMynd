@@ -6,7 +6,8 @@ import { WORKER_EVENTS, WORKER_STATUS } from "./workers/event";
 import { v4 as uuid } from 'uuid';
 import ONNX_Worker from "./workers/main-worker?worker";
 import GGUF_Worker from "./workers/wllama-worker?worker";
-// import MLC_Worker from "./workers/mlc-worker?worker";
+import Image_worker from "./workers/image-worker?worker";
+import MLC_Worker from "./workers/mlc-worker?worker";
 
 export class LLMController {
     private static instance: LLMController;
@@ -42,12 +43,15 @@ export class LLMController {
     }
 
     private getWokerker(format: ModelFormat) {
-        if (format == ModelFormat.GGUF) {
+        let model_format = format.toLowerCase();
+        if (model_format == ModelFormat.GGUF) {
             return new GGUF_Worker()
-        //} else if (format == ModelFormat.MLC) {
-            // return new Worker(new URL("./workers/mlc-worker.js", import.meta.url));
-        } else { // onnx
+        } else if (model_format == ModelFormat.MLC) {
+            return new MLC_Worker()
+        } else if (model_format == ModelFormat.ONNX) { // onnx
             return new ONNX_Worker()
+        } else {
+            return new Image_worker()
         }
     }
 
@@ -58,11 +62,8 @@ export class LLMController {
             }
             const model = Object.values(this.model_list).flat().find((model) => model.id === id);
             //@ts-ignore
-            const {model_id, format, file} = model;
+            const { model_id, format, file } = model;
             const worker = this.getWokerker(format);
-            // const worker = new Worker(new URL("./workers/main-worker.js", import.meta.url), {
-            //     type: "module",
-            // });
             const workerId = uuid();
             this.focusedWokerId = workerId;
             worker.onmessage = (e) => this.eventHandler(workerId, e);
@@ -82,10 +83,6 @@ export class LLMController {
             switch (type) {
                 case WORKER_STATUS.STATUS_LOADING:
                     console.log("loading")
-                    // eventEmitter.emit(EVENT_TYPES.MODEL_STATUS, {
-                    //     type: modelType,
-                    //     status: 'loading'
-                    // });
                     break;
                 case WORKER_STATUS.STATUS_READY: //모델 준비 완료
                     eventEmitter.emit(EVENT_TYPES.MODEL_READY);
@@ -93,9 +90,6 @@ export class LLMController {
                 case WORKER_STATUS.STATUS_ERROR:
                     eventEmitter.emit(EVENT_TYPES.ERROR, data);
                     break;
-                // case WORKER_STATUS.GENERATION_START:
-                //     eventEmitter.emit(EVENT_TYPES.GENERATION_START, { type: 'text' });
-                //     break;
                 case WORKER_STATUS.GENERATION_UPDATE:
                     eventEmitter.emit(EVENT_TYPES.GENERATION_UPDATE, data);
                     break;
