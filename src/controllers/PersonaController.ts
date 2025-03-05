@@ -1,5 +1,5 @@
 import { v4 as uuid } from 'uuid';
-import { Persona } from './types';
+import { NewPersona, Persona } from './types';
 import { EVENT_TYPES, eventEmitter } from './events';
 import { DBController } from './DBController';
 
@@ -25,17 +25,32 @@ export class PersonaController {
         return PersonaController.instance;
     }
 
-    createNewPersona(newPersona: Persona): string {
-        if (newPersona.id == '') {
-            newPersona.id = uuid()
+    createNewPersona(newPersona: NewPersona): string {
+        let persona: Persona;
+        if (newPersona.avatar !== null && newPersona.avatar !== undefined) {
+            const byteString = atob(newPersona.avatar.split(",")[1]);
+            const mimeType = newPersona.avatar.split(",")[0].split(":")[1].split(";")[0];
+            const arrayBuffer = new Uint8Array(byteString.length);
+            for (let i = 0; i < byteString.length; i++) {
+                arrayBuffer[i] = byteString.charCodeAt(i);
+            }
+            const blob = new Blob([arrayBuffer], { type: mimeType });
+            //@ts-ignore
+            persona = {
+                ...newPersona,
+                id: uuid(),
+                avatar: blob
+            }
+        } else {
+            persona = {
+                ...newPersona,
+                id: uuid(),
+                avatar: new Blob()
+            }
         }
-        if (newPersona.avatar !== null || newPersona.avatar !== undefined) {
-
-
-        }
-        this.personaList.set(newPersona.id, newPersona);
-        this.dbController.addPersona(newPersona);
-        return newPersona.id;
+        this.personaList.set(persona.id, persona);
+        this.dbController.addPersona(persona);
+        return persona.id;
     }
 
     getDefaultPersona(): Persona | undefined {

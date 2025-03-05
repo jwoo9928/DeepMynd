@@ -5,6 +5,7 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { prebuiltAppConfig } from '@mlc-ai/web-llm';
 import { v4 as uuid } from 'uuid';
 import { ModelFormat, ModelList } from '../components/models/types';
+import axios from 'axios';
 
 // 채팅 메시지 타입 정의
 export interface ChatMessage {
@@ -15,11 +16,16 @@ export interface ChatMessage {
     timestamp: number;
 }
 
+interface ImageStore {
+    p_id: string;
+    image: Blob;
+}
+
 // Dexie 데이터베이스 설정
 export class DBController extends Dexie {
     private messages!: Table<ChatMessage, number>;
     private personas!: Table<Persona, string>;
-    private images!: Table<{ id: string, imageUrl: string }, string>;
+    private images!: Table<ImageStore, string>;
     private supabase: SupabaseClient;
 
     private static instance: DBController;
@@ -158,23 +164,23 @@ export class DBController extends Dexie {
                                 persona.avatar = './assets/default.png';
                             } else {
                                 try {
-                                    // avatar가 있으면, 해당 URL에서 이미지를 다운로드
-                                    // const response = await axios.get(persona.avatar, {
-                                    //     responseType: 'blob',
-                                    // });
-                                    // const imageBlob = response.data;
+                                    //avatar가 있으면, 해당 URL에서 이미지를 다운로드
+                                    const response = await axios.get(persona.avatar, {
+                                        responseType: 'blob',
+                                    });
+                                    const imageBlob = response.data;
 
-                                    // // uuid()로 고유 id 생성
-                                    // const imageId = uuid();
+                                    // uuid()로 고유 id 생성
+                                    const imageId = uuid();
 
-                                    // // images 테이블에 저장 (예: Dexie 인스턴스 db)
+                                    // images 테이블에 저장 (예: Dexie 인스턴스 db)
                                     // await this.images.put({
                                     //     id: imageId,
                                     //     imageUrl: URL.createObjectURL(imageBlob), // 혹은 저장한 이미지 URL 사용
                                     // });
 
-                                    // // persona.avatar 값을 images 테이블의 id로 치환
-                                    // persona.avatar = imageId;
+                                    // persona.avatar 값을 images 테이블의 id로 치환
+                                    persona.avatar = imageBlob;
                                 } catch (error) {
                                     console.error('Error downloading image for persona:', persona.id, error);
                                     // 실패 시 기본 이미지 사용

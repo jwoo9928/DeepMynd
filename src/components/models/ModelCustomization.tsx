@@ -5,26 +5,31 @@ import { useSetRecoilState } from 'recoil';
 import { uiModeState } from '../../stores/ui.store';
 import { ModeValues } from '../types';
 import { PersonaController } from '../../controllers/PersonaController';
-import { Persona } from '../../controllers/types';
+import { FastAverageColor } from 'fast-average-color';
 import ModelSelectionModal from './ModelSelectionModal';
 import LoadingModal from './LoadingModal';
+import { NewPersona, Persona } from '../../controllers/types';
 
 
 const ModelCustomization = () => {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [systemInstruction, setSystemInstruction] = useState('');
-  const [firstMessage, setFirstMessage] = useState('');
-  const [profileImage, setProfileImage] = useState('');
+  const [name, setName] = useState<string>();
+  const [description, setDescription] = useState<string>();
+  const [systemInstruction, setSystemInstruction] = useState<string>();
+  const [firstMessage, setFirstMessage] = useState<string>();
+  const [profileImage, setProfileImage] = useState<string>();
+  const [profileColor, setProfileColor] = useState<string>();
+
   const [selectedFormat, setSelectedFormat] = useState<ModelFormat>(ModelFormat.ONNX);
   const [selectedTextModel, setSelectedTextModel] = useState<Model | null>(null);
   const [selectedImageModel, setSelectedImageModel] = useState<Model | null>(null);
   const [isTextModelModalOpen, setIsTextModelModalOpen] = useState(false);
   const [isImageModelModalOpen, setIsImageModelModalOpen] = useState(false);
+
   const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const setUIMode = useSetRecoilState(uiModeState);
   const personaController = useRef(PersonaController.getInstance());
+  const fastAverageColor = new FastAverageColor();
 
   const modalContents = useMemo(() => ({
     title: 'Creating Persona...',
@@ -41,6 +46,10 @@ const ModelCustomization = () => {
       const reader = new FileReader();
       reader.onloadend = () => {
         if (typeof reader.result === 'string') {
+          let image = reader.result;
+          fastAverageColor.getColorAsync(image).then(color => {
+            setProfileColor(color.hex);
+          });
           setProfileImage(reader.result);
         }
       };
@@ -64,26 +73,29 @@ const ModelCustomization = () => {
 
   const onBack = () => {
     setUIMode(ModeValues.Chat);
+    setIsLoading(false)
   };
 
   const handleSubmit = async () => {
-    // if (selectedModel) {
-    //   const persona: Persona = {
-    //     name,
-    //     description,
-    //     system: systemInstruction,
-    //     first_message: firstMessage,
-    //     avatar: profileImage,
-    //     model_id: selectedModel.id,
-    //     model_type: selectedModel.format,
-    //     producer: 'local',
-    //     id: ''
-    //   };
-    //   await personaController.current.createNewPersona(persona);
-    //   onBack();
-    // } else {
-    //   throw new Error('No model selected');
-    // }
+    setIsLoading(true)
+    if (name && selectedTextModel && systemInstruction && description && profileColor) {
+      const persona: NewPersona = {
+        name,
+        description,
+        system: systemInstruction,
+        first_message: firstMessage,
+        avatar: profileImage,
+        model_id: selectedTextModel.id,
+        model_type: selectedTextModel.format,
+        producer: 'local',
+        color: profileColor,
+
+      };
+      await personaController.current.createNewPersona(persona);
+      onBack();
+    } else {
+      throw new Error('No model selected');
+    }
   };
 
 
@@ -113,7 +125,8 @@ const ModelCustomization = () => {
                   <h2 className="text-lg font-semibold mb-4">Profile Image</h2>
                   <div className="flex items-center space-x-6">
                     <div
-                      className="relative w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden cursor-pointer"
+                      className="relative w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden cursor-pointer border-2"
+                      style={{ borderColor: profileColor }}
                       onClick={() => fileInputRef.current?.click()}
                     >
                       {profileImage ? (
@@ -306,7 +319,7 @@ const ModelCustomization = () => {
         onConfirm={() => { }}
       />
 
-      <ModelSelectionModal
+      {/* <ModelSelectionModal
         isOpen={isImageModelModalOpen}
         onClose={() => setIsImageModelModalOpen(false)}
         selectedFormat={selectedFormat}
@@ -314,7 +327,7 @@ const ModelCustomization = () => {
         selectedModel={selectedImageModel}
         setSelectedModel={setSelectedImageModel}
         onConfirm={() => { }}
-      />
+      /> */}
 
       <LoadingModal isOpen={isLoading} isComplete={false} contents={modalContents} />
     </div>

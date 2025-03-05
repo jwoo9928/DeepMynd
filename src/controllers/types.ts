@@ -43,9 +43,23 @@ export interface Persona {
   description: string;
   system: string;
   id: string;
+  avatar: Blob;
+  producer: string;
+  model_type: ModelFormat
+  model_id: string;
+  first_message?: string;
+  color: string;
+}
+
+export interface NewPersona {
+  name: string;
+  description: string;
+  system: string;
   avatar?: string;
   producer: string;
   model_type: ModelFormat
   model_id: string;
   first_message?: string;
+  color: string;
+  id?: string;
 }

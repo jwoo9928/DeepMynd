@@ -9,63 +9,6 @@ interface PersonaModalProps {
     startChat: () => void;
 }
 
-// const personas: Persona[] = [
-//     {
-//         id: "p1",
-//         name: "Assistant",
-//         avatar: "/assets/assistant-avatar.png",
-//         description: "General purpose AI assistant that can help with various tasks",
-//         model: "GPT-4",
-//         features: ["General knowledge", "Creative writing", "Coding assistance", "Learning support"],
-//         color: "#FF9F7F" // Soft coral
-//     },
-//     {
-//         id: "p2",
-//         name: "Code Expert",
-//         avatar: "/assets/coder-avatar.png",
-//         description: "Specialized in helping with programming and development tasks",
-//         model: "Claude-3",
-//         features: ["Code completion", "Debugging", "Code review", "Technical explanations"],
-//         color: "#7FAEFF" // Soft blue
-//     },
-//     {
-//         id: "p3",
-//         name: "Academic",
-//         avatar: "/assets/academic-avatar.png",
-//         description: "Perfect for students and researchers seeking help with academic content",
-//         model: "GPT-4 Turbo",
-//         features: ["Research assistance", "Paper writing", "Citation help", "Summarization"],
-//         color: "#9F7FFF" // Soft purple
-//     },
-//     {
-//         id: "p4",
-//         name: "Creative Partner",
-//         avatar: "/assets/creative-avatar.png",
-//         description: "Helps with creative projects and artistic endeavors",
-//         model: "Claude-3 Opus",
-//         features: ["Storytelling", "Poetry", "Idea generation", "Content creation"],
-//         color: "#FF7FD5" // Soft pink
-//     },
-//     {
-//         id: "p5",
-//         name: "Business Advisor",
-//         avatar: "/assets/business-avatar.png",
-//         description: "Assists with business strategy, marketing, and professional communications",
-//         model: "GPT-4o",
-//         features: ["Business planning", "Marketing strategy", "Professional writing", "Data analysis"],
-//         color: "#7FD5FF" // Soft sky blue
-//     },
-//     {
-//         id: "p6",
-//         name: "Language Tutor",
-//         avatar: "/assets/language-avatar.png",
-//         description: "Helps learn new languages and improve language skills",
-//         model: "Gemini Pro",
-//         features: ["Language learning", "Grammar correction", "Vocabulary building", "Conversation practice"],
-//         color: "#7FFFB0" // Soft mint
-//     }
-// ];
-
 
 const PersonaModal = ({
     selectedPersona,
@@ -93,15 +36,15 @@ const PersonaModal = ({
 
                     <div
                         className="w-24 h-24 rounded-full bg-white p-1 shadow-lg mb-4 overflow-hidden border-4"
-                         //@ts-ignore
+                        //@ts-ignore
                         style={{ borderColor: selectedPersona?.color || "#7FAEFF" }}
                     >
-                        <img src={selectedPersona.avatar} alt={selectedPersona.name} className="w-full h-full object-cover rounded-full" />
+                        <img src={URL.createObjectURL(selectedPersona.avatar)} alt={selectedPersona.name} className="w-full h-full object-cover rounded-full" />
                     </div>
 
                     <h3 className="font-bold text-xl mb-1">{selectedPersona.name}</h3>
                     <span className="text-sm bg-white px-3 py-1 rounded-full shadow-sm">
-                        {selectedPersona.model_id}
+                        {selectedPersona.model_type}
                     </span>
                 </div>
 
@@ -131,7 +74,7 @@ const PersonaModal = ({
                     <button
                         onClick={startChat}
                         className="px-6 py-2 text-white rounded-full shadow-md transition-all duration-200 hover:shadow-lg hover:scale-105"
-                         //@ts-ignore
+                        //@ts-ignore
                         style={{ backgroundColor: selectedPersona?.color || "#7FAEFF" }}
                     >
                         Start Chatting!
