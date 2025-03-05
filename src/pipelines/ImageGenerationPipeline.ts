@@ -1,11 +1,22 @@
 import {
+  AutoModel,
   AutoModelForCausalLM,
   AutoProcessor,
+  AutoTokenizer,
   MultiModalityCausalLM,
   Processor,
+  ProgressCallback,
+  StableLmPreTrainedModel,
 } from "@huggingface/transformers";
 import { Wllama } from "@wllama/wllama";
 import WasmFromCDN from "@wllama/wllama/esm/wasm-from-cdn";
+import {
+  DiffusionPipeline,
+  ProgressCallbackPayload,
+  setModelCacheDir,
+  StableDiffusionPipeline,
+  StableDiffusionXLPipeline
+} from '@aislamov/diffusers.js'
 
 
 export class ImageGenerationPipeline {
@@ -55,6 +66,31 @@ export class ImageGenerationPipeline {
   }
 }
 
+export class StableDefusionImageGenerationPipeline {
+  static model_id = "nmkd/stable-diffusion-1.5-onnx-fp16";
+  static pipe: Promise<StableLmPreTrainedModel> | null = null;
+
+  static async getInstance(model_id: string, progress_callback: ((x: any) => void) | null = null) {
+    this.model_id ??= model_id;
+    this.pipe ??= DiffusionPipeline.fromPretrained(this.model_id, {
+      progressCallback: (value: ProgressCallbackPayload) => {
+        let fitlered_value = {
+          name: this.model_id,
+          loaded: value.downloadStatus?.downloaded,
+          total: value.downloadStatus?.size,
+          progress: (value.downloadStatus?.downloaded ?? 0) / (value.downloadStatus?.size ?? 1) * 100,
+          status: value.downloadStatus?.downloaded != value.downloadStatus?.size ? 'progress' : 'done',
+          file: value.downloadStatus?.file
+        }
+        if (progress_callback) {
+          progress_callback(fitlered_value);
+        }
+      },
+    })
+    return Promise.all([this.pipe]);
+  }
+}
+
 
 export class WLLAMImageGenPipeline {
   static model_id: string | null = null;
@@ -94,6 +130,4 @@ export class WLLAMImageGenPipeline {
 
     return this.model;
   }
-
-
 }

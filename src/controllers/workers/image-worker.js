@@ -2,7 +2,10 @@ import {
   BaseStreamer,
   InterruptableStoppingCriteria,
 } from "@huggingface/transformers";
-import { ImageGenerationPipeline } from "../../pipelines/ImageGenerationPipeline";
+import {
+  ImageGenerationPipeline,
+  StableDefusionImageGenerationPipeline,
+} from "../../pipelines/ImageGenerationPipeline";
 import { WORKER_STATUS, WORKER_EVENTS } from "./event";
 
 /**
@@ -47,20 +50,20 @@ async function check() {
     //@ts-ignore
     const adapter = await navigator.gpu.requestAdapter();
     if (!adapter) {
-        throw new Error("WebGPU is not supported (no adapter found)");
+      throw new Error("WebGPU is not supported (no adapter found)");
     }
-} catch (e) {
+  } catch (e) {
     self.postMessage({
-        type: WORKER_STATUS.STATUS_ERROR,
-        data: (e).toString(),
+      type: WORKER_STATUS.STATUS_ERROR,
+      data: e.toString(),
     });
-}
+  }
 }
 
 async function load() {
   self.postMessage({ type: WORKER_STATUS.STATUS_LOADING });
 
-  await ImageGenerationPipeline.getInstance((x) => {
+  await StableDefusionImageGenerationPipeline.getInstance((x) => {
     self.postMessage(x);
   });
 
@@ -71,48 +74,65 @@ async function load() {
  * This class uses the Singleton pattern to enable lazy-loading of the pipeline
  */
 
-const stopping_criteria = new InterruptableStoppingCriteria();
-let past_key_values_cache = null;
+// const stopping_criteria = new InterruptableStoppingCriteria();
+// let past_key_values_cache = null;
+
+// async function generate(message) {
+//   const [processor, model] = await ImageGenerationPipeline.getInstance();
+
+//   const conversation = [
+//     {
+//       role: "<|User|>", // uses title case
+//       content: message,
+//     },
+//   ];
+//   const inputs = await processor(conversation, {
+//     chat_template: "text_to_image",
+//   });
+
+//   const callback_function = (output) => {
+//     self.postMessage({
+//       status: "image-update",
+//       ...output,
+//     });
+//   };
+
+//   const num_image_tokens = processor.num_image_tokens;
+
+//   const streamer = new ProgressStreamer(num_image_tokens, callback_function);
+
+//   self.postMessage({ status: WORKER_STATUS.GENERATION_START });
+
+//   // @ts-ignore
+//   const outputs = await model.generate_images({
+//     ...inputs,
+//     min_new_tokens: num_image_tokens,
+//     max_new_tokens: num_image_tokens,
+//     do_sample: true,
+//     streamer,
+//   });
+
+//   const blob = await outputs[0].toBlob();
+
+//   self.postMessage({ type: WORKER_STATUS.IMAGE_GEN_COMPLETE, data: { blob } });
+// }
 
 async function generate(message) {
-  const [processor, model] = await ImageGenerationPipeline.getInstance();
-
-  const conversation = [
-    {
-      role: "<|User|>", // uses title case
-      content: message,
-    },
-  ];
-  const inputs = await processor(conversation, {
-    chat_template: "text_to_image",
-  });
-
-
-  const callback_function = (output) => {
-    self.postMessage({
-      status: "image-update",
-      ...output,
-    });
-  };
-
-  const num_image_tokens = processor.num_image_tokens;
-
-  const streamer = new ProgressStreamer(num_image_tokens, callback_function);
-
-  self.postMessage({ status: WORKER_STATUS.GENERATION_START });
-
-  // @ts-ignore
-  const outputs = await model.generate_images({
-    ...inputs,
-    min_new_tokens: num_image_tokens,
-    max_new_tokens: num_image_tokens,
-    do_sample: true,
-    streamer,
-  });
-
-  const blob = await outputs[0].toBlob();
-
-  self.postMessage({ type: WORKER_STATUS.IMAGE_GEN_COMPLETE, data: {blob} });
+  const [pipe] = await StableDefusionImageGenerationPipeline.getInstance();
+  let image = pipe.run(message);
+  // prompt: string
+  // negativePrompt?: string
+  // guidanceScale?: number
+  // seed?: string
+  // width?: number
+  // height?: number
+  // numInferenceSteps: number
+  // sdV1?: boolean
+  // progressCallback?: ProgressCallback
+  // runVaeOnEachStep?: boolean
+  // img2imgFlag?: boolean
+  // inputImage?: Float32Array
+  // strength?: number
 }
 
 self.addEventListener("message", async (e) => {
