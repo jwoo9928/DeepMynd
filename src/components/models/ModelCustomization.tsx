@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { ArrowLeft, Upload, X, Bot, Download } from 'lucide-react';
 import { Model, ModelFormat } from './types';
 import { useSetRecoilState } from 'recoil';
@@ -25,6 +25,13 @@ const ModelCustomization = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const setUIMode = useSetRecoilState(uiModeState);
   const personaController = useRef(PersonaController.getInstance());
+
+  const modalContents = useMemo(() => ({
+    title: 'Creating Persona...',
+    subTitle: 'Please wait a moment',
+    successTitle: 'Persona Created!',
+    subSuccessTitle: 'Your new persona is ready to use'
+  }), [])
 
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -309,7 +316,7 @@ const ModelCustomization = () => {
         onConfirm={() => { }}
       />
 
-      <LoadingModal isOpen={isLoading} isComplete={false} />
+      <LoadingModal isOpen={isLoading} isComplete={false} contents={modalContents} />
     </div>
   );
 };

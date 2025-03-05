@@ -1,5 +1,5 @@
 import { Search, X, Plus, MoreVertical, Pin, Trash2 } from "lucide-react";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { EVENT_TYPES, eventEmitter } from "../controllers/events";
 import { ModeValues } from "./types";
 import { ChatController } from "../controllers/ChatController";
@@ -7,6 +7,7 @@ import NewChatModal from "./NewChatModal";
 import { ChatRoom } from "../controllers/types";
 import { useSetRecoilState } from "recoil";
 import { uiModeState } from "../stores/ui.store";
+import LoadingModal from "./models/LoadingModal";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -31,6 +32,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   const [dropdownOpen, setDropdownOpen] = useState<string | null>(null);
   const isDesktop = window.matchMedia("(min-width: 768px)").matches;
   const setUIMode = useSetRecoilState(uiModeState);
+  const [isRemoveStart, setIsRemoveStart] = useState(false);
+  const [isRemoveComplete, setIsRemoveComplete] = useState(false);
+
+  const removeContents = useMemo(() => ({
+    title: "Removing chat Data",
+    subTitle: "please wait while we remove the chat data",
+    successTitle: "Removed Successfully",
+    subSuccessTitle: "The chat data has been removed successfully",
+  }), []);
 
   const [swipeState, setSwipeState] = useState<SwipeState>({
     roomId: null,
@@ -46,9 +56,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   }, []);
 
   useEffect(() => {
-    eventEmitter.on(EVENT_TYPES.CREATE_NEW_CHAT, handleCreateRoomEvent);
+    setRooms(chatController.current.getChatRooms());
+    eventEmitter.on(EVENT_TYPES.UPDATED_CHAT_ROOMS, handleCreateRoomEvent);
     return () => {
-      eventEmitter.off(EVENT_TYPES.CREATE_NEW_CHAT, handleCreateRoomEvent);
+      eventEmitter.off(EVENT_TYPES.UPDATED_CHAT_ROOMS, handleCreateRoomEvent);
     };
   }, []);
 
@@ -126,9 +137,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
     }
   };
 
-  const handleDeleteRoom = useCallback((roomId: string) => {
-    setRooms(prev => prev.filter(room => room.roomId !== roomId));
-    chatController.current.deleteChatRoom(roomId);
+  const handleDeleteRoom = useCallback(async (roomId: string) => {
+    setIsRemoveStart(true);
+    await chatController.current.deleteChatRoom(roomId);
+    setIsRemoveComplete(true);
+    setTimeout(() => {
+      setIsRemoveStart(false);
+      setIsRemoveComplete(false);
+    }, 2000);
+
   }, []);
 
   const handlePinRoom = (roomId: string) => {
@@ -315,6 +332,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
         onCreateModel={handleCreateModel}
         onSkip={onSkip}
       />
+
+      <LoadingModal isOpen={isRemoveStart} isComplete={isRemoveComplete} contents={removeContents} />
 
       {isOpen && (
         <div

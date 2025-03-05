@@ -92,7 +92,14 @@ export class DBController extends Dexie {
         }, {} as Record<string, ChatMessage[]>);
     }
 
+    // roomId별 메시지 삭제
+    public async deleteMessagesByRoom(roomId: string): Promise<number> {
+        return await this.messages.where('roomId').equals(roomId).delete();
+    }
+
     /** 모델 관리 **/
+
+    // 모델 리스트 호출
     private async getModelsList(): Promise<ModelList> {
         const { data, error } = await this.supabase.from('models').select('*');
         if (error) {

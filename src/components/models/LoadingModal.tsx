@@ -1,12 +1,21 @@
-import { Check } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 import React from "react";
+
+interface Contents {
+  title: string;
+  subTitle?: string;
+  successTitle?: string;
+  subSuccessTitle?: string;
+}
 
 const LoadingModal = ({
   isOpen,
-  isComplete
+  isComplete,
+  contents,
 }: {
   isOpen: boolean;
   isComplete: boolean;
+  contents: Contents;
 }) => {
   if (!isOpen) return null;
 
@@ -18,25 +27,20 @@ const LoadingModal = ({
             <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mb-4">
               <Check className="h-6 w-6 text-green-500" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900">Persona Created!</h3>
-            <p className="text-sm text-gray-500 mt-2">Your new persona is ready to use</p>
+            <h3 className="text-lg font-medium text-gray-900">{contents.successTitle}</h3>
+            <p className="text-sm text-gray-500 mt-2">{contents.subSuccessTitle}</p>
           </div>
         ) : (
           <div className="flex flex-col items-center">
             <div className="relative">
-              {/* Outer spinning ring */}
-              <div className="w-16 h-16 border-4 border-blue-100 rounded-full animate-spin">
-                {/* Blue arc */}
-                <div className="absolute top-0 left-0 w-16 h-16 border-4 border-blue-500 rounded-full animate-spin-fast"
-                  style={{
-                    clip: 'rect(0, 32px, 64px, 0)',
-                    animationDuration: '0.6s'
-                  }}
-                />
-              </div>
+              <Loader2
+                className="animate-spin text-blue-500"
+                size={48}
+                strokeWidth={2.5}
+              />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mt-6">Creating Persona...</h3>
-            <p className="text-sm text-gray-500 mt-2">Please wait a moment</p>
+            <h3 className="text-lg font-medium text-gray-900 mt-6">{contents.title}</h3>
+            <p className="text-sm text-gray-500 mt-2">{contents.subTitle}</p>
           </div>
         )}
       </div>

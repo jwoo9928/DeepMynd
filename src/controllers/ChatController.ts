@@ -53,6 +53,7 @@ export class ChatController {
         name: persona?.name ?? 'DeepMynd'
       });
     }
+
   }
 
   public createChatRoom(persona: Persona): void {
@@ -70,7 +71,7 @@ export class ChatController {
 
     this.chatRooms.set(roomId, newRoom);
     this.changeChatRoom(roomId);
-    eventEmitter.emit(EVENT_TYPES.CREATE_NEW_CHAT, newRoom.roomId);
+    eventEmitter.emit(EVENT_TYPES.UPDATED_CHAT_ROOMS, newRoom.roomId);
   }
 
   private getChatRoom(roomId: string): ChatRoom {
@@ -193,18 +194,19 @@ export class ChatController {
     eventEmitter.emit(EVENT_TYPES.MESSAGE_UPDATE, this.currentMessages);
   }
 
-  public deleteChatRoom(roomId: string): void {
+  public async deleteChatRoom(roomId: string): Promise<void> {
+    eventEmitter.emit(EVENT_TYPES.MESSAGE_UPDATE, []);
     if (this.currentFocustRoomId === roomId) {
       this.currentFocustRoomId = undefined;
       this.currentMessages = [];
       const newCurrentRoom = this.getChatRooms()?.[0];
       if (newCurrentRoom) {
         this.changeChatRoom(newCurrentRoom.roomId);
-      } else {
-        this.createDefaultChatRoom();
       }
     }
     this.chatRooms.delete(roomId);
+    await this.dbController.deleteMessagesByRoom(roomId);
+    eventEmitter.emit(EVENT_TYPES.UPDATED_CHAT_ROOMS);
   }
 
   public pinHandleChatRoom(roomId: string): void {
