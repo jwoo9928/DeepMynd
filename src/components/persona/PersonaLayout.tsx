@@ -1,0 +1,61 @@
+import { Persona } from "../../controllers/types";
+import React, { useState, useRef } from "react";
+import PersonaSelection from "./PersonaSelection";
+import PersonaModal from "./PersonaModal";
+import { EVENT_TYPES, eventEmitter } from "../../controllers/events";
+import { ChatController } from "../../controllers/ChatController";
+import ChatHeader from "../chat/ChatHeader";
+
+interface ChatProps {
+    isSidebarOpen: boolean;
+    setIsSidebarOpen: (isOpen: boolean) => void;
+}
+
+const PersonaLayout = ({
+    isSidebarOpen,
+    setIsSidebarOpen,
+}: ChatProps) => {
+    const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null);
+    const [showPersonaModal, setShowPersonaModal] = useState(false);
+
+    const chatController = useRef(ChatController.getInstance());
+
+    const handlePersonaSelection = (persona: Persona) => {
+        setSelectedPersona(persona);
+        setShowPersonaModal(true);
+    };
+
+    // Start chat with selected persona
+    const startChat = async () => {
+        if (selectedPersona) {
+            chatController.current.createChatRoom(selectedPersona);
+            eventEmitter.emit(EVENT_TYPES.MODEL_INITIALIZING, selectedPersona.model_id)
+            setShowPersonaModal(false);
+        }
+    };
+
+    return (
+        <div className="flex-1 flex flex-col h-full">
+            <ChatHeader toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
+
+            <div className="flex-1 overflow-y-auto bg-gray-50">
+                <PersonaSelection
+                    handlePersonaSelection={handlePersonaSelection}
+                />
+            </div>
+
+            <div className="bg-white border-t border-gray-200 p-4 space-y-2">
+
+            </div>
+
+            <PersonaModal
+                setShowPersonaModal={setShowPersonaModal}
+                selectedPersona={selectedPersona}
+                showPersonaModal={showPersonaModal}
+                startChat={startChat}
+            />
+        </div>
+    )
+}
+
+export default PersonaLayout

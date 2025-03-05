@@ -27,7 +27,7 @@ export class ChatController {
     eventEmitter.on(EVENT_TYPES.GENERATION_COMPLETE, this.handleGenerationComplete.bind(this));
     eventEmitter.on(EVENT_TYPES.IMAGE_GEN_COMPLETE, this.handleGenerationComplete.bind(this));
 
-    this.initRoomsData();
+    this.initRoomsData.bind(this)();
   }
 
   public static getInstance(): ChatController {
@@ -53,6 +53,7 @@ export class ChatController {
         name: persona?.name ?? 'DeepMynd'
       });
     }
+    eventEmitter.emit(EVENT_TYPES.UPDATED_CHAT_ROOMS);
 
   }
 

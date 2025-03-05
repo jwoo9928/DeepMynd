@@ -1,28 +1,48 @@
-import { useEffect, useState, useCallback } from 'react';
-import { EVENT_TYPES, eventEmitter } from '../../controllers/events';
 import Sidebar from '../Sidebar';
 import Chat from './Chat';
 import { Mode, ModeValues } from '../types';
 import ModelCustomization from '../models/ModelCustomization';
 import LoadingProgressModal from './LoadingProgressModal';
-import { useRecoilState, useRecoilValue } from 'recoil';
+import { useRecoilValue } from 'recoil';
 import { uiModeState } from '../../stores/ui.store';
+import PersonaLayout from '../persona/PersonaLayout';
+import { useState } from 'react';
 // import { DBController } from '../../controllers/DBController';
+
+
+const ModeScreen = ({
+  mode = ModeValues.Import,
+  isSidebarOpen,
+  setIsSidebarOpen
+}: {
+  mode: Mode;
+  isSidebarOpen: boolean;
+  setIsSidebarOpen: (isOpen: boolean) => void;
+}) => {
+  switch (mode) {
+    case ModeValues.Chat:
+      return <Chat
+        isSidebarOpen={isSidebarOpen}
+        setIsSidebarOpen={setIsSidebarOpen}
+      />
+    case ModeValues.Create:
+      return <ModelCustomization />;
+    case ModeValues.Import:
+      return <PersonaLayout
+        isSidebarOpen={isSidebarOpen}
+        setIsSidebarOpen={setIsSidebarOpen}
+      />;
+  }
+}
 
 
 
 const ChatLayout = () => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
   const mode = useRecoilValue(uiModeState);
   // DBController.getDatabase().delete()
 
-  useEffect(() => {
-    // eventEmitter.on(EVENT_TYPES.CREATE_NEW_PERSONA, setMode)
 
-    // return () => {
-    //   eventEmitter.off(EVENT_TYPES.CREATE_NEW_PERSONA);
-    // };
-  }, []);
 
   return (
     <div className="h-screen w-full bg-gray-100">
@@ -31,13 +51,7 @@ const ChatLayout = () => {
           isOpen={isSidebarOpen}
           toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
         />
-        {
-          mode == ModeValues.Chat ? <Chat
-            isSidebarOpen={isSidebarOpen}
-            setIsSidebarOpen={setIsSidebarOpen}
-          /> : <ModelCustomization />
-        }
-
+        <ModeScreen mode={mode} isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
       </div>
       <LoadingProgressModal />
     </div>

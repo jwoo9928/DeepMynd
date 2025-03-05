@@ -125,7 +125,7 @@ const PersonaSelection = ({
                 <h3 className="font-bold text-lg mb-1">{persona.name}</h3>
                 <div className="text-xs px-2 py-1 rounded-full">
                   {/* <div className="text-xs px-2 py-1 rounded-full" style={{ backgroundColor: `${persona.color}33` }}> */}
-                  {persona.model_id}
+                  {persona.producer}
                 </div>
               </div>
               <p className="text-gray-600 text-sm text-center">{persona.description}</p>

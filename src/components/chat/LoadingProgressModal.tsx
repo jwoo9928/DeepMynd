@@ -1,12 +1,17 @@
-import { useEffect, useState } from "react";
-import { Bot, X } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Bot, Loader2, X } from "lucide-react";
 import { EVENT_TYPES, eventEmitter } from "../../controllers/events";
+import { useSetRecoilState } from "recoil";
+import { uiModeState } from "../../stores/ui.store";
+import { ModeValues } from "../types";
 
 
 const LoadingProgressModal = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [loading, setLoading] = useState(false);
   const [currentPromoIndex, setCurrentPromoIndex] = useState(0);
+  const setMode = useSetRecoilState(uiModeState);
 
   const promoMessages = [
     "DeepMynd will be your personal assistant! 💝",
@@ -29,7 +34,10 @@ const LoadingProgressModal = () => {
 
     const onClose = () => {
       console.log("onClose")
+      setMode(ModeValues.Chat);
       setIsOpen(false);
+      setLoading(false)
+
     };
 
     const handleProgressUpdate = (data: any) => {
@@ -49,6 +57,14 @@ const LoadingProgressModal = () => {
       eventEmitter.off(EVENT_TYPES.MODEL_READY, onClose);
     };
   }, [isOpen]);
+
+  useEffect(() => {
+    if (progress === 100) {
+      setLoading(false)
+    } else {
+      setLoading(true)
+    }
+  }, [progress])
 
   if (!isOpen) return null;
 
@@ -74,7 +90,7 @@ const LoadingProgressModal = () => {
             Please wait while we load your AI friend
           </p>
 
-          <div className="bg-gray-50 dark:bg-gray-800/80 rounded-lg p-5 shadow-inner">
+          {loading ? <div className="bg-gray-50 dark:bg-gray-800/80 rounded-lg p-5 shadow-inner">
             <div className="flex justify-between text-sm mb-2">
               <span className="font-medium text-gray-700 dark:text-gray-300">Loading Model</span>
               <span className="text-blue-500 font-semibold">{Math.round(progress)}%</span>
@@ -85,7 +101,18 @@ const LoadingProgressModal = () => {
                 style={{ width: `${progress}%` }}
               />
             </div>
-          </div>
+          </div> :
+            <div className="flex flex-col items-center">
+              <div className="relative">
+                <Loader2
+                  className="animate-spin text-blue-500"
+                  size={48}
+                  strokeWidth={2.5}
+                />
+              </div>
+            </div>
+          }
+
         </div>
 
         <div className="relative h-24 overflow-hidden mt-8">
@@ -110,4 +137,4 @@ const LoadingProgressModal = () => {
   );
 };
 
-export default LoadingProgressModal;
+export default React.memo(LoadingProgressModal);

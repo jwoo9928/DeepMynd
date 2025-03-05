@@ -5,7 +5,7 @@ import { ModeValues } from "./types";
 import { ChatController } from "../controllers/ChatController";
 import NewChatModal from "./NewChatModal";
 import { ChatRoom } from "../controllers/types";
-import { useSetRecoilState } from "recoil";
+import { useRecoilState, useSetRecoilState } from "recoil";
 import { uiModeState } from "../stores/ui.store";
 import LoadingModal from "./models/LoadingModal";
 
@@ -31,7 +31,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   const [rooms, setRooms] = useState<ChatRoom[]>(chatController.current.getChatRooms());
   const [dropdownOpen, setDropdownOpen] = useState<string | null>(null);
   const isDesktop = window.matchMedia("(min-width: 768px)").matches;
-  const setUIMode = useSetRecoilState(uiModeState);
+  const [uiMode, setUIMode] = useRecoilState(uiModeState);
   const [isRemoveStart, setIsRemoveStart] = useState(false);
   const [isRemoveComplete, setIsRemoveComplete] = useState(false);
 
@@ -73,22 +73,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
     }
   }, [selectedRoomId]);
 
-  const handleSelectModel = useCallback((model: string) => {
-    console.log('Selected model:', model);
-    setIsModalOpen(false);
-  }, []);
-
   const handleCreateModel = useCallback(() => {
     setIsModalOpen(false);
     console.log('Creating new model');
     setUIMode(ModeValues.Create);
-  }, []);
-
-  const onSkip = useCallback(() => {
-    setIsModalOpen(false);
-    console.log('Skipping model selection');
-
-    chatController.current.createDefaultChatRoom();
   }, []);
 
   // 터치 핸들러 수정
@@ -158,6 +146,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
       return;
     }
     setSelectedRoomId(roomId);
+    (uiMode != ModeValues.Chat) && setUIMode(ModeValues.Chat);
     setDropdownOpen(null);
   };
 
@@ -328,9 +317,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
       <NewChatModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSelectModel={handleSelectModel}
         onCreateModel={handleCreateModel}
-        onSkip={onSkip}
       />
 
       <LoadingModal isOpen={isRemoveStart} isComplete={isRemoveComplete} contents={removeContents} />
