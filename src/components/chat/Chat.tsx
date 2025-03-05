@@ -1,4 +1,4 @@
-import { Paperclip, Send } from "lucide-react";
+import { Paperclip, Pause, Send, X } from "lucide-react";
 import { Message, Persona } from "../../controllers/types";
 import ChatHeader from "./ChatHeader";
 import MessageBubble from "./MessageBubble";
@@ -143,17 +143,26 @@ const Chat = ({
                         <Paperclip className="h-4 w-4" />
                     </button>
 
-                    <button
-                        className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-                        onClick={handleSendMessage}
-                        disabled={isGenerating || !inputValue.trim() || showPersonaSelection}
-                    >
-                        <Send className="h-5 w-5" />
-                    </button>
+                    {isGenerating ? (
+                        <button
+                            className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors duration-200"
+                            onClick={() => chatController.current.stopGeneration()}
+                        >
+                            <Pause className="h-5 w-5" />
+                        </button>
+                    ) : (
+                        <button
+                            className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                            onClick={handleSendMessage}
+                            disabled={!inputValue.trim() || showPersonaSelection}
+                        >
+                            <Send className="h-5 w-5" />
+                        </button>
+                    )}
                 </div>
 
                 {/* Boost Thinking toggle button - only shown when chat is active */}
-                {!showPersonaSelection && (
+                {/* {!showPersonaSelection && (
                     <button
                         onClick={() => { }}//setBoost(prev => !prev)}
                         className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors duration-200 ${true //boost
@@ -163,7 +172,7 @@ const Chat = ({
                     >
                         Boost Thinking
                     </button>
-                )}
+                )} */}
             </div>
 
             <PersonaModal

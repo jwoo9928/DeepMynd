@@ -136,7 +136,7 @@ export class ChatController {
   private handleGenerationUpdate(data: GenerationUpdateData): void {
     const { output, state, format } = data;
     const messages = this.getMessages();
-    console.log("state",state)
+    console.log("state", state)
 
     if (messages.length === 0) {
       return;
@@ -147,7 +147,7 @@ export class ChatController {
 
     const updatedMessage: Message = {
       ...lastMessage,
-      content: format == ModelFormat.GGUF ? output :lastMessage.content + output,
+      content: format == ModelFormat.GGUF ? output : lastMessage.content + output,
       // ...(state === 'answering' && lastMessage.answerIndex === undefined && {
       //   answerIndex: lastMessage.content.length
       // })
@@ -173,6 +173,10 @@ export class ChatController {
       this.dbController.addMessage({ roomId: room.roomId, sender: room.personaId, message: this.currentMessages[this.currentMessages.length - 1], timestamp: Date.now() });
       this.chatRooms.set(roomId, { ...room, messages: [...this.currentMessages] });
     }
+  }
+
+  public stopGeneration(): void {
+    this.llmController.stopGeneration();
   }
 
   public changeChatRoom(roomId: string): void {

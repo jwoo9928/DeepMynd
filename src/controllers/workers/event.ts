@@ -27,5 +27,6 @@ export const WORKER_EVENTS = {
     INTERRUPT: 'interrupt',
     RESET: 'reset',
     GENERATION: 'generation',
+    GENERATION_STOP: 'generation_stop',
 
 }

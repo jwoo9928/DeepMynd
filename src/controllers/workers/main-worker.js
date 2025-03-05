@@ -106,6 +106,12 @@ async function generate(messages) {
   self.postMessage({ type: WORKER_STATUS.GENERATION_COMPLETE });
 }
 
+async function stop_generate() {
+  const [, model] = await TextGenerationPipeline.getInstance();
+  stopping_criteria.interrupt();
+  model.interrupt();
+}
+
 self.addEventListener("message", async (e) => {
   const { type, data } = e.data;
 
@@ -127,6 +133,9 @@ self.addEventListener("message", async (e) => {
     case WORKER_EVENTS.RESET:
       past_key_values_cache = null;
       stopping_criteria.reset();
+      break;
+    case WORKER_EVENTS.GENERATION_STOP:
+      stop_generate();
       break;
   }
 });

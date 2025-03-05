@@ -135,6 +135,14 @@ export class LLMController {
         }
     }
 
+    public stopGeneration() {
+        if (this.focusedWokerId) {
+            const id = this.focusedWokerId;
+            let worker = this.workers.get(id);
+            worker?.postMessage({ type: WORKER_EVENTS.GENERATION_STOP });
+        }
+    }
+
     public getModelIsInitialized() {
         return this.focusedWokerId !== null;
     }
