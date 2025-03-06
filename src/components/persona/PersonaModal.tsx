@@ -1,6 +1,7 @@
 import { Heart, X } from "lucide-react";
 import { Persona } from "../../controllers/types";
 import React from "react";
+import { LLMController } from "../../controllers/LLMController";
 
 interface PersonaModalProps {
     selectedPersona: Persona | null;
@@ -17,6 +18,8 @@ const PersonaModal = ({
     startChat,
 }: PersonaModalProps) => {
     if (!selectedPersona || !showPersonaModal) return null;
+
+    const model = LLMController.getInstance().getModelInfo(selectedPersona?.model_id || "");
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -44,7 +47,7 @@ const PersonaModal = ({
 
                     <h3 className="font-bold text-xl mb-1">{selectedPersona.name}</h3>
                     <span className="text-sm bg-white px-3 py-1 rounded-full shadow-sm">
-                        {selectedPersona.model_type}
+                        {model?.name}
                     </span>
                 </div>
 

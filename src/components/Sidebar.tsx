@@ -74,9 +74,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   }, [selectedRoomId]);
 
   const handleCreateModel = useCallback(() => {
-    setIsModalOpen(false);
-    console.log('Creating new model');
     setUIMode(ModeValues.Create);
+    setIsModalOpen(false);
   }, []);
 
   // 터치 핸들러 수정
@@ -277,7 +276,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
                   <div className="flex items-center space-x-3">
                     <div className="w-12 h-12 bg-gray-300 rounded-full">
                       <img
-                        src={room.image}
+                        src={URL.createObjectURL(room.image)}
                         alt="User"
                         className="w-full h-full object-cover rounded-full"
                       />

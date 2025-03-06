@@ -26,14 +26,14 @@ export class TextGenerationPipeline {
 
 
 export class MLCTextGenePipeline {
-    static model_id = "meta-llama/Llama-3.2-1B"//"onnx-community/DeepSeek-R1-Distill-Qwen-1.5B-ONNX";
+    static model_id = "Llama-3.1-8B-Instruct-q4f32_1-MLC"//"onnx-community/DeepSeek-R1-Distill-Qwen-1.5B-ONNX";
     static model: Promise<MLCEngine> | null = null;
 
     static async getInstance(model_id?: string, progress_callback?: InitProgressCallback): Promise<[MLCEngine]> {
         this.model_id = model_id ?? this.model_id;
         this.model ??= CreateMLCEngine(
             this.model_id,
-            { initProgressCallback: progress_callback }, // engineConfig1 import { Suspense, useEffect } from 'react'
+            { initProgressCallback: progress_callback, }, 
         );
 
         return Promise.all([this.model]);

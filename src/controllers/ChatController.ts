@@ -41,19 +41,25 @@ export class ChatController {
 
   private async initRoomsData(): Promise<void> {
     const roomsData = await this.dbController.getMessagesGroupedByRoom();
+    let firstRoomId = '';
     for (const roomId in roomsData) {
       const roomMessages = roomsData[roomId];
+      if (!firstRoomId) {
+        firstRoomId = roomId;
+      }
       const messages = roomMessages.map((msg) => (msg.message));
       const personaId = roomMessages[1]?.sender;
       const persona = this.personaController.getPersona(personaId);
-      const systemMessage = persona?.system ?? '';
-      this.chatRooms.set(roomId, {
-        messages: messages, roomId, personaId, systemMessage, isPin: false, boostThinking: false,
-        image: '',
-        name: persona?.name ?? 'DeepMynd'
-      });
+      if (persona) {
+        const systemMessage = persona?.system ?? '';
+        this.chatRooms.set(roomId, {
+          messages: messages, roomId, personaId, systemMessage, isPin: false, boostThinking: false,
+          image: persona.avatar,
+          name: persona.name ?? 'DeepMynd'
+        });
+      }
     }
-    eventEmitter.emit(EVENT_TYPES.UPDATED_CHAT_ROOMS);
+    eventEmitter.emit(EVENT_TYPES.UPDATED_CHAT_ROOMS, firstRoomId);
 
   }
 
@@ -66,7 +72,7 @@ export class ChatController {
       systemMessage: persona.system,
       isPin: false,
       boostThinking: false,
-      image: persona?.avatar ?? '/assets/deepmynd_500.jpg',
+      image: persona?.avatar,
       name: persona.name ?? 'DeepMynd'
     };
 
@@ -146,10 +152,10 @@ export class ChatController {
 
     const lastMessageIndex = messages.length - 1;
     const lastMessage = messages[lastMessageIndex];
-
+    console.log("format" ,format)
     const updatedMessage: Message = {
       ...lastMessage,
-      content: format == ModelFormat.GGUF ? output : lastMessage.content + output,
+      content: format?.toLowerCase() == ModelFormat.ONNX ? lastMessage.content + output : output,
       // ...(state === 'answering' && lastMessage.answerIndex === undefined && {
       //   answerIndex: lastMessage.content.length
       // })

@@ -10,7 +10,7 @@ const PersonaSelection = ({
 }) => {
   const personaController = PersonaController.getInstance();
   const [isMobile, setIsMobile] = useState<boolean>(false);
-  const [personas, setPersonas] = useState<Persona[]>([])
+  const [personas, setPersonas] = useState<Persona[]>([]);
 
   // Check if viewport is mobile size
   useEffect(() => {

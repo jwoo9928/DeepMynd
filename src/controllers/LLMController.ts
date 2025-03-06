@@ -42,6 +42,13 @@ export class LLMController {
         return this.model_list;
     }
 
+    public getModelInfo(id: string) {
+        if (!this.model_list) {
+            throw new Error('Model list is not initialized');
+        }
+        return Object.values(this.model_list).flat().find((model) => model.id === id);
+    }
+
     private getWokerker(format: ModelFormat) {
         let model_format = format.toLowerCase();
         if (model_format == ModelFormat.GGUF) {
@@ -60,6 +67,7 @@ export class LLMController {
             if (!this.model_list) {
                 throw new Error('Model list is not initialized');
             }
+            console.log("id",id)
             const model = Object.values(this.model_list).flat().find((model) => model.id === id);
             //@ts-ignore
             const { model_id, format, file } = model;

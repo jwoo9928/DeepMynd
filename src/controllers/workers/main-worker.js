@@ -77,6 +77,7 @@ async function generate(messages) {
         tps,
         numTokens,
         state,
+        format: 'onnx'
       },
     });
   };

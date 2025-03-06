@@ -32,8 +32,14 @@ const LoadingProgressModal = () => {
       setIsOpen(true);
     }
 
-    const onClose = () => {
+    const onClose = async () => {
       console.log("onClose")
+      if (progress < 10) {
+        for (let i = 0; i <= 100; i += 5) {
+          await new Promise(resolve => setTimeout(resolve, 200));
+          setProgress(i);
+        }
+      }
       setMode(ModeValues.Chat);
       setIsOpen(false);
       setLoading(false)
@@ -42,7 +48,8 @@ const LoadingProgressModal = () => {
 
     const handleProgressUpdate = (data: any) => {
       if (data.status === 'progress') {
-        setProgress((data.loaded / data.total) * 100);
+        const progress = data?.loaded ? data.loaded / data.total :  data.progress
+        setProgress(progress * 100);
       }
     };
 

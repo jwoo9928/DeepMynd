@@ -4,7 +4,7 @@ import { EVENT_TYPES, eventEmitter } from './events';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { prebuiltAppConfig } from '@mlc-ai/web-llm';
 import { v4 as uuid } from 'uuid';
-import { ModelFormat, ModelList } from '../components/models/types';
+import { Model, ModelFormat, ModelList } from '../components/models/types';
 import axios from 'axios';
 
 // 채팅 메시지 타입 정의
@@ -25,7 +25,7 @@ interface ImageStore {
 export class DBController extends Dexie {
     private messages!: Table<ChatMessage, number>;
     private personas!: Table<Persona, string>;
-    private images!: Table<ImageStore, string>;
+    private models!: Table<Model, string>;
     private supabase: SupabaseClient;
 
     private static instance: DBController;
@@ -43,10 +43,10 @@ export class DBController extends Dexie {
         this.version(3).stores({
             messages: "++id, roomId, timestamp",
             personas: "id, name, system", // id를 기본 키로 설정
-            images: "id, imageUrl"
+            models: "id, name, format, system",
         });
 
-        this.getModelsList();
+        this.initModelsList();
         this.initPersonas();
     }
 
@@ -105,36 +105,58 @@ export class DBController extends Dexie {
 
     /** 모델 관리 **/
 
-    // 모델 리스트 호출
-    private async getModelsList(): Promise<ModelList> {
-        const { data, error } = await this.supabase.from('models').select('*');
-        if (error) {
-            console.error('Error fetching models:', error);
-            return {
-                onnx: [],
-                gguf: [],
-                mlc: []
-            };
-        }
-        const categorizedModels = data.reduce((acc, model) => {
-            const format = model.format.toLowerCase();
-            if (!acc[format]) {
-                acc[format] = [];
+    //모델 리스트 호출
+    private async initModelsList(): Promise<ModelList> {
+        const models = await this.getModelList();
+        let modelList: ModelList = {
+            gguf: [],
+            mlc: [],
+            onnx: [],
+        };
+        if (models.length > 0) {
+            console.log('Models already loaded:', models);
+            models.forEach((model) => {
+                const format = model.format.toLowerCase().split('-')[0] as ModelFormat;
+                modelList[format].push(model);
+            });
+            console.log('Model list:', modelList);
+        } else {
+            const { data, error } = await this.supabase.from('models').select('*');
+            if (error) {
+                console.error('Error fetching models:', error);
+                return modelList;
             }
-            acc[format].push(model);
-            return acc;
-        }, { onnx: [], gguf: [], mlc: [] });
-        categorizedModels.mlc = categorizedModels.mlc.concat(prebuiltAppConfig.model_list.map((model) => ({
-            id: uuid(),
-            model_id: model.model_id,
-            name: model.model_id.split('/').pop() || '',
-            format: ModelFormat.MLC,
-            size: model.overrides?.context_window_size?.toString() || 'Unknown',
-            description: model.model_lib,
-            vram_required_MB: model.vram_required_MB,
-        })))
-        eventEmitter.emit(EVENT_TYPES.MODELS_UPDATED, categorizedModels);
-        return categorizedModels;
+            const categorizedModels = data.reduce((acc, model) => {
+                const format = model.format.toLowerCase();
+                if (!acc[format]) {
+                    acc[format] = [];
+                }
+                acc[format].push(model);
+                this.models.put(model);
+                return acc;
+            }, { onnx: [], gguf: [], mlc: [] });
+            categorizedModels.mlc = categorizedModels.mlc.concat(prebuiltAppConfig.model_list.map((model) => {
+                const filtered = {
+                    id: uuid(),
+                    model_id: model.model_id,
+                    name: model.model_id.split('/').pop() || '',
+                    format: ModelFormat.MLC,
+                    size: model.overrides?.context_window_size?.toString() || 'Unknown',
+                    description: model.model_lib,
+                    vram_required_MB: model.vram_required_MB,
+                };
+                this.models.put(filtered);
+                return filtered
+            }))
+            modelList = categorizedModels;
+        }
+        eventEmitter.emit(EVENT_TYPES.MODELS_UPDATED, modelList);
+        return modelList;
+    }
+
+    // get model
+    public async getModelList(): Promise<Model[]> {
+        return await this.models.toArray();
     }
 
     /** 📌 페르소나 관련 메서드 **/

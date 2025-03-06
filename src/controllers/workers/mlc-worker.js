@@ -2,7 +2,7 @@ import {
   TextStreamer,
   InterruptableStoppingCriteria,
 } from "@huggingface/transformers";
-import { MLCTextGenePipeline } from "../../pipelines/TextGenerationPipeline";
+import { MLCTextGenePipeline, TextGenerationPipeline } from "../../pipelines/TextGenerationPipeline";
 import { WORKER_STATUS, WORKER_EVENTS } from "./event";
 
 /**
@@ -27,9 +27,11 @@ async function load(data) {
   const { modelId } = data;
   console.log("worker: data", data);
   self.postMessage({ type: WORKER_STATUS.STATUS_LOADING });
-
   await MLCTextGenePipeline.getInstance(modelId, (x) => {
-    self.postMessage(x);
+    self.postMessage({
+      status: "progress",
+      progress: x.progress,
+    });
   });
 
   self.postMessage({ type: WORKER_STATUS.STATUS_READY });
@@ -39,49 +41,41 @@ async function load(data) {
  * This class uses the Singleton pattern to enable lazy-loading of the pipeline
  */
 
-const stopping_criteria = new InterruptableStoppingCriteria();
-let past_key_values_cache = null;
-
 async function generate(messages) {
   const [model] = await MLCTextGenePipeline.getInstance();
 
-  let state = "thinking";
-  let startTime;
-  let numTokens = 0;
-  let tps;
+  self.postMessage({ status: WORKER_STATUS.GENERATION_START });
 
   const callback_function = (output) => {
     self.postMessage({
       type: WORKER_STATUS.GENERATION_UPDATE,
       data: {
         output,
-        tps,
-        numTokens,
-        state,
       },
     });
   };
 
-  self.postMessage({ status: WORKER_STATUS.GENERATION_START });
-
-  const chunks = await engine.chat.completions.create({
+  const chunks = await model.chat.completions.create({
     messages,
     temperature: 1,
     stream: true, // <-- Enable streaming
     stream_options: { include_usage: true },
   });
-
-  // @ts-ignore
   let reply = "";
   for await (const chunk of chunks) {
     reply += chunk.choices[0]?.delta.content || "";
     callback_function(reply);
     if (chunk.usage) {
-      //callback_function(chunk.usage); // only last chunk has usage
+      console.log(chunk.usage); // only last chunk has usage
     }
   }
 
   self.postMessage({ type: WORKER_STATUS.GENERATION_COMPLETE });
+}
+
+async function stop_generate() {
+  const [pipe] = await MLCTextGenePipeline.getInstance();
+  pipe.interruptGenerate();
 }
 
 self.addEventListener("message", async (e) => {
@@ -96,15 +90,15 @@ self.addEventListener("message", async (e) => {
       load(data);
       break;
     case WORKER_EVENTS.GENERATION:
-      stopping_criteria.reset();
       generate(data);
       break;
     case WORKER_EVENTS.INTERRUPT:
-      stopping_criteria.interrupt();
       break;
     case WORKER_EVENTS.RESET:
       past_key_values_cache = null;
-      stopping_criteria.reset();
+      break;
+    case WORKER_EVENTS.GENERATION_STOP:
+      stop_generate();
       break;
   }
 });

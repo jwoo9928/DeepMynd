@@ -13,7 +13,7 @@ export interface ChatRoom {
   lastMessageTimestamp?: number;
   isPin: boolean;
   boostThinking: boolean;
-  image: string,
+  image: Blob,
   name: string,
 }
 
