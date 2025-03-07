@@ -33,7 +33,7 @@ export class MLCTextGenePipeline {
         this.model_id = model_id ?? this.model_id;
         this.model ??= CreateMLCEngine(
             this.model_id,
-            { initProgressCallback: progress_callback, }, 
+            { initProgressCallback: progress_callback, },
         );
 
         return Promise.all([this.model]);

@@ -80,7 +80,7 @@ const PersonaModal = ({
                         //@ts-ignore
                         style={{ backgroundColor: selectedPersona?.color || "#7FAEFF" }}
                     >
-                        Start Chatting!
+                        Start Conversation!
                     </button>
                 </div>
             </div>

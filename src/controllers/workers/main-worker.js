@@ -77,7 +77,7 @@ async function generate(messages) {
         tps,
         numTokens,
         state,
-        format: 'onnx'
+        format: "onnx",
       },
     });
   };
@@ -109,7 +109,6 @@ async function generate(messages) {
 
 async function stop_generate() {
   const [, model] = await TextGenerationPipeline.getInstance();
-  stopping_criteria.interrupt();
   model.interrupt();
 }
 
@@ -125,15 +124,12 @@ self.addEventListener("message", async (e) => {
       load(data);
       break;
     case WORKER_EVENTS.GENERATION:
-      stopping_criteria.reset();
       generate(data);
       break;
     case WORKER_EVENTS.INTERRUPT:
-      stopping_criteria.interrupt();
       break;
     case WORKER_EVENTS.RESET:
       past_key_values_cache = null;
-      stopping_criteria.reset();
       break;
     case WORKER_EVENTS.GENERATION_STOP:
       stop_generate();

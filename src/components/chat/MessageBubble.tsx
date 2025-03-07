@@ -81,12 +81,12 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isLast, isGenera
     <div className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
       {message.role !== 'user' && (
         <div className="mr-2 flex-shrink-0">
-           <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
-              <Bot className="w-4 h-4 text-gray-600" />
-            </div>
+          <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
+            <Bot className="w-4 h-4 text-gray-600" />
+          </div>
         </div>
       )}
-      <div className="flex flex-col items-start">
+      <div>
         <text className="text-xs text-gray-500">{message.role === 'user' ? 'You' : 'DeepMynd'}</text>
         <div
           className={`
