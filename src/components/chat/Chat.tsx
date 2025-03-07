@@ -1,9 +1,8 @@
-import { Paperclip, Pause, Send, X } from "lucide-react";
+import { Paperclip, Pause, Send } from "lucide-react";
 import { Message, Persona } from "../../controllers/types";
 import ChatHeader from "./ChatHeader";
 import MessageBubble from "./MessageBubble";
 import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
-import PersonaSelection from "../persona/PersonaSelection";
 import { EVENT_TYPES, eventEmitter } from "../../controllers/events";
 import { ChatController } from "../../controllers/ChatController";
 
@@ -19,6 +18,7 @@ const Chat = ({
     const [messages, setMessages] = useState<Message[]>([]);
     const [isGenerating, setIsGenerating] = useState(false);
     const [inputValue, setInputValue] = useState('');
+    const [persona, setPersona] = useState<Persona | null>(null);
 
     const chatController = useRef(ChatController.getInstance());
 
@@ -35,6 +35,10 @@ const Chat = ({
                 messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
             }
         }
+    }, []);
+
+    const handlePersona = useCallback((persona: Persona) => {
+        setPersona(persona)
     }, []);
 
 
@@ -65,6 +69,7 @@ const Chat = ({
             setIsGenerating(false);
         };//hikr215
         eventEmitter.on(EVENT_TYPES.MESSAGE_UPDATE, handleMessageReceived);
+        eventEmitter.on(EVENT_TYPES.CHANGE_PERSONA, handlePersona);
         eventEmitter.on(EVENT_TYPES.GENERATION_STARTING, handleGenerationStart);
         eventEmitter.on(EVENT_TYPES.GENERATION_COMPLETE, handleGenerationComplete);
         return () => {
@@ -79,6 +84,7 @@ const Chat = ({
         return messages.map((msg, index) => (
             <MessageBubble
                 key={index}
+                persona={persona}
                 message={msg}
                 isLast={index === messages.length - 1}
                 isGenerating={isGenerating}

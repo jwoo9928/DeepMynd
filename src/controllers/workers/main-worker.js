@@ -45,10 +45,16 @@ let past_key_values_cache = null;
 async function generate(messages) {
   const [tokenizer, model] = await TextGenerationPipeline.getInstance();
 
-  const inputs = tokenizer.apply_chat_template(messages, {
-    add_generation_prompt: true,
-    return_dict: true,
-  });
+  let inputs;
+  try {
+    inputs = tokenizer.apply_chat_template(messages, {
+      add_generation_prompt: true,
+      return_dict: true,
+    });
+  } catch (e) {
+    inputs = messages;
+    return;
+  }
 
   const [, END_THINKING_TOKEN_ID] = tokenizer.encode("<think></think>", {
     add_special_tokens: false,

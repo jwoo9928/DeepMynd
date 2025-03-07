@@ -1,21 +1,20 @@
 import { ChevronUp, ChevronDown, Bot, Loader2 } from "lucide-react";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import LoadingDots from "./LoadingDots";
-import { Message } from "../../controllers/types";
+import { Message, Persona } from "../../controllers/types";
 import ReactMarkdown from "react-markdown";
 
 interface MessageBubbleProps {
   message: Message;
   isLast: boolean;
   isGenerating: boolean;
+  persona: Persona | null
 }
 
-const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isLast, isGenerating }) => {
+const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isLast, isGenerating, persona }) => {
   const [isThinkExpanded, setIsThinkExpanded] = useState(true);
   const [isImageLoading, setIsImageLoading] = useState(true);
-  // const image = PersonaController.focusing.avartar; //Blob
   const isImage = message.content.startsWith('/image:');
-  console.log("message", message);
 
   const renderImageOrMarkdown = () => {
     const imageData = message.content.replace('/image:', '');
@@ -81,29 +80,34 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isLast, isGenera
     <div className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
       {message.role !== 'user' && (
         <div className="mr-2 flex-shrink-0">
-          <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
-            <Bot className="w-4 h-4 text-gray-600" />
-          </div>
+          {persona ? (
+            <img
+              src={URL.createObjectURL(persona.avatar)}
+              alt="Assistant avatar"
+              className="w-8 h-8 rounded-full object-cover"
+            />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
+              <Bot className="w-4 h-4 text-gray-600" />
+            </div>
+          )}
         </div>
       )}
-      <div>
-        <text className="text-xs text-gray-500">{message.role === 'user' ? 'You' : 'DeepMynd'}</text>
-        <div
-          className={`
+      <div
+        className={`
           max-w-[70%] p-3 rounded-2xl transition-all duration-300 ease-in-out
           ${message.role === 'user'
-              ? 'bg-blue-500 text-white rounded-br-none'
-              : 'bg-gray-200 text-gray-900 rounded-tl-none'
-            }
+            ? 'bg-blue-500 text-white rounded-br-none'
+            : 'bg-gray-200 text-gray-900 rounded-tl-none'
+          }
           ${isLast && isGenerating ? 'animate-[bubble_0.5s_ease-in-out_infinite]' : ''}
         `}
-        >
-          {message.role === 'user' ?
-            <ReactMarkdown>
-              {message.content}
-            </ReactMarkdown> : renderContent()}
-          {isLast && isGenerating && <LoadingDots />}
-        </div>
+      >
+        {message.role === 'user' ?
+          <ReactMarkdown>
+            {message.content}
+          </ReactMarkdown> : renderContent()}
+        {isLast && isGenerating && <LoadingDots />}
       </div>
     </div>
   );
@@ -112,5 +116,6 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isLast, isGenera
 export default React.memo(MessageBubble, (prevProps, nextProps) => {
   return prevProps.message.content === nextProps.message.content &&
     prevProps.isLast === nextProps.isLast &&
+    prevProps.persona === nextProps.persona &&
     prevProps.isGenerating === nextProps.isGenerating;
 });

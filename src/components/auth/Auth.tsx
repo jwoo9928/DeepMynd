@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Apple, LogIn } from 'lucide-react';
 import { AuthButton } from './AuthButton';
-// import { useAuth } from '../../hooks/useAuth';
+import { useSetRecoilState } from 'recoil';
+import { uiModeState } from '../../stores/ui.store';
+import { ModeValues } from '../types';
 
 const features = [
     {
@@ -27,7 +29,7 @@ export default function Auth() {
     const [loading, setLoading] = useState(false);
     const [, setCurrentFeature] = useState(0);
     const [showWarning, setShowWarning] = useState(false);
-    // const { session } = useAuth();
+    const setMode = useSetRecoilState(uiModeState);
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -38,7 +40,7 @@ export default function Auth() {
 
     // Redirect if already logged in
     // if (session) {
-    //     return <Navigate to="/init" replace />;
+    //     return <Navigate to="/chat" replace />;
     // }
 
     const handleSocialLogin = async (provider: 'google' | 'apple') => {

@@ -6,6 +6,7 @@ import { prebuiltAppConfig } from '@mlc-ai/web-llm';
 import { v4 as uuid } from 'uuid';
 import { Model, ModelFormat, ModelList } from '../components/models/types';
 import axios from 'axios';
+import { AuthController } from './AuthController';
 
 // 채팅 메시지 타입 정의
 export interface ChatMessage {
@@ -32,22 +33,16 @@ export class DBController extends Dexie {
 
     private constructor() {
         super("ChatDatabase");
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-        const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-        if (!supabaseUrl || !supabaseAnonKey) {
-            throw new Error('Missing Supabase environment variables');
-        }
-
-        this.supabase = createClient(supabaseUrl, supabaseAnonKey);
+        this.supabase = AuthController.getInstance().getSupabase();
         this.version(3).stores({
             messages: "++id, roomId, timestamp",
             personas: "id, name, system", // id를 기본 키로 설정
             models: "id, name, format, system",
         });
 
-        this.initModelsList();
-        this.initPersonas();
+        this.initModelsList.bind(this)();
+        this.initPersonas.bind(this)();
     }
 
     // 싱글턴 패턴으로 DB 인스턴스 관리
@@ -63,7 +58,7 @@ export class DBController extends Dexie {
             const { error } = await this.supabase.auth.signInWithOAuth({
                 provider,
                 options: {
-                    redirectTo: `${window.location.origin}/init`
+                    redirectTo: `${window.location.origin}/chat`
                 }
             });
             if (error) throw error;
@@ -236,5 +231,9 @@ export class DBController extends Dexie {
 
     public async updatePersona(persona: Persona): Promise<number> {
         return await this.personas.update(persona.id, persona);
+    }
+
+    public getSupabase(): SupabaseClient {
+        return this.supabase;
     }
 }

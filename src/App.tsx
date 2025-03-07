@@ -17,6 +17,8 @@ function App() {
           path="/init"
           element={<Initialize />} />
         <Route path="/chat" element={<ChatLayout />} />
+        <Route path="/auth" element={<Auth />} />
+        <Route path="/" element={<Navigate to="/chat" replace />} />
         <Route path="*" element={<Navigate to="/chat" replace />} />
       </Routes>
     </RecoilRoot>
