@@ -187,15 +187,6 @@ export class DBController extends Dexie {
                                     });
                                     const imageBlob = response.data;
 
-                                    // uuid()로 고유 id 생성
-                                    const imageId = uuid();
-
-                                    // images 테이블에 저장 (예: Dexie 인스턴스 db)
-                                    // await this.images.put({
-                                    //     id: imageId,
-                                    //     imageUrl: URL.createObjectURL(imageBlob), // 혹은 저장한 이미지 URL 사용
-                                    // });
-
                                     // persona.avatar 값을 images 테이블의 id로 치환
                                     persona.avatar = imageBlob;
                                 } catch (error) {
@@ -203,6 +194,7 @@ export class DBController extends Dexie {
                                     // 실패 시 기본 이미지 사용
                                     persona.avatar = './assets/default.png';
                                 }
+                                persona.tags = persona.tags.split(',').map((tag: string) => tag.trim());
                             }
 
                             // personaList에 저장 및 추가 로직 호출
