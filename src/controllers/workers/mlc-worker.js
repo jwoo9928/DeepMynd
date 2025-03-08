@@ -66,7 +66,7 @@ async function generate(messages) {
     reply += chunk.choices[0]?.delta.content || "";
     callback_function(reply);
     if (chunk.usage) {
-      console.log(chunk.usage); // only last chunk has usage
+      callback_function(chunk.usage); // only last chunk has usage
     }
   }
 

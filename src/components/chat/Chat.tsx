@@ -56,7 +56,7 @@ const Chat = ({
 
     useEffect(() => {
         const handleMessageReceived = (updatedMessages: Message[]) => {
-            setMessages([...updatedMessages]);
+            updatedMessages.length > 0 ? setMessages([...updatedMessages]): setMessages([]);
             scrollToBottom();
         };
 
@@ -89,7 +89,7 @@ const Chat = ({
                 isGenerating={isGenerating}
             />
         ));
-    }, [messages, isGenerating]);
+    }, [messages, isGenerating, persona]);
 
 
     return (

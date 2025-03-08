@@ -59,7 +59,9 @@ export class ChatController {
         });
       }
     }
+    this.currentMessages = this.chatRooms.get(firstRoomId)?.messages ?? [];
     eventEmitter.emit(EVENT_TYPES.UPDATED_CHAT_ROOMS, firstRoomId);
+    eventEmitter.emit(EVENT_TYPES.MESSAGE_UPDATE, this.currentMessages);
 
   }
 
@@ -214,6 +216,7 @@ export class ChatController {
     this.chatRooms.delete(roomId);
     await this.dbController.deleteMessagesByRoom(roomId);
     eventEmitter.emit(EVENT_TYPES.UPDATED_CHAT_ROOMS);
+    eventEmitter.emit(EVENT_TYPES.MESSAGE_UPDATE, []);
   }
 
   public pinHandleChatRoom(roomId: string): void {

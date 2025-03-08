@@ -53,7 +53,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isLast, isGenera
                 {thinkContent && <div className="relative">
                     <button
                         onClick={() => setIsThinkExpanded(!isThinkExpanded)}
-                        className={`flex items-center gap-2 p-2 bg-gray-700${isThinking ? '/50' : ''} rounded-lg text-sm`}
+                        className={`flex items-center gap-2 p-2 bg-gray-700${(isGenerating && isThinking) ? '' : '/50'} rounded-lg text-sm`}
                     >
                         <div className="flex items-center gap-2 text-gray-300">
                             <Bot className="w-5 h-5 text-gray-500" />
@@ -91,8 +91,12 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isLast, isGenera
                             <Bot className="w-4 h-4 text-gray-600" />
                         </div>
                     )}
+                    {/* <span className="text-sm text-gray bold mb-1 mb-2 mt-1">
+                        {persona?.name ?? 'Assistant'}
+                    </span> */}
                 </div>
             )}
+
             <div
                 className={`
           max-w-[70%] p-3 rounded-2xl transition-all duration-300 ease-in-out

@@ -80,7 +80,7 @@ const PersonaSelection = ({
                   {persona.producer}
                 </div>
               </div>
-              <p className="text-gray-600 text-sm text-center">{persona.description}</p>
+              <p className="text-gray-600 text-sm text-center truncate">{persona.description}</p>
             </div>
           </div>
         ))}

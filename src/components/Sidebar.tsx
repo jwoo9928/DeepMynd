@@ -6,7 +6,7 @@ import { ChatController } from "../controllers/ChatController";
 import NewChatModal from "./NewChatModal";
 import { ChatRoom } from "../controllers/types";
 import LoadingModal from "./models/LoadingModal";
-import { useAtom } from "jotai";
+import { useAtom, useSetAtom } from "jotai";
 import { uiModeAtom } from "../stores/ui.store";
 
 interface SidebarProps {
@@ -36,6 +36,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   const [isRemoveStart, setIsRemoveStart] = useState(false);
   const [isRemoveComplete, setIsRemoveComplete] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const setMode = useSetAtom(uiModeAtom);
   
   // Store dropdown position for proper rendering
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 });
@@ -75,6 +76,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
       if (focusedRoomId !== selectedRoomId) {
         chatController.current.changeChatRoom(selectedRoomId);
       }
+    }
+    if (chatController.current.getChatRooms().length <= 0) {
+      setMode(ModeValues.Import)
     }
   }, [selectedRoomId]);
 

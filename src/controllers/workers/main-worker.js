@@ -114,8 +114,7 @@ async function generate(messages) {
 }
 
 async function stop_generate() {
-  const [, model] = await TextGenerationPipeline.getInstance();
-  model.interrupt();
+  stopping_criteria.interrupt();
 }
 
 self.addEventListener("message", async (e) => {
