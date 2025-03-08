@@ -1,9 +1,9 @@
 import { Bot, ChevronLeft, ChevronRight, PlusCircle, X } from "lucide-react";
 import React, { useCallback, useState } from "react";
 import Modal from 'react-modal';
-import { useSetRecoilState } from "recoil";
 import { Mode, ModeValues } from "./types";
-import { uiModeState } from "../stores/ui.store";
+import { useSetAtom } from "jotai";
+import { uiModeAtom } from "../stores/ui.store";
 
 Modal.setAppElement('#root');
 
@@ -53,7 +53,7 @@ const NewChatModal = ({ isOpen, onClose, onCreateModel }: {
   onClose: () => void;
   onCreateModel: () => void;
 }) => {
-  const setMode = useSetRecoilState<Mode>(uiModeState);
+  const setMode = useSetAtom(uiModeAtom)
 
   const goToSelectPage = useCallback(() => {
     onClose();

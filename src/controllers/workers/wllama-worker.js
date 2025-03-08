@@ -26,7 +26,7 @@ async function load(data) {
   console.log("wllama");
   self.postMessage({ type: WORKER_STATUS.STATUS_LOADING });
 
-  await WLLAMATextGenPipeline.getInstance(modelId, modelfile, (x) => {
+  await WLLAMATextGenPipeline.getInstance('QuantFactory/Qwen2.5-Sex-GGUF', 'Qwen2.5-Sex.Q8_0.gguf', (x) => {
     self.postMessage(x);
   });
 

@@ -3,11 +3,13 @@ import Chat from './Chat';
 import { Mode, ModeValues } from '../types';
 import ModelCustomization from '../models/ModelCustomization';
 import LoadingProgressModal from './LoadingProgressModal';
-import { useRecoilValue } from 'recoil';
-import { uiModeState } from '../../stores/ui.store';
 import PersonaLayout from '../persona/PersonaLayout';
 import { useState } from 'react';
-// import { DBController } from '../../controllers/DBController';
+import WelcomeChat from './WelcomeSequence';
+import { useAtomValue } from 'jotai';
+import { uiModeAtom } from '../../stores/ui.store';
+import { DBController } from '../../controllers/DBController';
+import AppTour from '../tour/AppTour';
 
 
 const ModeScreen = ({
@@ -20,6 +22,8 @@ const ModeScreen = ({
   setIsSidebarOpen: (isOpen: boolean) => void;
 }) => {
   switch (mode) {
+    case ModeValues.Welcome:
+      return <WelcomeChat />
     case ModeValues.Chat:
       return <Chat
         isSidebarOpen={isSidebarOpen}
@@ -39,7 +43,7 @@ const ModeScreen = ({
 
 const ChatLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
-  const mode = useRecoilValue(uiModeState);
+  const mode = useAtomValue(uiModeAtom);
   // DBController.getDatabase().delete()
 
 
@@ -54,6 +58,7 @@ const ChatLayout = () => {
         <ModeScreen mode={mode} isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
       </div>
       <LoadingProgressModal />
+      {/* <AppTour isOpen={showTour} onClose={() => setShowTour(false)} /> */}
     </div>
   );
 };

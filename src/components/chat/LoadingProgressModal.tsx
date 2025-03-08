@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { Bot, Loader2, X } from "lucide-react";
 import { EVENT_TYPES, eventEmitter } from "../../controllers/events";
-import { useSetRecoilState } from "recoil";
-import { uiModeState } from "../../stores/ui.store";
 import { ModeValues } from "../types";
+import { useSetAtom } from "jotai";
+import { uiModeAtom } from "../../stores/ui.store";
 
 
 const LoadingProgressModal = () => {
@@ -11,7 +11,7 @@ const LoadingProgressModal = () => {
   const [progress, setProgress] = useState(0);
   const [loading, setLoading] = useState(false);
   const [currentPromoIndex, setCurrentPromoIndex] = useState(0);
-  const setMode = useSetRecoilState(uiModeState);
+  const setMode = useSetAtom(uiModeAtom);
 
   const promoMessages = [
     "DeepMynd will be your personal assistant! 💝",

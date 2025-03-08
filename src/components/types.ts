@@ -1,6 +1,7 @@
-export type Mode = 'Chat' | 'Create' | 'Import' | 'Edit';
+export type Mode = 'Chat' | 'Create' | 'Import' | 'Edit' | 'Welcome';
 
 export const ModeValues = {
+  Welcome: 'Welcome' as Mode,
   Chat: 'Chat' as Mode,
   Create: 'Create' as Mode,
   Import: 'Import' as Mode,

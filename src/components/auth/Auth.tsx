@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
 import { Apple, LogIn } from 'lucide-react';
-import { AuthButton } from './AuthButton';
-import { useSetRecoilState } from 'recoil';
-import { uiModeState } from '../../stores/ui.store';
-import { ModeValues } from '../types';
+import { AuthButton } from './AuthButton'; 
+import { useSetAtom } from 'jotai';
+import { uiModeAtom } from '../../stores/ui.store';
 
 const features = [
     {
@@ -29,7 +27,7 @@ export default function Auth() {
     const [loading, setLoading] = useState(false);
     const [, setCurrentFeature] = useState(0);
     const [showWarning, setShowWarning] = useState(false);
-    const setMode = useSetRecoilState(uiModeState);
+    const setMode = useSetAtom(uiModeAtom);
 
     useEffect(() => {
         const timer = setInterval(() => {

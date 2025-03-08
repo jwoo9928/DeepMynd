@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Persona } from "../../controllers/types";
 import { PersonaController } from "../../controllers/PersonaController";
 import { EVENT_TYPES, eventEmitter } from "../../controllers/events";
+import LoginPrompt from '../auth/LoginPrompt';
 
 const PersonaSelection = ({
   handlePersonaSelection
@@ -11,6 +12,7 @@ const PersonaSelection = ({
   const personaController = PersonaController.getInstance();
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [personas, setPersonas] = useState<Persona[]>([]);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
   // Check if viewport is mobile size
   useEffect(() => {
@@ -37,6 +39,13 @@ const PersonaSelection = ({
     };
   }, []);
 
+  const handlePersonaClick = (persona: Persona) => {
+    // if (!isLoggedIn) {
+    //   setShowLoginPrompt(true);
+    //   return;
+    // }
+    handlePersonaSelection(persona);
+  };
 
   return (
     <div className="p-4 md:p-6">
@@ -54,7 +63,7 @@ const PersonaSelection = ({
                     `}
             style={{ borderColor: persona.color }}
             onClick={() => {
-              handlePersonaSelection(persona);
+              handlePersonaClick(persona);
             }}
           >
             <div className="p-4">
@@ -76,6 +85,11 @@ const PersonaSelection = ({
           </div>
         ))}
       </div>
+      <LoginPrompt
+        isOpen={showLoginPrompt}
+        onClose={() => setShowLoginPrompt(false)}
+        message="Log in to change or create new Personas! Unlock the full potential of DeepMynd with a personalized experience."
+      />
     </div>
   );
 }

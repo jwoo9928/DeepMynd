@@ -4,7 +4,7 @@ import PersonaSelection from "./PersonaSelection";
 import PersonaModal from "./PersonaModal";
 import { EVENT_TYPES, eventEmitter } from "../../controllers/events";
 import { ChatController } from "../../controllers/ChatController";
-import ChatHeader from "../chat/ChatHeader";
+import ChatHeader from "../chat/atoms/ChatHeader";
 
 interface ChatProps {
     isSidebarOpen: boolean;

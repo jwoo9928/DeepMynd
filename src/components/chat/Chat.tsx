@@ -1,10 +1,11 @@
 import { Paperclip, Pause, Send } from "lucide-react";
 import { Message, Persona } from "../../controllers/types";
-import ChatHeader from "./ChatHeader";
-import MessageBubble from "./MessageBubble";
+import ChatHeader from "./atoms/ChatHeader";
+import MessageBubble from "./atoms/MessageBubble";
 import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { EVENT_TYPES, eventEmitter } from "../../controllers/events";
 import { ChatController } from "../../controllers/ChatController";
+import ChatInput from "./atoms/ChatInput";
 
 interface ChatProps {
     isSidebarOpen: boolean;
@@ -19,11 +20,9 @@ const Chat = ({
     const [isGenerating, setIsGenerating] = useState(false);
     const [inputValue, setInputValue] = useState('');
     const [persona, setPersona] = useState<Persona | null>(null);
-
     const chatController = useRef(ChatController.getInstance());
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    // const [boost, setBoost] = useState<boolean>(false);
 
     const scrollToBottom = useCallback(() => {
         if (messagesEndRef.current) {
@@ -104,42 +103,13 @@ const Chat = ({
                 </div>
             </div>
 
-            <div className="bg-white border-t border-gray-200 p-4 space-y-2">
-                {/* 입력창과 버튼들 */}
-                <div className="flex items-center space-x-2">
-                    <input
-                        value={inputValue}
-                        onChange={(e) => setInputValue(e.target.value)}
-                        onKeyPress={handleKeyPress}
-                        type="text"
-                        placeholder="Type a message..."
-                        className="flex-1 bg-gray-100 rounded-full px-4 py-2 outline-none"
-                    />
-
-                    <button
-                        className="p-2 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors duration-200"
-                    >
-                        <Paperclip className="h-4 w-4" />
-                    </button>
-
-                    {isGenerating ? (
-                        <button
-                            className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors duration-200"
-                            onClick={() => chatController.current.stopGeneration()}
-                        >
-                            <Pause className="h-5 w-5" />
-                        </button>
-                    ) : (
-                        <button
-                            className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-                            onClick={handleSendMessage}
-                            disabled={!inputValue.trim()}
-                        >
-                            <Send className="h-5 w-5" />
-                        </button>
-                    )}
-                </div>
-            </div>
+            <ChatInput
+                inputValue={inputValue}
+                setInputValue={setInputValue}
+                handleKeyPress={handleKeyPress}
+                handleSendMessage={handleSendMessage}
+                isGenerating={isGenerating}
+            />
         </div>
     )
 }

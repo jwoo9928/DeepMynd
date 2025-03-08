@@ -1,14 +1,14 @@
 import React, { useState, useRef, useMemo } from 'react';
-import { ArrowLeft, Upload, X, Bot, Download } from 'lucide-react';
+import { ArrowLeft, Upload, X } from 'lucide-react';
 import { Model, ModelFormat } from './types';
-import { useSetRecoilState } from 'recoil';
-import { uiModeState } from '../../stores/ui.store';
 import { ModeValues } from '../types';
 import { PersonaController } from '../../controllers/PersonaController';
 import { FastAverageColor } from 'fast-average-color';
 import ModelSelectionModal from './ModelSelectionModal';
 import LoadingModal from './LoadingModal';
-import { NewPersona, Persona } from '../../controllers/types';
+import { NewPersona } from '../../controllers/types';
+import { useSetAtom } from 'jotai';
+import { uiModeAtom } from '../../stores/ui.store';
 
 
 const ModelCustomization = () => {
@@ -27,7 +27,7 @@ const ModelCustomization = () => {
 
   const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const setUIMode = useSetRecoilState(uiModeState);
+  const setUIMode = useSetAtom(uiModeAtom);
   const personaController = useRef(PersonaController.getInstance());
   const fastAverageColor = new FastAverageColor();
 
@@ -56,20 +56,6 @@ const ModelCustomization = () => {
       reader.readAsDataURL(file);
     }
   };
-
-  // const simulateDownload = async () => {
-  //   setIsDownloading(true);
-  //   setDownloadProgress(0);
-
-  //   // 다운로드 시뮬레이션
-  //   for (let i = 0; i <= 100; i += 5) {
-  //     await new Promise(resolve => setTimeout(resolve, 200));
-  //     setDownloadProgress(i);
-  //   }
-
-  //   setIsDownloading(false);
-  //   setDownloadProgress(100);
-  // };
 
   const onBack = () => {
     setUIMode(ModeValues.Chat);

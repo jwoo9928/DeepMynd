@@ -5,9 +5,9 @@ import { ModeValues } from "./types";
 import { ChatController } from "../controllers/ChatController";
 import NewChatModal from "./NewChatModal";
 import { ChatRoom } from "../controllers/types";
-import { useRecoilState, useSetRecoilState } from "recoil";
-import { uiModeState } from "../stores/ui.store";
 import LoadingModal from "./models/LoadingModal";
+import { useAtom } from "jotai";
+import { uiModeAtom } from "../stores/ui.store";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -31,7 +31,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   const [rooms, setRooms] = useState<ChatRoom[]>(chatController.current.getChatRooms());
   const [dropdownOpen, setDropdownOpen] = useState<string | null>(null);
   const isDesktop = window.matchMedia("(min-width: 768px)").matches;
-  const [uiMode, setUIMode] = useRecoilState(uiModeState);
+  const [uiMode, setUIMode] = useAtom(uiModeAtom);
   const [isRemoveStart, setIsRemoveStart] = useState(false);
   const [isRemoveComplete, setIsRemoveComplete] = useState(false);
 
