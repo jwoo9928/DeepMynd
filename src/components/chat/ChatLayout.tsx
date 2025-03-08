@@ -58,7 +58,6 @@ const ChatLayout = () => {
         <ModeScreen mode={mode} isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
       </div>
       <LoadingProgressModal />
-      {/* <AppTour isOpen={showTour} onClose={() => setShowTour(false)} /> */}
     </div>
   );
 };

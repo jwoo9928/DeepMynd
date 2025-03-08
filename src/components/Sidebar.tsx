@@ -22,6 +22,7 @@ interface SwipeState {
   currentX: number;
   swiping: boolean;
   direction: 'left' | 'right' | null;
+  revealed: boolean;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
@@ -34,6 +35,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   const [uiMode, setUIMode] = useAtom(uiModeAtom);
   const [isRemoveStart, setIsRemoveStart] = useState(false);
   const [isRemoveComplete, setIsRemoveComplete] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  
+  // Store dropdown position for proper rendering
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 });
 
   const removeContents = useMemo(() => ({
     title: "Removing chat Data",
@@ -47,7 +52,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
     startX: 0,
     currentX: 0,
     swiping: false,
-    direction: null
+    direction: null,
+    revealed: false
   });
 
   const handleCreateRoomEvent = useCallback((roomId: string) => {
@@ -61,11 +67,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
     return () => {
       eventEmitter.off(EVENT_TYPES.UPDATED_CHAT_ROOMS, handleCreateRoomEvent);
     };
-  }, []);
+  }, [handleCreateRoomEvent]);
 
   useEffect(() => {
     let focusedRoomId = chatController.current.getFocusedRoomId();
-    console.log("#0 focusedRoomId: ", focusedRoomId, selectedRoomId);
     if (selectedRoomId && focusedRoomId) {
       if (focusedRoomId !== selectedRoomId) {
         chatController.current.changeChatRoom(selectedRoomId);
@@ -76,18 +81,65 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   const handleCreateModel = useCallback(() => {
     setUIMode(ModeValues.Create);
     setIsModalOpen(false);
-  }, []);
+  }, [setUIMode]);
 
-  // 터치 핸들러 수정
+  // Reset swipe state when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (swipeState.revealed && 
+          swipeState.roomId && 
+          !(e.target as HTMLElement).closest(`[data-room-id="${swipeState.roomId}"]`)) {
+        setSwipeState(prev => ({
+          ...prev,
+          revealed: false,
+          swiping: false,
+          direction: null
+        }));
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [swipeState]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (dropdownOpen && dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+    };
+  }, [dropdownOpen]);
+
   const handleTouchStart = (e: React.TouchEvent, roomId: string) => {
     if (!isDesktop) {
-      setSwipeState({
-        roomId,
-        startX: e.touches[0].clientX,
-        currentX: e.touches[0].clientX,
-        swiping: true,
-        direction: null
-      });
+      // If there's already a revealed item, reset it unless it's the same one
+      if (swipeState.revealed && swipeState.roomId !== roomId) {
+        setSwipeState({
+          roomId,
+          startX: e.touches[0].clientX,
+          currentX: e.touches[0].clientX,
+          swiping: true,
+          direction: null,
+          revealed: false
+        });
+      } else {
+        setSwipeState({
+          roomId,
+          startX: e.touches[0].clientX,
+          currentX: e.touches[0].clientX,
+          swiping: true,
+          direction: null,
+          revealed: swipeState.roomId === roomId ? swipeState.revealed : false
+        });
+      }
     }
   };
 
@@ -107,65 +159,179 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   const handleTouchEnd = () => {
     if (swipeState.swiping && swipeState.roomId) {
       const diff = Math.abs(swipeState.currentX - swipeState.startX);
-      if (diff > SWIPE_THRESHOLD / 2) { // 절반 이상 스와이프 되었을 때 액션 실행
-        if (swipeState.direction === 'left') {
-          handleDeleteRoom(swipeState.roomId);
-        } else if (swipeState.direction === 'right') {
-          handlePinRoom(swipeState.roomId);
+      
+      // If already revealed and swiping in opposite direction, close it
+      if (swipeState.revealed) {
+        const isOppositeDirection = 
+          (swipeState.direction === 'right' && swipeState.revealed && swipeState.direction !== 'right') ||
+          (swipeState.direction === 'left' && swipeState.revealed && swipeState.direction !== 'left');
+        
+        if (isOppositeDirection || diff < SWIPE_THRESHOLD / 3) {
+          setSwipeState(prev => ({
+            ...prev,
+            revealed: false,
+            swiping: false
+          }));
+          return;
         }
       }
-      setSwipeState({
-        roomId: null,
-        startX: 0,
-        currentX: 0,
-        swiping: false,
-        direction: null
-      });
+      
+      // If swiping enough to trigger reveal
+      if (diff > SWIPE_THRESHOLD / 2) {
+        setSwipeState(prev => ({
+          ...prev,
+          revealed: true,
+          swiping: false
+        }));
+      } else {
+        // Not swiped enough, reset
+        setSwipeState(prev => ({
+          ...prev,
+          revealed: false,
+          swiping: false
+        }));
+      }
     }
+  };
+
+  const handleActionButtonClick = (action: 'delete' | 'pin', roomId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (action === 'delete') {
+      handleDeleteRoom(roomId);
+    } else {
+      handlePinRoom(roomId);
+    }
+    
+    // Reset swipe state after action
+    setSwipeState({
+      roomId: null,
+      startX: 0,
+      currentX: 0,
+      swiping: false,
+      direction: null,
+      revealed: false
+    });
   };
 
   const handleDeleteRoom = useCallback(async (roomId: string) => {
-    setIsRemoveStart(true);
-    await chatController.current.deleteChatRoom(roomId);
-    setIsRemoveComplete(true);
-    setTimeout(() => {
-      setIsRemoveStart(false);
-      setIsRemoveComplete(false);
-    }, 2000);
+    try {
+      setIsRemoveStart(true);
+      // Fix: Make sure we properly await the deletion process
+      await chatController.current.deleteChatRoom(roomId);
+      
+      // Update the rooms list after deletion
+      setRooms(chatController.current.getChatRooms());
+      
+      // If deleted room is selected, reset selection
+      if (selectedRoomId === roomId) {
+        setSelectedRoomId(null);
+      }
+      
+      setIsRemoveComplete(true);
+    } catch (error) {
+      console.error("Error deleting chat room:", error);
+    } finally {
+      setTimeout(() => {
+        setIsRemoveStart(false);
+        setIsRemoveComplete(false);
+      }, 2000);
+    }
+  }, [selectedRoomId]);
 
+  const handlePinRoom = useCallback((roomId: string) => {
+    chatController.current.pinHandleChatRoom(roomId);
+    // Refresh rooms after pinning
+    setRooms(chatController.current.getChatRooms());
   }, []);
 
-  const handlePinRoom = (roomId: string) => {
-    chatController.current.pinHandleChatRoom(roomId);
-  };
-
-  const handleSelectRoom = (roomId: string, e: React.MouseEvent) => {
-    // 드롭다운 클릭 시 방 선택 방지
-    if ((e.target as HTMLElement).closest('.dropdown-content')) {
+  const handleSelectRoom = useCallback((roomId: string, e: React.MouseEvent) => {
+    // Don't select if we're clicking on action buttons or if item is revealed
+    if ((e.target as HTMLElement).closest('.action-button') || 
+        (swipeState.revealed && swipeState.roomId === roomId)) {
       return;
     }
+    
+    // Prevent room selection when clicking dropdown
+    if ((e.target as HTMLElement).closest('.dropdown-trigger') || 
+        (e.target as HTMLElement).closest('.dropdown-content')) {
+      return;
+    }
+    
     setSelectedRoomId(roomId);
-    (uiMode != ModeValues.Chat) && setUIMode(ModeValues.Chat);
+    if (uiMode !== ModeValues.Chat) {
+      setUIMode(ModeValues.Chat);
+    }
     setDropdownOpen(null);
+  }, [swipeState, uiMode, setUIMode]);
+
+  // Fix: Calculate and position dropdown correctly
+  const handleOpenDropdown = useCallback((e: React.MouseEvent, roomId: string) => {
+    e.stopPropagation();
+    e.preventDefault();
+    
+    // Get button position
+    const button = e.currentTarget.getBoundingClientRect();
+    
+    // Position dropdown relative to button
+    setDropdownPosition({
+      top: button.bottom - button.top + 5,
+      right: 12
+    });
+    
+    setDropdownOpen(dropdownOpen === roomId ? null : roomId);
+  }, [dropdownOpen]);
+
+  const getSwipePosition = (roomId: string) => {
+    if (swipeState.roomId !== roomId) return 0;
+    
+    if (swipeState.revealed) {
+      return swipeState.direction === 'left' ? -SWIPE_THRESHOLD : SWIPE_THRESHOLD;
+    }
+    
+    if (swipeState.swiping) {
+      // Limit the swipe to threshold
+      return Math.max(
+        Math.min(
+          swipeState.currentX - swipeState.startX,
+          SWIPE_THRESHOLD
+        ),
+        -SWIPE_THRESHOLD
+      );
+    }
+    
+    return 0;
   };
 
-  const renderDropdown = (roomId: string, isPinned: boolean) => {
+  // Memoize the dropdown rendering to prevent unnecessary re-renders
+  const renderDropdown = useCallback((roomId: string, isPinned: boolean) => {
     if (dropdownOpen !== roomId) return null;
 
     return (
       <div
-        className="dropdown-content absolute right-4 top-12 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-30"
+        ref={dropdownRef}
+        className="dropdown-content absolute bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50"
+        style={{ 
+          top: `${dropdownPosition.top}px`, 
+          right: `${dropdownPosition.right}px`,
+          minWidth: '120px'
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         <button
-          onClick={() => handlePinRoom(roomId)}
+          onClick={() => {
+            handlePinRoom(roomId);
+            setDropdownOpen(null);
+          }}
           className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2"
         >
           <Pin className="h-4 w-4" />
           {isPinned ? 'Unpin' : 'Pin'}
         </button>
         <button
-          onClick={() => handleDeleteRoom(roomId)}
+          onClick={() => {
+            handleDeleteRoom(roomId);
+            setDropdownOpen(null);
+          }}
           className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2 text-red-600"
         >
           <Trash2 className="h-4 w-4" />
@@ -173,7 +339,120 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
         </button>
       </div>
     );
-  };
+  }, [dropdownOpen, dropdownPosition, handlePinRoom, handleDeleteRoom]);
+
+  // Memoize room items to prevent unnecessary re-renders
+  const roomItems = useMemo(() => {
+    return rooms.map((room) => {
+      const isPinned = room.isPin;
+      const isSelected = selectedRoomId === room.roomId;
+      const swipeOffset = getSwipePosition(room.roomId);
+      const isRevealed = swipeState.revealed && swipeState.roomId === room.roomId;
+      const direction = swipeState.direction;
+
+      return (
+        <div
+          key={room.roomId}
+          data-room-id={room.roomId}
+          className="relative"
+        >
+          {/* Action buttons container - positioned absolutely */}
+          <div className="absolute inset-y-0 left-0 right-0 flex items-stretch">
+            {/* Left action (Pin) */}
+            <div 
+              className={`
+                flex items-center justify-center
+                bg-blue-500 text-white
+                transition-opacity duration-200
+                action-button
+              `}
+              style={{ 
+                width: `${SWIPE_THRESHOLD}px`,
+                opacity: isRevealed && direction === 'right' ? 1 : 0,
+                position: 'absolute',
+                left: 0,
+                top: 0,
+                bottom: 0
+              }}
+              onClick={(e) => handleActionButtonClick('pin', room.roomId, e)}
+            >
+              <Pin className="h-6 w-6" />
+            </div>
+
+            {/* Right action (Delete) */}
+            <div 
+              className={`
+                flex items-center justify-center
+                bg-red-500 text-white
+                transition-opacity duration-200
+                action-button
+              `}
+              style={{ 
+                width: `${SWIPE_THRESHOLD}px`,
+                opacity: isRevealed && direction === 'left' ? 1 : 0,
+                position: 'absolute',
+                right: 0,
+                top: 0,
+                bottom: 0
+              }}
+              onClick={(e) => handleActionButtonClick('delete', room.roomId, e)}
+            >
+              <Trash2 className="h-6 w-6" />
+            </div>
+          </div>
+
+          {/* Main room item */}
+          <div
+            className={`
+              relative px-4 py-3 cursor-pointer
+              transition-all duration-200 ease-in-out
+              ${isSelected ? 'bg-gray-100' : 'hover:bg-gray-50'}
+            `}
+            style={{
+              transform: `translateX(${swipeOffset}px)`
+            }}
+            onClick={(e) => handleSelectRoom(room.roomId, e)}
+            onTouchStart={(e) => handleTouchStart(e, room.roomId)}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-gray-300 rounded-full">
+                <img
+                  src={URL.createObjectURL(room.image)}
+                  alt="User"
+                  className="w-full h-full object-cover rounded-full"
+                />
+              </div>
+              <div className="flex-1">
+                <div className="flex justify-between items-center">
+                  <h3 className="font-medium flex items-center gap-2">
+                    {isPinned && <Pin className="h-3 w-3" />}
+                    {room.name}
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500">12:30 PM</span>
+                    {isDesktop && (
+                      <button
+                        onClick={(e) => handleOpenDropdown(e, room.roomId)}
+                        className="focus:outline-none z-10 dropdown-trigger"
+                      >
+                        <MoreVertical className="h-4 w-4 text-gray-500 hover:text-gray-700" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <p className="text-sm text-gray-500 truncate">Latest message preview...</p>
+              </div>
+            </div>
+          </div>
+          
+          {/* Fixed positioning of dropdown in the DOM to prevent overlap */}
+          {isDesktop && dropdownOpen === room.roomId && renderDropdown(room.roomId, isPinned)}
+        </div>
+      );
+    });
+  }, [rooms, selectedRoomId, swipeState, handleSelectRoom, handleOpenDropdown, renderDropdown, isDesktop, dropdownOpen]);
 
   return (
     <>
@@ -213,103 +492,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
         </div>
 
         <div className="overflow-y-auto h-[calc(100%-8rem)]">
-          {rooms.map((room) => {
-            const isPinned = room.isPin;
-            const isSelected = selectedRoomId === room.roomId;
-            const swipeOffset = swipeState.roomId === room.roomId
-              ? Math.max(
-                Math.min(
-                  swipeState.currentX - swipeState.startX,
-                  SWIPE_THRESHOLD
-                ),
-                -SWIPE_THRESHOLD
-              )
-              : 0;
-
-            return (
-              <div
-                key={room.roomId}
-                className="relative" // 부모 컨테이너
-              >
-                {/* 왼쪽 스와이프 시 나타날 삭제 버튼 */}
-                <div
-                  className={`
-                    absolute right-0 top-0 bottom-0 
-                    flex items-center justify-center
-                    bg-red-500 text-white
-                    transition-opacity duration-200
-                    ${swipeOffset < -SWIPE_THRESHOLD / 2 ? 'opacity-100' : 'opacity-0'}
-                  `}
-                  style={{ width: `${SWIPE_THRESHOLD}px` }}
-                >
-                  <Trash2 className="h-6 w-6" />
-                </div>
-
-                {/* 오른쪽 스와이프 시 나타날 고정 버튼 */}
-                <div
-                  className={`
-                    absolute left-0 top-0 bottom-0
-                    flex items-center justify-center
-                    bg-blue-500 text-white
-                    transition-opacity duration-200
-                    ${swipeOffset > SWIPE_THRESHOLD / 2 ? 'opacity-100' : 'opacity-0'}
-                  `}
-                  style={{ width: `${SWIPE_THRESHOLD}px` }}
-                >
-                  <Pin className="h-6 w-6" />
-                </div>
-                <div
-                  key={room.roomId}
-                  className={`
-                  relative px-4 py-3 cursor-pointer
-                  transition-all duration-200 ease-in-out
-                  ${isSelected ? 'bg-gray-100' : 'hover:bg-gray-50'}
-                `}
-                  style={{
-                    transform: `translateX(${swipeOffset}px)`
-                  }}
-                  onClick={(e) => handleSelectRoom(room.roomId, e)}
-                  onTouchStart={(e) => handleTouchStart(e, room.roomId)}
-                  onTouchMove={handleTouchMove}
-                  onTouchEnd={handleTouchEnd}
-                >
-                  <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-gray-300 rounded-full">
-                      <img
-                        src={URL.createObjectURL(room.image)}
-                        alt="User"
-                        className="w-full h-full object-cover rounded-full"
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex justify-between items-center">
-                        <h3 className="font-medium flex items-center gap-2">
-                          {isPinned && <Pin className="h-3 w-3" />}
-                          {room.name}
-                        </h3>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-gray-500">12:30 PM</span>
-                          {isDesktop && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setDropdownOpen(dropdownOpen === room.roomId ? null : room.roomId);
-                              }}
-                              className="focus:outline-none"
-                            >
-                              <MoreVertical className="h-4 w-4 text-gray-500 hover:text-gray-700" />
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                      <p className="text-sm text-gray-500 truncate">Latest message preview...</p>
-                    </div>
-                  </div>
-                  {renderDropdown(room.roomId, isPinned)}
-                </div>
-              </div>
-            );
-          })}
+          {roomItems}
         </div>
       </div>
 
@@ -325,14 +508,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
         <div
           className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-10"
           onClick={toggleSidebar}
-        />
-      )}
-
-      {/* 드롭다운 외부 클릭 시 닫기 */}
-      {dropdownOpen && (
-        <div
-          className="fixed inset-0 z-20"
-          onClick={() => setDropdownOpen(null)}
         />
       )}
     </>
