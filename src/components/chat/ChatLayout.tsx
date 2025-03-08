@@ -1,7 +1,6 @@
 import Sidebar from '../Sidebar';
 import Chat from './Chat';
 import { Mode, ModeValues } from '../types';
-import ModelCustomization from '../models/ModelCustomization';
 import LoadingProgressModal from './LoadingProgressModal';
 import PersonaLayout from '../persona/PersonaLayout';
 import { useState } from 'react';
@@ -10,6 +9,7 @@ import { useAtomValue } from 'jotai';
 import { uiModeAtom } from '../../stores/ui.store';
 import { DBController } from '../../controllers/DBController';
 import AppTour from '../tour/AppTour';
+import ModelCustomization from '../persona/ModelCustomization';
 
 
 const ModeScreen = ({
