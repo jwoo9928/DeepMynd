@@ -109,7 +109,6 @@ const ModelCustomization = () => {
   const [profileColor, setProfileColor] = useState<string>('#7FAEFF');
   const [tags, setTags] = useState<string[]>([]);
 
-  const [selectedFormat, setSelectedFormat] = useState<ModelFormat>(ModelFormat.ONNX);
   const [selectedTextModel, setSelectedTextModel] = useState<Model | null>(null);
   const [selectedImageModel, setSelectedImageModel] = useState<Model | null>(null);
   const [isTextModelModalOpen, setIsTextModelModalOpen] = useState(false);
@@ -151,7 +150,7 @@ const ModelCustomization = () => {
   }, [fastAverageColor]);
 
   const onBack = useCallback(() => {
-    setUIMode(ModeValues.Chat);
+    setUIMode(ModeValues.Import);
     setIsLoading(false);
   }, [setUIMode]);
 
@@ -431,21 +430,13 @@ const ModelCustomization = () => {
       <ModelSelectionModal
         isOpen={isTextModelModalOpen}
         onClose={() => setIsTextModelModalOpen(false)}
-        selectedFormat={selectedFormat}
-        setSelectedFormat={setSelectedFormat}
-        selectedModel={selectedTextModel}
-        setSelectedModel={setSelectedTextModel}
-        onConfirm={() => setIsTextModelModalOpen(false)}
+        onConfirm={setSelectedTextModel}
       />
 
       <ModelSelectionModal
         isOpen={isImageModelModalOpen}
         onClose={() => setIsImageModelModalOpen(false)}
-        selectedFormat={selectedFormat}
-        setSelectedFormat={setSelectedFormat}
-        selectedModel={selectedImageModel}
-        setSelectedModel={setSelectedImageModel}
-        onConfirm={() => setIsImageModelModalOpen(false)}
+        onConfirm={setSelectedImageModel}
       />
 
       <LoadingModal isOpen={isLoading} isComplete={false} contents={modalContents} />

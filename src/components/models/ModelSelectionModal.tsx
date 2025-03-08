@@ -6,22 +6,16 @@ import React from "react";
 const ModelSelectionModal = ({
   isOpen,
   onClose,
-  selectedFormat,
-  setSelectedFormat,
-  selectedModel,
-  setSelectedModel,
   onConfirm
 }: {
   isOpen: boolean;
   onClose: () => void;
-  selectedFormat: ModelFormat;
-  setSelectedFormat: (format: ModelFormat) => void;
-  selectedModel: Model | null;
-  setSelectedModel: (model: Model) => void;
-  onConfirm: () => void;
+  onConfirm: (model: Model) => void;
 }) => {
 
   if (!isOpen) return null;
+  const [selectedFormat, setSelectedFormat] = React.useState<ModelFormat>(ModelFormat.ONNX);
+  const [selectedModel, setSelectedModel] = React.useState<Model | null>(null);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -64,7 +58,7 @@ const ModelSelectionModal = ({
             </button>
             <button
               onClick={() => {
-                onConfirm();
+                selectedModel && onConfirm(selectedModel);
                 onClose();
               }}
               disabled={!selectedModel}

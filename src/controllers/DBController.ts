@@ -1,10 +1,10 @@
 import Dexie, { Table } from 'dexie';
 import { Message, Persona } from './types';
 import { EVENT_TYPES, eventEmitter } from './events';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { SupabaseClient } from '@supabase/supabase-js';
 import { prebuiltAppConfig } from '@mlc-ai/web-llm';
 import { v4 as uuid } from 'uuid';
-import { Model, ModelFormat, ModelList } from '../components/models/types';
+import { DeviceType, Model, ModelFormat, ModelList } from '../components/models/types';
 import axios from 'axios';
 import { AuthController } from './AuthController';
 
@@ -15,11 +15,6 @@ export interface ChatMessage {
     sender: string; //persona id
     message: Message;
     timestamp: number;
-}
-
-interface ImageStore {
-    p_id: string;
-    image: Blob;
 }
 
 // Dexie 데이터베이스 설정
@@ -136,9 +131,10 @@ export class DBController extends Dexie {
                     model_id: model.model_id,
                     name: model.model_id.split('/').pop() || '',
                     format: ModelFormat.MLC,
-                    size: model.overrides?.context_window_size?.toString() || 'Unknown',
+                    size: model.overrides?.context_window_size || 0,
                     description: model.model_lib,
-                    vram_required_MB: model.vram_required_MB,
+                    available: DeviceType.CPU,
+                    limit: model.vram_required_MB || 0,
                 };
                 this.models.put(filtered);
                 return filtered
@@ -194,7 +190,7 @@ export class DBController extends Dexie {
                                     // 실패 시 기본 이미지 사용
                                     persona.avatar = './assets/default.png';
                                 }
-                                persona.tags = persona.tags.split(',').map((tag: string) => tag.trim());
+                                persona.tags = persona.tags?.split(',').map((tag: string) => tag.trim()) ?? [];
                             }
 
                             // personaList에 저장 및 추가 로직 호출

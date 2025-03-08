@@ -8,7 +8,6 @@ import WelcomeChat from './WelcomeSequence';
 import { useAtomValue } from 'jotai';
 import { uiModeAtom } from '../../stores/ui.store';
 import { DBController } from '../../controllers/DBController';
-import AppTour from '../tour/AppTour';
 import ModelCustomization from '../persona/ModelCustomization';
 
 

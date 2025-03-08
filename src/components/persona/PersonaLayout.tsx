@@ -26,10 +26,10 @@ const PersonaLayout = ({
     };
 
     // Start chat with selected persona
-    const startChat = async () => {
+    const startChat = async (model_id?: string) => {
         if (selectedPersona) {
             chatController.current.createChatRoom(selectedPersona);
-            eventEmitter.emit(EVENT_TYPES.MODEL_INITIALIZING, selectedPersona.model_id)
+            eventEmitter.emit(EVENT_TYPES.MODEL_INITIALIZING, model_id ?? selectedPersona.model_id)
             setShowPersonaModal(false);
         }
     };
