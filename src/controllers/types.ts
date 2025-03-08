@@ -49,6 +49,7 @@ export interface Persona {
   model_id: string;
   first_message?: string;
   color: string;
+  tags?: string[];
 }
 
 export interface NewPersona {
@@ -62,4 +63,5 @@ export interface NewPersona {
   first_message?: string;
   color: string;
   id?: string;
+  tags?: string[];
 }

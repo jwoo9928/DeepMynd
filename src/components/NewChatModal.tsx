@@ -45,6 +45,7 @@ const NewChatModal = ({ isOpen, onClose, onCreateModel }: {
   }, [onClose, setMode]);
 
   return (
+    //@ts-ignore
     <Modal
       isOpen={isOpen}
       onRequestClose={onClose}

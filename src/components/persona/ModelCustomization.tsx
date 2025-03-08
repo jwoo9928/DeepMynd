@@ -107,7 +107,7 @@ const ModelCustomization = () => {
   const [firstMessage, setFirstMessage] = useState<string>('');
   const [profileImage, setProfileImage] = useState<string>('');
   const [profileColor, setProfileColor] = useState<string>('#7FAEFF');
-  const [features, setFeatures] = useState<string[]>([]);
+  const [tags, setTags] = useState<string[]>([]);
 
   const [selectedFormat, setSelectedFormat] = useState<ModelFormat>(ModelFormat.ONNX);
   const [selectedTextModel, setSelectedTextModel] = useState<Model | null>(null);
@@ -168,7 +168,7 @@ const ModelCustomization = () => {
         model_type: selectedTextModel.format,
         producer: 'local',
         color: profileColor,
-        // features: features
+        tags: tags
       };
       await personaController.current.createNewPersona(persona);
       onBack();
@@ -176,7 +176,7 @@ const ModelCustomization = () => {
       setIsLoading(false);
       // You could add error notifications here
     }
-  }, [name, selectedTextModel, systemInstruction, description, profileColor, firstMessage, profileImage, features, onBack]);
+  }, [name, selectedTextModel, systemInstruction, description, profileColor, firstMessage, profileImage, tags, onBack]);
 
   // Auto-scroll to bottom sections when needed
   const scrollToBottom = useCallback(() => {
@@ -379,7 +379,7 @@ const ModelCustomization = () => {
                     <Hash className="h-4 w-4 mr-2 text-gray-500" />
                     <span className="text-sm text-gray-500">Add tags to highlight your persona's special abilities</span>
                   </div>
-                  <TagInput tags={features} setTags={setFeatures} color={profileColor} />
+                  <TagInput tags={tags} setTags={setTags} color={profileColor} />
                 </div>
               </Section>
 
