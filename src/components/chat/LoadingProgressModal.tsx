@@ -55,12 +55,14 @@ const LoadingProgressModal = () => {
 
     eventEmitter.on(EVENT_TYPES.PROGRESS_UPDATE, handleProgressUpdate);
     eventEmitter.on(EVENT_TYPES.MODEL_INITIALIZING, handleModelInitializing)
+    eventEmitter.on(EVENT_TYPES.MODEL_INITIALIZING_2, handleModelInitializing);
     eventEmitter.on(EVENT_TYPES.MODEL_READY, onClose);
 
     return () => {
       clearInterval(interval);
       eventEmitter.off(EVENT_TYPES.PROGRESS_UPDATE, handleProgressUpdate);
       eventEmitter.off(EVENT_TYPES.MODEL_INITIALIZING, handleModelInitializing)
+      eventEmitter.off(EVENT_TYPES.MODEL_INITIALIZING_2, handleModelInitializing);
       eventEmitter.off(EVENT_TYPES.MODEL_READY, onClose);
     };
   }, [isOpen]);

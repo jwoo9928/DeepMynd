@@ -67,12 +67,11 @@ export class LLMController {
             if (!this.model_list) {
                 throw new Error('Model list is not initialized');
             }
-            console.log("id",id)
             const model = Object.values(this.model_list).flat().find((model) => model.id === id);
             //@ts-ignore
             const { model_id, format, file } = model;
             const worker = this.getWokerker(format);
-            const workerId = uuid();
+            const workerId = model_id;
             this.focusedWokerId = workerId;
             worker.onmessage = (e) => this.eventHandler(workerId, e);
             this.workers.set(workerId, worker);
@@ -131,7 +130,20 @@ export class LLMController {
         this.workers.delete(workerId);
     }
 
-    public async generateText(messages: Message[]) {
+    public async generateText(modelId: string, messages: Message[]) {
+        if (this.workerStates.get(modelId) === 'busy') {
+            //error처리
+            return;
+        }
+        if (this.focusedWokerId !== modelId) {
+            if (this.workers.get(modelId)) {
+                this.focusedWokerId = modelId;
+                this.focused_model_id = modelId;
+            } else {
+                eventEmitter.emit(EVENT_TYPES.MODEL_INITIALIZING_2);
+                await this.initializeModel(modelId)
+            }
+        }
         if (this.focusedWokerId) {
             console.log("generateText testing")
             console.log("이벤트 발생 시 타입:", EVENT_TYPES.GENERATION_STARTING);
@@ -157,6 +169,82 @@ export class LLMController {
 
     public getFocusedModelId() {
         return this.focused_model_id;
+    }
+
+    public async getMemoryUsage() {
+        const memoryStats = {
+            webGPU: {
+                used: 0,
+                total: 0,
+                limits: {}
+            },
+            jsHeap: {
+                used: 0,
+                total: 0,
+                limit: 0
+            }
+        };
+    
+        // WebGPU 관련 정보
+        if ('gpu' in navigator) {
+            try {
+                const adapter = await navigator.gpu.requestAdapter();
+                if (adapter) {
+                    const device = await adapter.requestDevice();
+                    let totalMemoryUsage = 0;
+    
+                    // 메모리 사용량 추적 (예시)
+                    const buffer = device.createBuffer({
+                        size: 1024, // 1KB 예시 버퍼
+                        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC
+                    });
+                    totalMemoryUsage += buffer.size;
+    
+                    const texture = device.createTexture({
+                        size: [256, 256, 1], // 256x256 텍스처
+                        format: 'r8unorm', // 1바이트/픽셀
+                        usage: GPUTextureUsage.STORAGE | GPUTextureUsage.COPY_SRC
+                    });
+                    const bytesPerPixel = 1; // r8unorm 포맷의 경우
+                    const textureSize = texture.width * texture.height * texture.depthOrArrayLayers * bytesPerPixel;
+                    totalMemoryUsage += textureSize;
+    
+                    // WebGPU 메모리 사용량 및 총 용량
+                    memoryStats.webGPU.used = totalMemoryUsage; // 추적된 메모리 사용량 (바이트)
+                    memoryStats.webGPU.total = device.limits.maxBufferSize + device.limits.maxUniformBufferBindingSize + device.limits.maxTextureDimension2D; // WebGPU API에서 총 용량 제공 안 함
+    
+                    // WebGPU 제한 정보
+                    memoryStats.webGPU.limits = {
+                        maxTextureDimension2D: device.limits.maxTextureDimension2D,
+                        maxBufferSize: device.limits.maxBufferSize,
+                        maxUniformBufferBindingSize: device.limits.maxUniformBufferBindingSize
+                    };
+                } else {
+                    memoryStats.webGPU.used = 0;
+                    memoryStats.webGPU.total = 0;
+                }
+            } catch (err) {
+                console.error('WebGPU 어댑터 요청 중 오류:', err);
+                memoryStats.webGPU.used = 0;
+                memoryStats.webGPU.total = 0;
+            }
+        } else {
+            memoryStats.webGPU.used = 0;
+            memoryStats.webGPU.total = 0;
+        }
+    
+        // JS Heap 메모리 관련 정보 (Chrome 등 일부 브라우저에서 지원)
+        if (performance && performance.memory) {
+            memoryStats.jsHeap.used = performance.memory.usedJSHeapSize;
+            memoryStats.jsHeap.total = performance.memory.totalJSHeapSize;
+            memoryStats.jsHeap.limit = performance.memory.jsHeapSizeLimit;
+        } else {
+            memoryStats.jsHeap.used = 0;
+            memoryStats.jsHeap.total = 0;
+            memoryStats.jsHeap.limit = 0;
+        }
+    
+        return memoryStats;
     }
 
 

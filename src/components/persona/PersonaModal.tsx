@@ -28,11 +28,15 @@ const PersonaModal = ({
         }
     }, [selectedPersona])
 
+    useEffect(()=> {
+console.log("selectedModel",selectedModel)
+    },[selectedModel])
+
     if (!selectedPersona || !showPersonaModal) return null;
     
     // Mock available models - replace with your actual model list
 
-    const handleModelChange = () => {
+    const handleStartChat = () => {
         // Implement model change logic
         startChat(selectedModel?.id);
     };
@@ -121,7 +125,7 @@ const PersonaModal = ({
 
                 <div className="p-4 flex justify-center border-t">
                     <button
-                        onClick={handleModelChange}
+                        onClick={handleStartChat}
                         className="px-6 py-2 text-white rounded-full shadow-md transition-all duration-200 hover:shadow-lg hover:scale-105"
                         style={{ backgroundColor: selectedPersona?.color || "#7FAEFF" }}
                     >

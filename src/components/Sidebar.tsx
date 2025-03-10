@@ -226,10 +226,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
       // Update the rooms list after deletion
       setRooms(chatController.current.getChatRooms());
       
-      // If deleted room is selected, reset selection
-      if (selectedRoomId === roomId) {
-        setSelectedRoomId(null);
-      }
+      // // If deleted room is selected, reset selection
+      // if (selectedRoomId === roomId) {
+      //   setSelectedRoomId(null);
+      // }
       
       setIsRemoveComplete(true);
     } catch (error) {
@@ -260,11 +260,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
         (e.target as HTMLElement).closest('.dropdown-content')) {
       return;
     }
-    
-    setSelectedRoomId(roomId);
     if (uiMode !== ModeValues.Chat) {
       setUIMode(ModeValues.Chat);
     }
+    setSelectedRoomId(roomId);
+    chatController.current.changeChatRoom(roomId);
     setDropdownOpen(null);
   }, [swipeState, uiMode, setUIMode]);
 

@@ -53,7 +53,13 @@ export class ChatController {
       if (persona) {
         const systemMessage = persona?.system ?? '';
         this.chatRooms.set(roomId, {
-          messages: messages, roomId, personaId, systemMessage, isPin: false, boostThinking: false,
+          messages: messages,
+          roomId,
+          personaId,
+          systemMessage,
+          isPin: false,
+          boostThinking: false,
+          modelId: persona.model_id,
           image: persona.avatar,
           name: persona.name ?? 'DeepMynd'
         });
@@ -72,6 +78,7 @@ export class ChatController {
       roomId,
       personaId: persona.id, //sender
       systemMessage: persona.system,
+      modelId: persona.model_id,
       isPin: false,
       boostThinking: false,
       image: persona?.avatar,
@@ -131,7 +138,7 @@ export class ChatController {
     if (isImageCall) {
       // this.llmController.generateImage(content);
     } else {
-      this.llmController.generateText(messages);
+      this.llmController.generateText(room.modelId, messages);
     }
   }
 
@@ -198,6 +205,7 @@ export class ChatController {
     if (persona) {
       eventEmitter.emit(EVENT_TYPES.CHANGE_PERSONA, persona);
     }
+    console.log(room.messages)
     this.currentMessages = room.messages;
     this.currentFocustRoomId = room.roomId;
     eventEmitter.emit(EVENT_TYPES.MESSAGE_UPDATE, this.currentMessages);
