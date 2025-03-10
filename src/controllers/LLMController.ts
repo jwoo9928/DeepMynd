@@ -15,7 +15,7 @@ export class LLMController {
     private workers: Map<string, Worker> = new Map();
     private focusedWokerId: string | null = null;
     private workerStates: Map<string, 'idle' | 'busy'> = new Map();
-    private focused_model_id: string | null = null;
+    private focused_worker_id: string | null = null;
     private model_list: ModelList | null = null;
     // private modelStatus: ModelStatus = {
     //     text: null,
@@ -67,18 +67,26 @@ export class LLMController {
             if (!this.model_list) {
                 throw new Error('Model list is not initialized');
             }
+            if (this.workers.get(id)) {
+                this.focused_worker_id = id;
+                setTimeout(() => {
+                    eventEmitter.emit(EVENT_TYPES.MODEL_READY, Array.from(this.workers.keys()));
+                }
+                    , 1000);
+                return
+            }
             const model = Object.values(this.model_list).flat().find((model) => model.id === id);
             //@ts-ignore
             const { model_id, format, file } = model;
             const worker = this.getWokerker(format);
-            const workerId = model_id;
+            const workerId = id;
             this.focusedWokerId = workerId;
             worker.onmessage = (e) => this.eventHandler(workerId, e);
             this.workers.set(workerId, worker);
             this.workerStates.set(workerId, 'idle');
             console.log("worker is initialized")
             worker.postMessage({ type: WORKER_EVENTS.LOAD, data: { modelId: model_id, modelfile: file } });
-            this.focused_model_id = model_id;
+            this.focused_worker_id = id;
         } catch (error) {
             console.log("error", error)
         }
@@ -92,7 +100,8 @@ export class LLMController {
                     console.log("loading")
                     break;
                 case WORKER_STATUS.STATUS_READY: //모델 준비 완료
-                    eventEmitter.emit(EVENT_TYPES.MODEL_READY);
+                    console.log("Array.from(this.workers.keys())" ,Array.from(this.workers.keys()))
+                    eventEmitter.emit(EVENT_TYPES.MODEL_READY, Array.from(this.workers.keys()));
                     break;
                 case WORKER_STATUS.STATUS_ERROR:
                     eventEmitter.emit(EVENT_TYPES.ERROR, data);
@@ -128,9 +137,11 @@ export class LLMController {
         const worker = this.workers.get(workerId);
         worker?.terminate();
         this.workers.delete(workerId);
+        eventEmitter.emit(EVENT_TYPES.MODEL_DELETED, Array.from(this.workers.keys()));
     }
 
     public async generateText(modelId: string, messages: Message[]) {
+        console.log("generateText input id: ", modelId)
         if (this.workerStates.get(modelId) === 'busy') {
             //error처리
             return;
@@ -138,7 +149,7 @@ export class LLMController {
         if (this.focusedWokerId !== modelId) {
             if (this.workers.get(modelId)) {
                 this.focusedWokerId = modelId;
-                this.focused_model_id = modelId;
+                this.focused_worker_id = modelId;
             } else {
                 eventEmitter.emit(EVENT_TYPES.MODEL_INITIALIZING_2);
                 await this.initializeModel(modelId)
@@ -159,6 +170,7 @@ export class LLMController {
         if (this.focusedWokerId) {
             const id = this.focusedWokerId;
             let worker = this.workers.get(id);
+            this.workerStates.set(id, 'idle');
             worker?.postMessage({ type: WORKER_EVENTS.GENERATION_STOP });
         }
     }
@@ -168,7 +180,7 @@ export class LLMController {
     }
 
     public getFocusedModelId() {
-        return this.focused_model_id;
+        return this.focused_worker_id;
     }
 
     public async getMemoryUsage() {

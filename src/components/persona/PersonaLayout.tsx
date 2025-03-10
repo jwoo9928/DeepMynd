@@ -25,6 +25,7 @@ const PersonaLayout = () => {
                 model_id: model_id || selectedPersona.model_id
             }
             if (selectedPersona) {
+                console.log("start chat id",persona.model_id)
                 chatController.current.createChatRoom(persona);
                 eventEmitter.emit(EVENT_TYPES.MODEL_INITIALIZING, persona.model_id);
                 setShowPersonaModal(false);

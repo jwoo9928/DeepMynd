@@ -39,19 +39,19 @@ const ChatLayout = () => {
 
 
   return (
-    <div className="h-screen w-full bg-gray-100">
-      <div className="flex h-full">
-        <Sidebar
-          isOpen={isSidebarOpen}
-          toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
-        />
-        <div className="flex flex-col">
-          <ChatHeader toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
-          <ModeScreen mode={mode} />
-        </div>
-      </div>
-      <LoadingProgressModal />
+<div className="h-screen w-full bg-gray-100">
+  <div className="flex h-full">
+    <Sidebar
+      isOpen={isSidebarOpen}
+      toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+    />
+    <div className="flex-1 flex flex-col">
+      <ChatHeader toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
+      <ModeScreen mode={mode} />
     </div>
+  </div>
+  <LoadingProgressModal />
+</div>
   );
 };
 

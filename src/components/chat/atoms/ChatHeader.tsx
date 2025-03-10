@@ -1,6 +1,7 @@
 import { Menu, MoreVertical, X, Cpu, HardDrive, Info } from "lucide-react";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { LLMController } from "../../../controllers/LLMController";
+import { EVENT_TYPES, eventEmitter } from "../../../controllers/events";
 
 // Model type definition
 interface Model {
@@ -40,17 +41,29 @@ const ChatHeader = ({ toggleSidebar }: {
   const [isMobile, setIsMobile] = useState(false);
   const [showResourceInfo, setShowResourceInfo] = useState<'ram' | 'vram' | null>(null);
 
+  const llmController = useRef<LLMController>(LLMController.getInstance())
+
+  const updateRunningModels = (modelIdList : string[]) => {
+    const models = modelIdList.map(id => llmController.current.getModelInfo(id) as unknown as Model)
+    console.log("models", models)
+    setActiveModels(models)
+  }
+
   // Detect mobile device
   useEffect(() => {
     const checkIfMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
     
+    
     checkIfMobile();
     window.addEventListener('resize', checkIfMobile);
-    
+    eventEmitter.on(EVENT_TYPES.MODEL_READY, updateRunningModels)
+    eventEmitter.on(EVENT_TYPES.MODEL_DELETED, updateRunningModels)
     return () => {
       window.removeEventListener('resize', checkIfMobile);
+      eventEmitter.off(EVENT_TYPES.MODEL_READY, updateRunningModels)
+      eventEmitter.off(EVENT_TYPES.MODEL_DELETED, updateRunningModels)
     };
   }, []);
 
@@ -95,7 +108,7 @@ const ChatHeader = ({ toggleSidebar }: {
 
   // Function to remove a model
   const removeModel = (modelId: string) => {
-    setActiveModels(activeModels.filter(model => model.id !== modelId));
+    llmController.current.deleteWorker(modelId)
     setShowTerminatePrompt(null);
   };
 
@@ -113,16 +126,11 @@ const ChatHeader = ({ toggleSidebar }: {
 
   // Set focus to a model
   const setFocus = (modelId: string) => {
-    setActiveModels(activeModels.map(model => ({
-      ...model,
-      isFocused: model.id === modelId
-    })));
+    // setActiveModels(activeModels.map(model => ({
+    //   ...model,
+    // })));
   };
 
-  // Format GB values
-  const formatGB = (value: number): string => {
-    return value.toFixed(1) + 'GB';
-  };
 
   return (
     <div className="h-16 bg-white border-b border-gray-200 flex items-center px-4 justify-between">
@@ -151,8 +159,9 @@ const ChatHeader = ({ toggleSidebar }: {
             >
               <div 
                 className={`w-10 h-10 rounded-full bg-blue-300 flex items-center justify-center border-2 
-                  ${model.isFocused ? 'border-blue-500' : 'border-white'} 
+                 
                   cursor-pointer relative`}
+                  // ${model.isFocused ? 'border-blue-500' : 'border-white'} 
               >
                 {model.name.charAt(0)}
                 

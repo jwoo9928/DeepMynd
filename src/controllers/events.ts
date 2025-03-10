@@ -7,6 +7,7 @@ export const EVENT_TYPES = {
   MODEL_INITIALIZING_2: 'model_initializing_2',
   MODEL_READY: 'model_ready',
   MODELS_UPDATED: 'models_updated',
+  MODEL_DELETED: 'model_deleted',
 
   //llm
   PROGRESS_UPDATE: 'progress_update',
