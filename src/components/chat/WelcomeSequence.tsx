@@ -1,6 +1,5 @@
 import { Code, PenTool, Coffee, MessageSquare } from "lucide-react";
 import { Message } from "../../controllers/types";
-import ChatHeader from "./atoms/ChatHeader";
 import MessageBubble from "./atoms/MessageBubble";
 import React, { useMemo, useState, useEffect, useRef } from "react";
 import ChatInput from './atoms/ChatInput';
@@ -274,7 +273,6 @@ const WelcomeChat = () => {
 
     return (
         <div className="flex-1 flex flex-col h-full">
-            <ChatHeader toggleSidebar={() => { }} />
 
             <div className="flex-1 overflow-y-auto bg-gray-50">
                 <div className="p-4 space-y-4">

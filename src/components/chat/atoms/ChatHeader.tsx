@@ -1,5 +1,5 @@
 import { Menu, MoreVertical, X, Cpu, HardDrive, Info } from "lucide-react";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { LLMController } from "../../../controllers/LLMController";
 
 // Model type definition
@@ -14,13 +14,13 @@ interface Model {
 // System resources interface
 interface SystemResources {
   ram: {
-    total: number;
-    used: number;
+    total: string;
+    used: string;
     percentage: number;
   };
   vram: {
-    total: number;
-    used: number;
+    total: string;
+    used: string;
     percentage: number;
   };
 }
@@ -54,33 +54,42 @@ const ChatHeader = ({ toggleSidebar }: {
     };
   }, []);
 
+  const trimToFirstNonZero = useCallback((num: number): string => {
+    if (num === 0) return '0'; // 0이면 바로 반환
+
+    let str = num.toString(); // 문자열 변환
+    let match = str.match(/^-?0\.\d*?[1-9]/); // 0이 아닌 첫 숫자까지 찾기
+
+    return match ? parseFloat(match[0]).toString() : num.toString(); // 매칭된 값 반환
+  }, [])
+
   // Simulate fetching system resources
   useEffect(() => {
     // This would be replaced with actual API calls to get system information 1024 ** 3)
-    // const fetchResources = async() => {
-    //    const ramInfo = await LLMController.getInstance().getMemoryUsage()
-    //     // Mock data updates - replace with actual data fetching logic
-    //     setResources(prev => ({
-    //         ram: {
-    //             total:ramInfo.jsHeap.limit / (1024 ** 3),
-    //             used: ramInfo.jsHeap.used / (1024 ** 3),
-    //             percentage: (ramInfo.jsHeap.used / ramInfo.jsHeap.total) * 100,
-    //         },
-    //         vram: {
-    //             total: ramInfo.webGPU.total / (1024 ** 3),
-    //             used: ramInfo.webGPU.used / (1024 ** 3),
-    //             percentage: (ramInfo.jsHeap.used / ramInfo.jsHeap.total) * 100,
-    //         }
-    //     }));
-    // };
+    const fetchResources = async() => {
+       const ramInfo = await LLMController.getInstance().getMemoryUsage()
+        // Mock data updates - replace with actual data fetching logic
+        setResources(({
+            ram: {
+                total:ramInfo.jsHeap.limit.toFixed(0) + 'GB',
+                used: trimToFirstNonZero(ramInfo.jsHeap.used / (1024 ** 3)) + 'GB',
+                percentage: (ramInfo.jsHeap.used / (ramInfo.jsHeap.limit * (1024 ** 3))) * 100,
+            },
+            vram: {
+                total: (ramInfo.webGPU.total / (1024 ** 3)).toFixed(0) + 'GB',
+                used: trimToFirstNonZero(ramInfo.webGPU.used / (1024 ** 3)) + 'GB',
+                percentage: (ramInfo.webGPU.used / ramInfo.webGPU.total) * 100,
+            }
+        }));
+    };
 
-    // const interval = setInterval(() => {
-    //   fetchResources();
-    // }, 5000);
+    const interval = setInterval(() => {
+      fetchResources();
+    }, 5000);
 
-    // fetchResources(); // Initial fetch
+    fetchResources(); // Initial fetch
     
-    // return () => clearInterval(interval);
+    return () => clearInterval(interval);
   }, []);
 
 
@@ -203,7 +212,7 @@ const ChatHeader = ({ toggleSidebar }: {
       {/* Right side with system resources and menu */}
       <div className="flex items-center space-x-4">
         {/* RAM Usage */}
-        {/* <div 
+        <div 
           className="relative"
           onMouseEnter={() => setShowResourceInfo('ram')}
           onMouseLeave={() => setShowResourceInfo(null)}
@@ -211,11 +220,11 @@ const ChatHeader = ({ toggleSidebar }: {
           {resources && <div className="flex items-center space-x-1">
             <Cpu className={`h-5 w-5 ${resources.ram.percentage > 80 ? 'text-red-500' : 'text-gray-600'}`} />
             {!isMobile && (
-              <span className="text-xs font-medium">{formatGB(resources.ram.used)}/{formatGB(resources.ram.total)}</span>
+              <span className="text-xs font-medium">{resources.ram.used}/{resources.ram.total}</span>
             )}
           </div>}
           
-          { RAM usage tooltip }
+           {/* RAM usage tooltip  */}
           {resources && showResourceInfo === 'ram' && (
             <div className="absolute z-10 w-48 bg-white rounded-md shadow-lg -bottom-24 right-0 p-2 text-sm">
               <p className="font-bold">RAM Usage</p>
@@ -231,14 +240,14 @@ const ChatHeader = ({ toggleSidebar }: {
               </div>
               <div className="flex justify-between mt-1">
                 <span className="text-xs">{resources.ram.percentage.toFixed(1)}% used</span>
-                <span className="text-xs">{formatGB(resources.ram.used)} of {formatGB(resources.ram.total)}</span>
+                <span className="text-xs">{resources.ram.used} of {resources.ram.total}</span>
               </div>
             </div>
           )}
-        </div> */}
+        </div>
         
         {/* VRAM Usage */}
-        {/* <div 
+        <div 
           className="relative"
           onMouseEnter={() => setShowResourceInfo('vram')}
           onMouseLeave={() => setShowResourceInfo(null)}
@@ -246,11 +255,11 @@ const ChatHeader = ({ toggleSidebar }: {
           {resources&&<div className="flex items-center space-x-1">
             <HardDrive className={`h-5 w-5 ${resources.vram.percentage > 80 ? 'text-red-500' : 'text-gray-600'}`} />
             {!isMobile && (
-              <span className="text-xs font-medium">{formatGB(resources.vram.used)}/{formatGB(resources.vram.total)}</span>
+              <span className="text-xs font-medium">{resources.vram.used}/{resources.vram.total}</span>
             )}
           </div>}
           
-          {/VRAM usage tooltip }
+          {/* VRAM usage tooltip  */}
           {resources && showResourceInfo === 'vram' && (
             <div className="absolute z-10 w-48 bg-white rounded-md shadow-lg -bottom-24 right-0 p-2 text-sm">
               <p className="font-bold">VRAM Usage</p>
@@ -266,11 +275,11 @@ const ChatHeader = ({ toggleSidebar }: {
               </div>
               <div className="flex justify-between mt-1">
                 <span className="text-xs">{resources.vram.percentage.toFixed(1)}% used</span>
-                <span className="text-xs">{formatGB(resources.vram.used)} of {formatGB(resources.vram.total)}</span>
+                <span className="text-xs">{resources.vram.used} of {resources.vram.total}</span>
               </div>
             </div>
           )}
-        </div> */}
+        </div>
 
         {/* Menu button with dropdown */}
         <div className="relative">

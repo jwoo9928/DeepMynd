@@ -4,17 +4,9 @@ import PersonaSelection from "./PersonaSelection";
 import PersonaModal from "./PersonaModal";
 import { EVENT_TYPES, eventEmitter } from "../../controllers/events";
 import { ChatController } from "../../controllers/ChatController";
-import ChatHeader from "../chat/atoms/ChatHeader";
 
-interface ChatProps {
-    isSidebarOpen: boolean;
-    setIsSidebarOpen: (isOpen: boolean) => void;
-}
 
-const PersonaLayout = ({
-    isSidebarOpen,
-    setIsSidebarOpen,
-}: ChatProps) => {
+const PersonaLayout = () => {
     const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null);
     const [showPersonaModal, setShowPersonaModal] = useState(false);
 
@@ -42,7 +34,6 @@ const PersonaLayout = ({
 
     return (
         <div className="flex-1 flex flex-col h-full">
-            <ChatHeader toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
 
             <div className="flex-1 overflow-y-auto bg-gray-50">
                 <PersonaSelection

@@ -188,6 +188,7 @@ export class LLMController {
         // WebGPU 관련 정보
         if ('gpu' in navigator) {
             try {
+                  //@ts-ignore
                 const adapter = await navigator.gpu.requestAdapter();
                 if (adapter) {
                     const device = await adapter.requestDevice();
@@ -196,6 +197,7 @@ export class LLMController {
                     // 메모리 사용량 추적 (예시)
                     const buffer = device.createBuffer({
                         size: 1024, // 1KB 예시 버퍼
+                        //@ts-ignore
                         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC
                     });
                     totalMemoryUsage += buffer.size;
@@ -203,6 +205,7 @@ export class LLMController {
                     const texture = device.createTexture({
                         size: [256, 256, 1], // 256x256 텍스처
                         format: 'r8unorm', // 1바이트/픽셀
+                          //@ts-ignore
                         usage: GPUTextureUsage.STORAGE | GPUTextureUsage.COPY_SRC
                     });
                     const bytesPerPixel = 1; // r8unorm 포맷의 경우
@@ -211,7 +214,7 @@ export class LLMController {
     
                     // WebGPU 메모리 사용량 및 총 용량
                     memoryStats.webGPU.used = totalMemoryUsage; // 추적된 메모리 사용량 (바이트)
-                    memoryStats.webGPU.total = device.limits.maxBufferSize + device.limits.maxUniformBufferBindingSize + device.limits.maxTextureDimension2D; // WebGPU API에서 총 용량 제공 안 함
+                    memoryStats.webGPU.total = adapter.limits.maxBufferSize + adapter.limits.maxUniformBufferBindingSize + adapter.limits.maxTextureDimension2D; // WebGPU API에서 총 용량 제공 안 함
     
                     // WebGPU 제한 정보
                     memoryStats.webGPU.limits = {
@@ -234,10 +237,14 @@ export class LLMController {
         }
     
         // JS Heap 메모리 관련 정보 (Chrome 등 일부 브라우저에서 지원)
+          //@ts-ignore
         if (performance && performance.memory) {
+              //@ts-ignore
             memoryStats.jsHeap.used = performance.memory.usedJSHeapSize;
-            memoryStats.jsHeap.total = performance.memory.totalJSHeapSize;
-            memoryStats.jsHeap.limit = performance.memory.jsHeapSizeLimit;
+              //@ts-ignore
+            memoryStats.jsHeap.total = navigator.deviceMemory//performance.memory.totalJSHeapSize;
+              //@ts-ignore
+            memoryStats.jsHeap.limit = navigator.deviceMemory//performance.memory.jsHeapSizeLimit;
         } else {
             memoryStats.jsHeap.used = 0;
             memoryStats.jsHeap.total = 0;

@@ -9,32 +9,23 @@ import { useAtomValue } from 'jotai';
 import { uiModeAtom } from '../../stores/ui.store';
 import { DBController } from '../../controllers/DBController';
 import ModelCustomization from '../persona/ModelCustomization';
+import ChatHeader from './atoms/ChatHeader';
 
 
 const ModeScreen = ({
   mode = ModeValues.Import,
-  isSidebarOpen,
-  setIsSidebarOpen
 }: {
   mode: Mode;
-  isSidebarOpen: boolean;
-  setIsSidebarOpen: (isOpen: boolean) => void;
 }) => {
   switch (mode) {
     case ModeValues.Welcome:
       return <WelcomeChat />
     case ModeValues.Chat:
-      return <Chat
-        isSidebarOpen={isSidebarOpen}
-        setIsSidebarOpen={setIsSidebarOpen}
-      />
+      return <Chat />
     case ModeValues.Create:
       return <ModelCustomization />;
     case ModeValues.Import:
-      return <PersonaLayout
-        isSidebarOpen={isSidebarOpen}
-        setIsSidebarOpen={setIsSidebarOpen}
-      />;
+      return <PersonaLayout />
   }
 }
 
@@ -54,7 +45,10 @@ const ChatLayout = () => {
           isOpen={isSidebarOpen}
           toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
         />
-        <ModeScreen mode={mode} isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
+        <div className="flex flex-col">
+          <ChatHeader toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
+          <ModeScreen mode={mode} />
+        </div>
       </div>
       <LoadingProgressModal />
     </div>

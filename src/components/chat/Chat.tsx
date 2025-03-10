@@ -1,21 +1,12 @@
 import { Paperclip, Pause, Send } from "lucide-react";
 import { Message, Persona } from "../../controllers/types";
-import ChatHeader from "./atoms/ChatHeader";
 import MessageBubble from "./atoms/MessageBubble";
 import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { EVENT_TYPES, eventEmitter } from "../../controllers/events";
 import { ChatController } from "../../controllers/ChatController";
 import ChatInput from "./atoms/ChatInput";
 
-interface ChatProps {
-    isSidebarOpen: boolean;
-    setIsSidebarOpen: (isOpen: boolean) => void;
-}
-
-const Chat = ({
-    isSidebarOpen,
-    setIsSidebarOpen,
-}: ChatProps) => {
+const Chat = () => {
     const [messages, setMessages] = useState<Message[]>([]);
     const [isGenerating, setIsGenerating] = useState(false);
     const [inputValue, setInputValue] = useState('');
@@ -94,7 +85,6 @@ const Chat = ({
 
     return (
         <div className="flex-1 flex flex-col h-full">
-            <ChatHeader toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
 
             <div className="flex-1 overflow-y-auto bg-gray-50">
                 <div className="p-4 space-y-4">
