@@ -3,13 +3,14 @@ import { ArrowLeft, Upload, X, Hash, Info } from 'lucide-react';
 import { ModeValues } from '../types';
 import { PersonaController } from '../../controllers/PersonaController';
 import { FastAverageColor } from 'fast-average-color';
-import { NewPersona } from '../../controllers/types';
-import { useSetAtom } from 'jotai';
+import { NewPersona, Persona } from '../../controllers/types';
+import { useAtom, useAtomValue } from 'jotai';
 import { uiModeAtom } from '../../stores/ui.store';
-import { Model, ModelFormat } from '../models/types';
+import { Model } from '../models/types';
 import ModelSelectionModal from '../models/ModelSelectionModal';
 import LoadingModal from '../models/LoadingModal';
 import TourPersona from './atom/TourPersona'; // Import the new TourPersona component
+import { personaForUpdateAtom } from '../../stores/data.store';
 
 // Tag input component
 const TagInput = ({ tags, setTags, color }: { tags: string[], setTags: React.Dispatch<React.SetStateAction<string[]>>, color?: string }) => {
@@ -47,13 +48,13 @@ const TagInput = ({ tags, setTags, color }: { tags: string[], setTags: React.Dis
   };
 
   return (
-    <div 
+    <div
       className="flex flex-wrap items-center gap-2 p-3 border border-gray-200 rounded-lg min-h-12 focus-within:ring-2 focus-within:ring-blue-500 cursor-text"
       onClick={handleContainerClick}
     >
       {tags.map((tag, index) => (
-        <div 
-          key={index} 
+        <div
+          key={index}
           className="flex items-center rounded-full px-3 py-1 text-sm"
           style={{ backgroundColor: `${color || '#7FAEFF'}33` }}
         >
@@ -83,13 +84,13 @@ const TagInput = ({ tags, setTags, color }: { tags: string[], setTags: React.Dis
 };
 
 // Section component for better organization
-const Section = React.memo(({ 
-  title, 
-  children, 
-  id 
-}: { 
-  title: string; 
-  children: React.ReactNode; 
+const Section = React.memo(({
+  title,
+  children,
+  id
+}: {
+  title: string;
+  children: React.ReactNode;
   id?: string;
 }) => (
   <div className="bg-white rounded-lg shadow-sm" id={id}>
@@ -101,10 +102,11 @@ const Section = React.memo(({
 ));
 
 const ModelCustomization = () => {
-  const [name, setName] = useState<string>('');
-  const [description, setDescription] = useState<string>('');
-  const [systemInstruction, setSystemInstruction] = useState<string>('');
-  const [firstMessage, setFirstMessage] = useState<string>('');
+  const [targetPersona, setTargetPersona] = useAtom(personaForUpdateAtom)
+  const [name, setName] = useState<string>(targetPersona?.name ?? '');
+  const [description, setDescription] = useState<string>(targetPersona?.description ?? '');
+  const [systemInstruction, setSystemInstruction] = useState<string>(targetPersona?.system ?? '');
+  const [firstMessage, setFirstMessage] = useState<string>(targetPersona?.first_message ?? '');
   const [profileImage, setProfileImage] = useState<string>('');
   const [profileColor, setProfileColor] = useState<string>('#7FAEFF');
   const [tags, setTags] = useState<string[]>([]);
@@ -115,12 +117,13 @@ const ModelCustomization = () => {
   const [isImageModelModalOpen, setIsImageModelModalOpen] = useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
   const [runTour, setRunTour] = useState(false);
-  
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const formEndRef = useRef<HTMLDivElement>(null);
-  
-  const setUIMode = useSetAtom(uiModeAtom);
+
+  const [mode, setUIMode] = useAtom(uiModeAtom);
   const personaController = useRef(PersonaController.getInstance());
   const fastAverageColor = useMemo(() => new FastAverageColor(), []);
 
@@ -151,25 +154,46 @@ const ModelCustomization = () => {
 
   const onBack = useCallback(() => {
     setUIMode(ModeValues.Import);
-    setIsLoading(false);
+    setTimeout(() => {
+      setIsLoading(false);
+      setIsSuccess(false)
+    }, 1000);
   }, [setUIMode]);
 
   const handleSubmit = useCallback(async () => {
     setIsLoading(true);
     if (name && selectedTextModel && systemInstruction && description && profileColor) {
-      const persona: NewPersona = {
-        name,
-        description,
-        system: systemInstruction,
-        first_message: firstMessage,
-        avatar: profileImage,
-        model_id: selectedTextModel.id,
-        model_type: selectedTextModel.format,
-        producer: 'local',
-        color: profileColor,
-        tags: tags
-      };
-      await personaController.current.createNewPersona(persona);
+      if (mode == ModeValues.Create) {
+        const persona: NewPersona = {
+          name,
+          description,
+          system: systemInstruction,
+          first_message: firstMessage,
+          avatar: profileImage,
+          model_id: selectedTextModel.id,
+          model_type: selectedTextModel.format,
+          producer: 'local',
+          color: profileColor,
+          tags: tags
+        };
+        await personaController.current.createNewPersona(persona);
+      } else if (mode == ModeValues.Edit && targetPersona) {
+        const avatar = await personaController.current.toBlob(profileImage);
+        const persona: Persona = {
+          ...targetPersona,
+          name,
+          description,
+          system: systemInstruction,
+          first_message: firstMessage,
+          avatar: avatar,
+          model_id: selectedTextModel.id,
+          model_type: selectedTextModel.format,
+          color: profileColor,
+          tags: tags
+        }
+        await personaController.current.updatePersona(persona);
+      }
+      setIsSuccess(true)
       onBack();
     } else {
       setIsLoading(false);
@@ -193,17 +217,21 @@ const ModelCustomization = () => {
         setRunTour(true);
         localStorage.setItem('hasSeenPersonaTour', 'true');
       }, 1000);
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+        setTargetPersona(null);
+      };
     }
   }, []);
+
 
   return (
     <div className="flex-1 flex flex-col h-full">
       {/* Tour Component */}
-      <TourPersona 
-        isOpen={runTour} 
-        onClose={() => setRunTour(false)} 
-      />
+      {mode == ModeValues.Create && <TourPersona
+        isOpen={runTour}
+        onClose={() => setRunTour(false)}
+      />}
 
       <div className="flex h-full">
         <div className="flex-1 flex flex-col h-full">
@@ -216,7 +244,7 @@ const ModelCustomization = () => {
               <ArrowLeft className="h-5 w-5" />
               <span>Back to Chat</span>
             </button>
-            
+
             <button
               onClick={() => setRunTour(true)}
               className="flex items-center space-x-1 text-blue-500 hover:text-blue-600"
@@ -356,7 +384,7 @@ const ModelCustomization = () => {
                       className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
-                  
+
                   <div>
                     <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                     <input
@@ -439,7 +467,7 @@ const ModelCustomization = () => {
         onConfirm={setSelectedImageModel}
       />
 
-      <LoadingModal isOpen={isLoading} isComplete={false} contents={modalContents} />
+      <LoadingModal isOpen={isLoading} isComplete={isSuccess} contents={modalContents} />
     </div>
   );
 };

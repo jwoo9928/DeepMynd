@@ -28,8 +28,8 @@ export class AuthController {
         }
 
         this.supabase = createClient(supabaseUrl, supabaseAnonKey);
-        this.initAuthListener();
-        this.restoreSession();
+        // this.initAuthListener();
+        // this.restoreSession();
     }
 
     public static getInstance(): AuthController {

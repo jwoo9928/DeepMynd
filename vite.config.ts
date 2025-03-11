@@ -7,7 +7,7 @@ import crossOriginIsolation from 'vite-plugin-cross-origin-isolation';
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), wasm(),removeConsole(), crossOriginIsolation()],
+  plugins: [react(), wasm(), removeConsole(), crossOriginIsolation()],
   build: {
     rollupOptions: {
       output: {

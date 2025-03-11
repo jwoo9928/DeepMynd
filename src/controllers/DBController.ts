@@ -48,24 +48,6 @@ export class DBController extends Dexie {
         return DBController.instance;
     }
 
-    public async handleSocialLogin(provider: 'google' | 'apple') {
-        try {
-            const { error } = await this.supabase.auth.signInWithOAuth({
-                provider,
-                options: {
-                    redirectTo: `${window.location.origin}/chat`
-                }
-            });
-            if (error) throw error;
-        } catch (error) {
-            console.error('Error:', error);
-            alert('Error signing in. Please try again.');
-            return false;
-        } finally {
-            return true;
-        }
-    };
-
     /** 📌 채팅 메시지 관련 메서드 **/
 
     // 메시지 저장
@@ -111,11 +93,13 @@ export class DBController extends Dexie {
             });
             console.log('Model list:', modelList);
         } else {
+            console.log('Fetching models from Supabase...');
             const { data, error } = await this.supabase.from('models').select('*');
             if (error) {
                 console.error('Error fetching models:', error);
                 return modelList;
             }
+            console.log("data")
             const categorizedModels = data.reduce((acc, model) => {
                 const format = model.format.toLowerCase();
                 if (!acc[format]) {
@@ -168,6 +152,7 @@ export class DBController extends Dexie {
                 if (error) {
                     console.error('Error fetching personas from Supabase:', error.message);
                 }
+                console.log("data", data)
 
                 if (data && data.length > 0) {
                     await Promise.all(

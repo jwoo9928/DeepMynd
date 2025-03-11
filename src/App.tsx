@@ -1,8 +1,14 @@
 import ChatLayout from './components/chat/ChatLayout'
 import { Routes, Route, Navigate } from "react-router-dom";
 import Auth from './components/auth/Auth';
+import { useEffect } from 'react';
+import { DBController } from './controllers/DBController';
 
 function App() {
+  useEffect(() => {
+    DBController.getDatabase();
+    // DBController.getDatabase().delete();
+  }, []);
 
   return (
     <Routes>

@@ -53,6 +53,13 @@ export class PersonaController {
         return persona.id;
     }
 
+    updatePersona(persona: Persona): void {
+        if (this.personaList.has(persona.id)) {
+            this.personaList.set(persona.id, persona);
+            this.dbController.updatePersona(persona);
+        }
+    }
+
     getDefaultPersona(): Persona | undefined {
         const persona = this.personaList.get(this.default_p_id);
         return persona;
@@ -83,6 +90,17 @@ export class PersonaController {
 
     getPersonaList(): Persona[] {
         return Array.from(this.personaList.values());
+    }
+
+    async toBlob(url: string): Promise<Blob> {
+        const byteString = atob(url.split(",")[1]);
+        const mimeType = url.split(",")[0].split(":")[1].split(";")[0];
+        const arrayBuffer = new Uint8Array(byteString.length);
+        for (let i = 0; i < byteString.length; i++) {
+            arrayBuffer[i] = byteString.charCodeAt(i);
+        }
+        const blob = new Blob([arrayBuffer], { type: mimeType });
+        return blob;
     }
 
 

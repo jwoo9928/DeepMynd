@@ -2,6 +2,10 @@ import { Menu, MoreVertical, X, Cpu, HardDrive, Info } from "lucide-react";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { LLMController } from "../../../controllers/LLMController";
 import { EVENT_TYPES, eventEmitter } from "../../../controllers/events";
+import { personaForUpdateAtom } from "../../../stores/data.store";
+import { useSetAtom } from "jotai";
+import { ModeValues } from "../../types";
+import { uiModeAtom } from "../../../stores/ui.store";
 
 // Model type definition
 interface Model {
@@ -40,12 +44,12 @@ const ChatHeader = ({ toggleSidebar }: {
   const [showTerminatePrompt, setShowTerminatePrompt] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [showResourceInfo, setShowResourceInfo] = useState<'ram' | 'vram' | null>(null);
+  const setMode = useSetAtom(uiModeAtom);
 
   const llmController = useRef<LLMController>(LLMController.getInstance())
 
-  const updateRunningModels = (modelIdList : string[]) => {
+  const updateRunningModels = (modelIdList: string[]) => {
     const models = modelIdList.map(id => llmController.current.getModelInfo(id) as unknown as Model)
-    console.log("models", models)
     setActiveModels(models)
   }
 
@@ -54,8 +58,8 @@ const ChatHeader = ({ toggleSidebar }: {
     const checkIfMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
-    
-    
+
+
     checkIfMobile();
     window.addEventListener('resize', checkIfMobile);
     eventEmitter.on(EVENT_TYPES.MODEL_READY, updateRunningModels)
@@ -79,21 +83,21 @@ const ChatHeader = ({ toggleSidebar }: {
   // Simulate fetching system resources
   useEffect(() => {
     // This would be replaced with actual API calls to get system information 1024 ** 3)
-    const fetchResources = async() => {
-       const ramInfo = await LLMController.getInstance().getMemoryUsage()
-        // Mock data updates - replace with actual data fetching logic
-        setResources(({
-            ram: {
-                total:ramInfo.jsHeap.limit.toFixed(0) + 'GB',
-                used: trimToFirstNonZero(ramInfo.jsHeap.used / (1024 ** 3)) + 'GB',
-                percentage: (ramInfo.jsHeap.used / (ramInfo.jsHeap.limit * (1024 ** 3))) * 100,
-            },
-            vram: {
-                total: (ramInfo.webGPU.total / (1024 ** 3)).toFixed(0) + 'GB',
-                used: trimToFirstNonZero(ramInfo.webGPU.used / (1024 ** 3)) + 'GB',
-                percentage: (ramInfo.webGPU.used / ramInfo.webGPU.total) * 100,
-            }
-        }));
+    const fetchResources = async () => {
+      const ramInfo = await LLMController.getInstance().getMemoryUsage()
+      // Mock data updates - replace with actual data fetching logic
+      setResources(({
+        ram: {
+          total: ramInfo.jsHeap.limit.toFixed(0) + 'GB',
+          used: trimToFirstNonZero(ramInfo.jsHeap.used / (1024 ** 3)) + 'GB',
+          percentage: (ramInfo.jsHeap.used / (ramInfo.jsHeap.limit * (1024 ** 3))) * 100,
+        },
+        vram: {
+          total: (ramInfo.webGPU.total / (1024 ** 3)).toFixed(0) + 'GB',
+          used: trimToFirstNonZero(ramInfo.webGPU.used / (1024 ** 3)) + 'GB',
+          percentage: (ramInfo.webGPU.used / ramInfo.webGPU.total) * 100,
+        }
+      }));
     };
 
     const interval = setInterval(() => {
@@ -101,7 +105,7 @@ const ChatHeader = ({ toggleSidebar }: {
     }, 5000);
 
     fetchResources(); // Initial fetch
-    
+
     return () => clearInterval(interval);
   }, []);
 
@@ -131,6 +135,10 @@ const ChatHeader = ({ toggleSidebar }: {
     // })));
   };
 
+  const editPersona = useCallback(() => {
+    setMode(ModeValues.Create) //import
+  }, []);
+
 
   return (
     <div className="h-16 bg-white border-b border-gray-200 flex items-center px-4 justify-between">
@@ -142,7 +150,7 @@ const ChatHeader = ({ toggleSidebar }: {
         >
           <Menu className="h-6 w-6 text-gray-600" />
         </button>
-        
+
         {/* Active models displayed as profile circles - aligned left */}
         <div className="flex -space-x-2">
           {activeModels.map((model) => (
@@ -157,14 +165,14 @@ const ChatHeader = ({ toggleSidebar }: {
                 return () => clearTimeout(timer);
               }}
             >
-              <div 
+              <div
                 className={`w-10 h-10 rounded-full bg-blue-300 flex items-center justify-center border-2 
                  
                   cursor-pointer relative`}
-                  // ${model.isFocused ? 'border-blue-500' : 'border-white'} 
+              // ${model.isFocused ? 'border-blue-500' : 'border-white'} 
               >
                 {model.name.charAt(0)}
-                
+
                 {/* Tooltip on hover */}
                 {hoveredModel === model.id && (
                   <div className="absolute z-10 w-48 bg-white rounded-md shadow-lg top-12 left-0 p-2 text-sm">
@@ -172,10 +180,10 @@ const ChatHeader = ({ toggleSidebar }: {
                     <p className="text-gray-600 text-xs">{model.description}</p>
                   </div>
                 )}
-                
+
                 {/* X button on hover for desktop */}
                 {!isMobile && hoveredModel === model.id && (
-                  <button 
+                  <button
                     className="absolute -top-2 -right-2 bg-gray-100 rounded-full p-1 shadow-sm"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -185,13 +193,13 @@ const ChatHeader = ({ toggleSidebar }: {
                     <X className="h-3 w-3 text-gray-600" />
                   </button>
                 )}
-                
+
                 {/* Terminate prompt for mobile */}
                 {isMobile && showTerminatePrompt === model.id && (
                   <div className="absolute z-20 w-48 bg-white rounded-md shadow-lg top-12 left-0 p-2 text-sm">
                     <p>Terminate this model?</p>
                     <div className="flex justify-end mt-2">
-                      <button 
+                      <button
                         className="px-2 py-1 text-xs bg-gray-200 rounded mr-2"
                         onClick={(e) => {
                           e.stopPropagation();
@@ -200,7 +208,7 @@ const ChatHeader = ({ toggleSidebar }: {
                       >
                         Cancel
                       </button>
-                      <button 
+                      <button
                         className="px-2 py-1 text-xs bg-red-500 text-white rounded"
                         onClick={(e) => {
                           e.stopPropagation();
@@ -221,7 +229,7 @@ const ChatHeader = ({ toggleSidebar }: {
       {/* Right side with system resources and menu */}
       <div className="flex items-center space-x-4">
         {/* RAM Usage */}
-        <div 
+        <div
           className="relative"
           onMouseEnter={() => setShowResourceInfo('ram')}
           onMouseLeave={() => setShowResourceInfo(null)}
@@ -232,18 +240,17 @@ const ChatHeader = ({ toggleSidebar }: {
               <span className="text-xs font-medium">{resources.ram.used}/{resources.ram.total}</span>
             )}
           </div>}
-          
-           {/* RAM usage tooltip  */}
+
+          {/* RAM usage tooltip  */}
           {resources && showResourceInfo === 'ram' && (
             <div className="absolute z-10 w-48 bg-white rounded-md shadow-lg -bottom-24 right-0 p-2 text-sm">
               <p className="font-bold">RAM Usage</p>
               <div className="mt-1 bg-gray-200 rounded-full h-2.5">
-                <div 
-                  className={`h-2.5 rounded-full ${
-                    resources.ram.percentage > 90 ? 'bg-red-600' : 
-                    resources.ram.percentage > 75 ? 'bg-orange-500' : 
-                    'bg-blue-500'
-                  }`} 
+                <div
+                  className={`h-2.5 rounded-full ${resources.ram.percentage > 90 ? 'bg-red-600' :
+                    resources.ram.percentage > 75 ? 'bg-orange-500' :
+                      'bg-blue-500'
+                    }`}
                   style={{ width: `${resources.ram.percentage}%` }}
                 ></div>
               </div>
@@ -254,31 +261,30 @@ const ChatHeader = ({ toggleSidebar }: {
             </div>
           )}
         </div>
-        
+
         {/* VRAM Usage */}
-        <div 
+        <div
           className="relative"
           onMouseEnter={() => setShowResourceInfo('vram')}
           onMouseLeave={() => setShowResourceInfo(null)}
         >
-          {resources&&<div className="flex items-center space-x-1">
+          {resources && <div className="flex items-center space-x-1">
             <HardDrive className={`h-5 w-5 ${resources.vram.percentage > 80 ? 'text-red-500' : 'text-gray-600'}`} />
             {!isMobile && (
               <span className="text-xs font-medium">{resources.vram.used}/{resources.vram.total}</span>
             )}
           </div>}
-          
+
           {/* VRAM usage tooltip  */}
           {resources && showResourceInfo === 'vram' && (
             <div className="absolute z-10 w-48 bg-white rounded-md shadow-lg -bottom-24 right-0 p-2 text-sm">
               <p className="font-bold">VRAM Usage</p>
               <div className="mt-1 bg-gray-200 rounded-full h-2.5">
-                <div 
-                  className={`h-2.5 rounded-full ${
-                    resources.vram.percentage > 90 ? 'bg-red-600' : 
-                    resources.vram.percentage > 75 ? 'bg-orange-500' : 
-                    'bg-green-500'
-                  }`} 
+                <div
+                  className={`h-2.5 rounded-full ${resources.vram.percentage > 90 ? 'bg-red-600' :
+                    resources.vram.percentage > 75 ? 'bg-orange-500' :
+                      'bg-green-500'
+                    }`}
                   style={{ width: `${resources.vram.percentage}%` }}
                 ></div>
               </div>
@@ -295,12 +301,15 @@ const ChatHeader = ({ toggleSidebar }: {
           <button onClick={toggleMenu}>
             <MoreVertical className="h-6 w-6 text-gray-600" />
           </button>
-          
+
           {/* Dropdown menu */}
           {showMenu && (
             <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-20">
               <div className="py-1">
-                <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                <button
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  onClick={editPersona}
+                >
                   Edit Persona
                 </button>
                 <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">

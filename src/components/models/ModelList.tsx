@@ -30,10 +30,17 @@ const ModelListSection = ({
 
   useEffect(() => {
     if (searchQuery != '') {
-      const filtered = AVAILABLE_MODELS[selectedFormat].filter(model =>
-        model.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        model.description?.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+      const lowerSearchTerms = searchQuery.trim().toLowerCase().split(/\s+/);
+      const filtered = AVAILABLE_MODELS[selectedFormat].filter(({ name, description = '' }) => {
+        if (!searchQuery.trim()) return true; // 빈 검색어 처리
+
+        const lowerName = name.toLowerCase();
+        const lowerDesc = description.toLowerCase();
+
+        return lowerSearchTerms.every(term =>
+          lowerName.indexOf(term) !== -1 || lowerDesc.indexOf(term) !== -1
+        );
+      });
       setFilteredModels(filtered);
     } else {
       setFilteredModels(AVAILABLE_MODELS[selectedFormat]);

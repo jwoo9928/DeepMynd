@@ -25,7 +25,7 @@ const PersonaLayout = () => {
                 model_id: model_id || selectedPersona.model_id
             }
             if (selectedPersona) {
-                console.log("start chat id",persona.model_id)
+                console.log("start chat id", persona.model_id);
                 chatController.current.createChatRoom(persona);
                 eventEmitter.emit(EVENT_TYPES.MODEL_INITIALIZING, persona.model_id);
                 setShowPersonaModal(false);
@@ -35,7 +35,6 @@ const PersonaLayout = () => {
 
     return (
         <div className="flex-1 flex flex-col h-full">
-
             <div className="flex-1 overflow-y-auto bg-gray-50">
                 <PersonaSelection
                     handlePersonaSelection={handlePersonaSelection}
@@ -43,7 +42,7 @@ const PersonaLayout = () => {
             </div>
 
             <div className="bg-white border-t border-gray-200 p-4 space-y-2">
-
+                {/* 하단 영역 콘텐츠 */}
             </div>
 
             <PersonaModal

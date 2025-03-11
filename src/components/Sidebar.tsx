@@ -1,4 +1,4 @@
-import { Search, X, Plus, MoreVertical, Pin, Trash2 } from "lucide-react";
+import { Search, X, Plus, MoreVertical, Pin, Trash2, User, Download, LogIn, Bot } from "lucide-react";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { EVENT_TYPES, eventEmitter } from "../controllers/events";
 import { ModeValues } from "./types";
@@ -25,6 +25,15 @@ interface SwipeState {
   revealed: boolean;
 }
 
+interface UserInfo {
+  isLoggedIn: boolean;
+  profile?: {
+    name: string;
+    email: string;
+    avatar: string;
+  };
+}
+
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   const chatController = useRef(ChatController.getInstance());
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -37,7 +46,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   const [isRemoveComplete, setIsRemoveComplete] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const setMode = useSetAtom(uiModeAtom);
-  
+
+  // User information (mock data - replace with actual auth state)
+  const [userInfo, setUserInfo] = useState<UserInfo>({
+    isLoggedIn: false,
+    profile: undefined
+  });
+
   // Store dropdown position for proper rendering
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 });
 
@@ -90,9 +105,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   // Reset swipe state when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (swipeState.revealed && 
-          swipeState.roomId && 
-          !(e.target as HTMLElement).closest(`[data-room-id="${swipeState.roomId}"]`)) {
+      if (swipeState.revealed &&
+        swipeState.roomId &&
+        !(e.target as HTMLElement).closest(`[data-room-id="${swipeState.roomId}"]`)) {
         setSwipeState(prev => ({
           ...prev,
           revealed: false,
@@ -163,13 +178,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   const handleTouchEnd = () => {
     if (swipeState.swiping && swipeState.roomId) {
       const diff = Math.abs(swipeState.currentX - swipeState.startX);
-      
+
       // If already revealed and swiping in opposite direction, close it
       if (swipeState.revealed) {
-        const isOppositeDirection = 
+        const isOppositeDirection =
           (swipeState.direction === 'right' && swipeState.revealed && swipeState.direction !== 'right') ||
           (swipeState.direction === 'left' && swipeState.revealed && swipeState.direction !== 'left');
-        
+
         if (isOppositeDirection || diff < SWIPE_THRESHOLD / 3) {
           setSwipeState(prev => ({
             ...prev,
@@ -179,7 +194,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
           return;
         }
       }
-      
+
       // If swiping enough to trigger reveal
       if (diff > SWIPE_THRESHOLD / 2) {
         setSwipeState(prev => ({
@@ -205,7 +220,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
     } else {
       handlePinRoom(roomId);
     }
-    
+
     // Reset swipe state after action
     setSwipeState({
       roomId: null,
@@ -222,15 +237,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
       setIsRemoveStart(true);
       // Fix: Make sure we properly await the deletion process
       await chatController.current.deleteChatRoom(roomId);
-      
+
       // Update the rooms list after deletion
       setRooms(chatController.current.getChatRooms());
-      
-      // // If deleted room is selected, reset selection
-      // if (selectedRoomId === roomId) {
-      //   setSelectedRoomId(null);
-      // }
-      
+
       setIsRemoveComplete(true);
     } catch (error) {
       console.error("Error deleting chat room:", error);
@@ -250,14 +260,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
 
   const handleSelectRoom = useCallback((roomId: string, e: React.MouseEvent) => {
     // Don't select if we're clicking on action buttons or if item is revealed
-    if ((e.target as HTMLElement).closest('.action-button') || 
-        (swipeState.revealed && swipeState.roomId === roomId)) {
+    if ((e.target as HTMLElement).closest('.action-button') ||
+      (swipeState.revealed && swipeState.roomId === roomId)) {
       return;
     }
-    
+
     // Prevent room selection when clicking dropdown
-    if ((e.target as HTMLElement).closest('.dropdown-trigger') || 
-        (e.target as HTMLElement).closest('.dropdown-content')) {
+    if ((e.target as HTMLElement).closest('.dropdown-trigger') ||
+      (e.target as HTMLElement).closest('.dropdown-content')) {
       return;
     }
     if (uiMode !== ModeValues.Chat) {
@@ -272,26 +282,26 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   const handleOpenDropdown = useCallback((e: React.MouseEvent, roomId: string) => {
     e.stopPropagation();
     e.preventDefault();
-    
+
     // Get button position
     const button = e.currentTarget.getBoundingClientRect();
-    
+
     // Position dropdown relative to button
     setDropdownPosition({
       top: button.bottom - button.top + 5,
       right: 12
     });
-    
+
     setDropdownOpen(dropdownOpen === roomId ? null : roomId);
   }, [dropdownOpen]);
 
   const getSwipePosition = (roomId: string) => {
     if (swipeState.roomId !== roomId) return 0;
-    
+
     if (swipeState.revealed) {
       return swipeState.direction === 'left' ? -SWIPE_THRESHOLD : SWIPE_THRESHOLD;
     }
-    
+
     if (swipeState.swiping) {
       // Limit the swipe to threshold
       return Math.max(
@@ -302,7 +312,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
         -SWIPE_THRESHOLD
       );
     }
-    
+
     return 0;
   };
 
@@ -314,8 +324,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
       <div
         ref={dropdownRef}
         className="dropdown-content absolute bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50"
-        style={{ 
-          top: `${dropdownPosition.top}px`, 
+        style={{
+          top: `${dropdownPosition.top}px`,
           right: `${dropdownPosition.right}px`,
           minWidth: '120px'
         }}
@@ -363,14 +373,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
           {/* Action buttons container - positioned absolutely */}
           <div className="absolute inset-y-0 left-0 right-0 flex items-stretch">
             {/* Left action (Pin) */}
-            <div 
+            <div
               className={`
                 flex items-center justify-center
                 bg-blue-500 text-white
                 transition-opacity duration-200
                 action-button
               `}
-              style={{ 
+              style={{
                 width: `${SWIPE_THRESHOLD}px`,
                 opacity: isRevealed && direction === 'right' ? 1 : 0,
                 position: 'absolute',
@@ -384,14 +394,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
             </div>
 
             {/* Right action (Delete) */}
-            <div 
+            <div
               className={`
                 flex items-center justify-center
                 bg-red-500 text-white
                 transition-opacity duration-200
                 action-button
               `}
-              style={{ 
+              style={{
                 width: `${SWIPE_THRESHOLD}px`,
                 opacity: isRevealed && direction === 'left' ? 1 : 0,
                 position: 'absolute',
@@ -450,7 +460,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
               </div>
             </div>
           </div>
-          
+
           {/* Fixed positioning of dropdown in the DOM to prevent overlap */}
           {isDesktop && dropdownOpen === room.roomId && renderDropdown(room.roomId, isPinned)}
         </div>
@@ -458,13 +468,105 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
     });
   }, [rooms, selectedRoomId, swipeState, handleSelectRoom, handleOpenDropdown, renderDropdown, isDesktop, dropdownOpen]);
 
+  // Empty state component when no chats exist
+  const EmptyChatState = () => (
+    <div className="flex flex-col items-center justify-center h-64 px-6 text-center">
+      <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+        <Bot className="h-8 w-8 text-blue-500" />
+      </div>
+      <h3 className="text-lg font-medium mb-2">No conversations yet</h3>
+      <p className="text-gray-500 text-sm mb-6">Start your first chat with DeepMynd AI assistant</p>
+      <button
+        onClick={() => setIsModalOpen(true)}
+        className="px-4 py-2 bg-blue-500 text-white rounded-lg flex items-center gap-2 hover:bg-blue-600 transition-colors"
+      >
+        <Plus className="h-4 w-4" />
+        Start New Chat
+      </button>
+    </div>
+  );
+
+  // Render user info section
+  const UserInfoSection = () => (
+    <div className="border-t border-gray-200 p-4">
+      {userInfo.isLoggedIn ? (
+        <div className="flex items-center space-x-3">
+          <div className="w-10 h-10 bg-gray-300 rounded-full overflow-hidden">
+            <img
+              src={userInfo.profile?.avatar || "/default-avatar.png"}
+              alt="Profile"
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <div className="flex-1">
+            <h3 className="font-medium text-sm">{userInfo.profile?.name || "User"}</h3>
+            <p className="text-xs text-gray-500">{userInfo.profile?.email || "user@example.com"}</p>
+          </div>
+          <button className="p-2 text-gray-600 hover:text-blue-500 hover:bg-blue-50 rounded-full transition-colors">
+            <MoreVertical className="h-4 w-4" />
+          </button>
+        </div>
+      ) : (
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+              <User className="h-5 w-5 text-gray-500" />
+            </div>
+            <div>
+              <p className="text-sm font-medium">Not logged in</p>
+              <p className="text-xs text-gray-500">Sign in to sync your chats</p>
+            </div>
+          </div>
+          <button
+            className="px-3 py-1.5 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-1"
+          >
+            <LogIn className="h-3.5 w-3.5" />
+            Log In
+          </button>
+        </div>
+      )}
+    </div>
+  );
+
+  // Download apps section
+  const DownloadAppsSection = () => (
+    <div className="border-t border-gray-200 p-4">
+      <div className="bg-gray-50 rounded-lg p-4">
+        <h3 className="text-sm font-medium mb-2">Get DeepMynd apps</h3>
+        <div className="grid grid-cols-3 gap-2 mt-3">
+          <a
+            href="#"
+            className="flex flex-col items-center justify-center p-3 bg-white rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            <Download className="h-5 w-5 text-blue-500 mb-1" />
+            <span className="text-xs">Web App</span>
+          </a>
+          <a
+            href="#"
+            className="flex flex-col items-center justify-center p-3 bg-white rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            <Download className="h-5 w-5 text-blue-500 mb-1" />
+            <span className="text-xs">Windows</span>
+          </a>
+          <a
+            href="#"
+            className="flex flex-col items-center justify-center p-3 bg-white rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            <Download className="h-5 w-5 text-blue-500 mb-1" />
+            <span className="text-xs">macOS</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <>
       <div
         className={`
           fixed md:relative
           ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-          w-80 h-full bg-white border-r border-gray-200
+          w-80 h-full bg-white border-r border-gray-200 flex flex-col
           transition-transform duration-300 ease-in-out z-20
         `}
       >
@@ -495,9 +597,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
           </div>
         </div>
 
-        <div className="overflow-y-auto h-[calc(100%-8rem)]">
-          {roomItems}
+        {/* Chat list with empty state */}
+        <div className="flex-1 overflow-y-auto">
+          {rooms.length > 0 ? roomItems : <EmptyChatState />}
         </div>
+
+        {/* User info section */}
+        <UserInfoSection />
+
+        {/* Download apps section */}
+        {/* <DownloadAppsSection /> */}
       </div>
 
       <NewChatModal

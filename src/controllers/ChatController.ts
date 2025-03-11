@@ -73,8 +73,20 @@ export class ChatController {
 
   public createChatRoom(persona: Persona): void {
     const roomId = uuid();
+    const messages: Message[] = []
+    if (persona.system.trim().length > 0) {
+      messages.push({
+        role: 'system', content: persona.system
+      });
+    }
+    if (persona.first_message && persona.first_message.trim().length > 0) {
+      messages.push({
+        role: 'assistant', content: persona.first_message
+      });
+      this.dbController.addMessage({ roomId, sender: persona.id, message: messages[messages.length - 1], timestamp: Date.now() });
+    }
     const newRoom: ChatRoom = {
-      messages: [],
+      messages: messages,
       roomId,
       personaId: persona.id, //sender
       systemMessage: persona.system,
@@ -82,11 +94,12 @@ export class ChatController {
       isPin: false,
       boostThinking: false,
       image: persona?.avatar,
-      name: persona.name ?? 'UniMynd'
+      name: persona.name ?? 'UniMynd',
     };
 
     this.chatRooms.set(roomId, newRoom);
     this.changeChatRoom(roomId);
+    this.currentMessages = messages;
     eventEmitter.emit(EVENT_TYPES.UPDATED_CHAT_ROOMS, newRoom.roomId);
   }
 
@@ -128,17 +141,14 @@ export class ChatController {
     //@ts-ignore
     const room = this.getChatRoom(this.currentFocustRoomId);
     console.log("#5 room: ", room);
-    const systemMessage: Message = { role: 'system', content: room.systemMessage };
     const userMessage: Message = { role: 'user', content: content };
-    const messages = this.currentMessages.length === 0 ? [systemMessage, userMessage] : [userMessage];
-    console.log("#6 messages: ", messages);
     this.currentMessages.push(userMessage);
     this.dbController.addMessage({ roomId: room.roomId, sender: room.personaId, message: userMessage, timestamp: Date.now() });
     eventEmitter.emit(EVENT_TYPES.MESSAGE_UPDATE, this.currentMessages);
     if (isImageCall) {
       // this.llmController.generateImage(content);
     } else {
-      this.llmController.generateText(room.modelId, messages);
+      this.llmController.generateText(room.modelId, this.currentMessages);
     }
   }
 
