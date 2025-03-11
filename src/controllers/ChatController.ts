@@ -12,7 +12,6 @@ export class ChatController {
   private readonly personaController: PersonaController;
   private readonly dbController: DBController;
   private chatRooms: Map<string, ChatRoom>;
-  private currentMessages: Message[];
   private currentFocustRoomId: string | undefined;
 
   private constructor() {
@@ -20,7 +19,6 @@ export class ChatController {
     this.llmController = LLMController.getInstance();
     this.personaController = PersonaController.getInstance();
     this.dbController = DBController.getDatabase();
-    this.currentMessages = [];
 
     eventEmitter.on(EVENT_TYPES.GENERATION_STARTING, this.handleGenerationStart.bind(this)) //() => console.log("fuckk youuu"))//this.handleGenerationStart.bind(this));
     eventEmitter.on(EVENT_TYPES.GENERATION_UPDATE, this.handleGenerationUpdate.bind(this));
@@ -65,25 +63,25 @@ export class ChatController {
         });
       }
     }
-    this.currentMessages = this.chatRooms.get(firstRoomId)?.messages ?? [];
     eventEmitter.emit(EVENT_TYPES.UPDATED_CHAT_ROOMS, firstRoomId);
-    eventEmitter.emit(EVENT_TYPES.MESSAGE_UPDATE, this.currentMessages);
+    eventEmitter.emit(EVENT_TYPES.MESSAGE_UPDATE, this.chatRooms.get(firstRoomId)?.messages ?? []);
 
   }
 
-  public createChatRoom(persona: Persona): void {
+  public async createChatRoom(persona: Persona): Promise<void> {
     const roomId = uuid();
     const messages: Message[] = []
     if (persona.system.trim().length > 0) {
       messages.push({
         role: 'system', content: persona.system
       });
+      await this.dbController.addMessage({ roomId, sender: persona.id, message: messages[messages.length - 1], timestamp: Date.now() });
     }
     if (persona.first_message && persona.first_message.trim().length > 0) {
       messages.push({
         role: 'assistant', content: persona.first_message
       });
-      this.dbController.addMessage({ roomId, sender: persona.id, message: messages[messages.length - 1], timestamp: Date.now() });
+      await this.dbController.addMessage({ roomId, sender: persona.id, message: messages[messages.length - 1], timestamp: Date.now() });
     }
     const newRoom: ChatRoom = {
       messages: messages,
@@ -99,8 +97,8 @@ export class ChatController {
 
     this.chatRooms.set(roomId, newRoom);
     this.changeChatRoom(roomId);
-    this.currentMessages = messages;
     eventEmitter.emit(EVENT_TYPES.UPDATED_CHAT_ROOMS, newRoom.roomId);
+    eventEmitter.emit(EVENT_TYPES.MESSAGE_UPDATE, [...messages]);
   }
 
   private getChatRoom(roomId: string): ChatRoom {
@@ -109,27 +107,6 @@ export class ChatController {
       throw new Error(`Chat room with ID ${roomId} not found`);
     }
     return room;
-  }
-
-  public async createDefaultChatRoom(): Promise<boolean> {
-    try {
-      const persona = this.personaController.getDefaultPersona();
-      if (!this.llmController.getModelIsInitialized() && persona) {
-
-        await this.llmController.initializeModel(
-          persona.model_id,
-        );
-      }
-      if (!persona) {
-        throw new Error('Default persona not found');
-      } else {
-        this.createChatRoom(persona);
-        return true
-      }
-    } catch (e) {
-      console.error(e);
-      return false
-    }
   }
 
   public async sendMessage(content: string): Promise<void> {
@@ -142,22 +119,34 @@ export class ChatController {
     const room = this.getChatRoom(this.currentFocustRoomId);
     console.log("#5 room: ", room);
     const userMessage: Message = { role: 'user', content: content };
-    this.currentMessages.push(userMessage);
-    this.dbController.addMessage({ roomId: room.roomId, sender: room.personaId, message: userMessage, timestamp: Date.now() });
-    eventEmitter.emit(EVENT_TYPES.MESSAGE_UPDATE, this.currentMessages);
+    let sendMessage: Message[] = [];
+    await this.dbController.addMessage({ roomId: room.roomId, sender: room.personaId, message: userMessage, timestamp: Date.now() });
+    if (!room.messages.find((msg) => msg.role === 'user')) {
+      sendMessage = [...room.messages];
+    }
+    sendMessage.push(userMessage);
+    room.messages.push(userMessage)
+    eventEmitter.emit(EVENT_TYPES.MESSAGE_UPDATE, sendMessage);
     if (isImageCall) {
       // this.llmController.generateImage(content);
     } else {
-      this.llmController.generateText(room.modelId, this.currentMessages);
+      this.llmController.generateText(room.modelId, sendMessage);
     }
   }
 
 
   private handleGenerationStart({ type }: { type: string }): void {
-    console.log("#7 handleGenerationStart: ", this.currentMessages);
+    if (!this.currentFocustRoomId) {
+      return
+    }
+    console.log("#7 handleGenerationStart ");
     console.log("이벤트 발생 시 타입 2:", EVENT_TYPES.GENERATION_STARTING);
-    this.currentMessages.push({ role: 'assistant', content: type == 'text' ? '' : '/image:' });
-    eventEmitter.emit(EVENT_TYPES.MESSAGE_UPDATE, this.currentMessages);
+    const message = this.getMessages();
+    if (!message) {
+      return;
+    }
+    message.push({ role: 'assistant', content: type == 'text' ? '' : '/image:' });
+    eventEmitter.emit(EVENT_TYPES.MESSAGE_UPDATE, message);
   }
 
   private handleGenerationUpdate(data: GenerationUpdateData): void {
@@ -179,9 +168,9 @@ export class ChatController {
       //   answerIndex: lastMessage.content.length
       // })
     };
-    this.currentMessages[lastMessageIndex] = updatedMessage;
+    messages[lastMessageIndex] = updatedMessage;
 
-    eventEmitter.emit(EVENT_TYPES.MESSAGE_UPDATE, this.currentMessages);
+    eventEmitter.emit(EVENT_TYPES.MESSAGE_UPDATE, [...messages]);
   }
 
   private handleGenerationComplete(data: {
@@ -192,13 +181,14 @@ export class ChatController {
     if (roomId) {
       const room = this.getChatRoom(roomId);
       room.lastMessageTimestamp = Date.now();
-      if (data?.blob) {
-        const url = URL.createObjectURL(data.blob);
-        this.currentMessages[this.currentMessages.length - 1].content = `/image:${url}`;
-        eventEmitter.emit(EVENT_TYPES.MESSAGE_UPDATE, this.currentMessages);
-      }
-      this.dbController.addMessage({ roomId: room.roomId, sender: room.personaId, message: this.currentMessages[this.currentMessages.length - 1], timestamp: Date.now() });
-      this.chatRooms.set(roomId, { ...room, messages: [...this.currentMessages] });
+      // if (data?.blob) {
+      //   const url = URL.createObjectURL(data.blob);
+      //   this.currentMessages[this.currentMessages.length - 1].content = `/image:${url}`;
+      //   eventEmitter.emit(EVENT_TYPES.MESSAGE_UPDATE, this.currentMessages);
+      // }
+      const messages = this.getMessages();
+      this.dbController.addMessage({ roomId: room.roomId, sender: room.personaId, message: messages[messages.length - 1], timestamp: Date.now() });
+      this.chatRooms.set(roomId, { ...room, messages: [...messages] });
     }
   }
 
@@ -216,16 +206,14 @@ export class ChatController {
       eventEmitter.emit(EVENT_TYPES.CHANGE_PERSONA, persona);
     }
     console.log(room.messages)
-    this.currentMessages = room.messages;
     this.currentFocustRoomId = room.roomId;
-    eventEmitter.emit(EVENT_TYPES.MESSAGE_UPDATE, this.currentMessages);
+    eventEmitter.emit(EVENT_TYPES.MESSAGE_UPDATE, [...room.messages]);
   }
 
   public async deleteChatRoom(roomId: string): Promise<void> {
     eventEmitter.emit(EVENT_TYPES.MESSAGE_UPDATE, []);
     if (this.currentFocustRoomId === roomId) {
       this.currentFocustRoomId = undefined;
-      this.currentMessages = [];
       const newCurrentRoom = this.getChatRooms()?.[0];
       if (newCurrentRoom) {
         this.changeChatRoom(newCurrentRoom.roomId);
@@ -251,7 +239,10 @@ export class ChatController {
   }
 
   public getMessages(): Message[] {
-    return this.currentMessages;
+    if (!this.currentFocustRoomId) {
+      throw new Error('No chat room is focused');
+    }
+    return this.chatRooms.get(this.currentFocustRoomId)?.messages ?? [];
   }
 
   // public isGenerating(roomId: string): boolean {
