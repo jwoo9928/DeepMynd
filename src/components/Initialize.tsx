@@ -4,9 +4,9 @@ import { Bot, Sparkles } from "lucide-react";
 
 
 const promoMessages = [
-  "DeepMynd will be your personal assistant! 💝",
+  "UniMynd will be your personal assistant! 💝",
   "All conversations are processed only on your device! Use it safely~ 🔒",
-  "Did you know?\nDeepMynd allows unlimited conversations! ✨",
+  "Did you know?\nUniMynd allows unlimited conversations! ✨",
   "We’ll be your special AI friend! 💫"
 ];
 
@@ -87,7 +87,7 @@ const Initialize = () => {
             <div className="animate-bounce mb-4">
               <span className="text-5xl"><Bot /></span>
             </div>
-            <h2 className="text-xl font-semibold mb-2">Preparing DeepMynd...</h2>
+            <h2 className="text-xl font-semibold mb-2">Preparing UniMynd...</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Please wait a moment!</p>
 
             <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
@@ -108,13 +108,12 @@ const Initialize = () => {
             {promoMessages.map((message, index) => (
               <div
                 key={index}
-                className={`absolute w-full transition-all duration-500 ease-in-out ${
-                  index === currentPromoIndex 
-                    ? 'translate-x-0 opacity-100' 
-                    : index < currentPromoIndex 
-                      ? '-translate-x-full opacity-0' 
+                className={`absolute w-full transition-all duration-500 ease-in-out ${index === currentPromoIndex
+                    ? 'translate-x-0 opacity-100'
+                    : index < currentPromoIndex
+                      ? '-translate-x-full opacity-0'
                       : 'translate-x-full opacity-0'
-                }`}
+                  }`}
               >
                 <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-800/50">
                   <p className="text-blue-600 dark:text-blue-300 text-sm">{message}</p>
@@ -137,7 +136,7 @@ const Initialize = () => {
             className="w-4/5 mx-auto rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300"
           />
         </div>
-        
+
         <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-blue-500 to-purple-500 text-transparent bg-clip-text">
           DeepMynd Web
         </h1>

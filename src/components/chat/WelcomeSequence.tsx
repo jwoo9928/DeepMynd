@@ -21,7 +21,7 @@ const getTimeBasedGreeting = () => {
 const welcomeMessages: Message[] = [
     {
         role: 'assistant',
-        content: 'Welcome to DeepMynd! 👋',
+        content: 'Welcome to UniMynd! 👋',
     },
     {
         role: 'assistant',

@@ -61,7 +61,7 @@ export class ChatController {
           boostThinking: false,
           modelId: persona.model_id,
           image: persona.avatar,
-          name: persona.name ?? 'DeepMynd'
+          name: persona.name ?? 'UniMynd'
         });
       }
     }
@@ -82,7 +82,7 @@ export class ChatController {
       isPin: false,
       boostThinking: false,
       image: persona?.avatar,
-      name: persona.name ?? 'DeepMynd'
+      name: persona.name ?? 'UniMynd'
     };
 
     this.chatRooms.set(roomId, newRoom);
@@ -161,7 +161,7 @@ export class ChatController {
 
     const lastMessageIndex = messages.length - 1;
     const lastMessage = messages[lastMessageIndex];
-    console.log("format" ,format)
+    console.log("format", format)
     const updatedMessage: Message = {
       ...lastMessage,
       content: format?.toLowerCase() == ModelFormat.ONNX ? lastMessage.content + output : output,

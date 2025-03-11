@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Apple, LogIn } from 'lucide-react';
-import { AuthButton } from './AuthButton'; 
+import { AuthButton } from './AuthButton';
 import { useSetAtom } from 'jotai';
 import { uiModeAtom } from '../../stores/ui.store';
 
@@ -64,7 +64,7 @@ export default function Auth() {
                         <div className="flex items-center justify-center w-20 h-20 mx-auto bg-blue-500 rounded-2xl">
                             <LogIn className="w-12 h-12 text-white" />
                         </div>
-                        <h2 className="text-3xl font-bold text-white">Welcome to DeepMynd</h2>
+                        <h2 className="text-3xl font-bold text-white">Welcome to UniMynd</h2>
                         {/* Rotating Feature Cards */}
                         {/* <div className="mb-12 relative h-24">
                             {features.map((feature, index) => (
@@ -141,7 +141,7 @@ export default function Auth() {
                     {/* Footer */}
                     <div className="mt-8 text-center">
                         <p className="text-sm text-gray-400">
-                            By continuing, you agree to DeepMynd's{' '}
+                            By continuing, you agree to UniMynd's{' '}
                             <a href="/terms" className="text-blue-400 hover:text-blue-300">
                                 Terms of Service
                             </a>{' '}
@@ -168,7 +168,7 @@ export default function Auth() {
                             </div>
                             <h3 className="text-lg font-medium text-white mb-2">Guest Session Notice</h3>
                             <p className="text-gray-400 mb-6">
-                                Chat history will not be saved or synced when using DeepMynd without an account. Your data will be lost when you close the browser.
+                                Chat history will not be saved or synced when using UniMynd without an account. Your data will be lost when you close the browser.
                             </p>
                             <div className="flex justify-end gap-3">
                                 <button
