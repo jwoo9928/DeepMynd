@@ -47,7 +47,9 @@ const ChatLayout = () => {
         />
         <div className="flex-1 flex flex-col">
           <ChatHeader toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
-          <ModeScreen mode={mode} />
+          <div className="flex-1 overflow-y-auto">
+    <ModeScreen mode={mode} />
+  </div>
         </div>
       </div>
       <LoadingProgressModal />

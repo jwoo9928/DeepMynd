@@ -1,4 +1,3 @@
-import { Paperclip, Pause, Send } from "lucide-react";
 import { Message, Persona } from "../../controllers/types";
 import MessageBubble from "./atoms/MessageBubble";
 import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
@@ -11,8 +10,8 @@ const Chat = () => {
     const [isGenerating, setIsGenerating] = useState(false);
     const [inputValue, setInputValue] = useState('');
     const [persona, setPersona] = useState<Persona | null>(null);
-    const chatController = useRef(ChatController.getInstance());
 
+    const chatController = useRef(ChatController.getInstance());
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const scrollToBottom = useCallback(() => {
@@ -45,11 +44,14 @@ const Chat = () => {
         }
     }, [handleSendMessage]);
 
+    const handleMessageReceived = useCallback((data: { roomId: string, messages: Message[] }) => {
+        const roomId = chatController.current.getFocusedRoomId();
+        console.log("gen_roomId", data.roomId, "roomId", roomId);
+        (roomId == data.roomId && data.messages.length > 0) && setMessages([...data.messages]);
+        scrollToBottom();
+    }, []);
+
     useEffect(() => {
-        const handleMessageReceived = (updatedMessages: Message[]) => {
-            updatedMessages.length > 0 ? setMessages([...updatedMessages]): setMessages([]);
-            scrollToBottom();
-        };
 
         const handleGenerationStart = () => {
             setIsGenerating(true);
@@ -57,13 +59,16 @@ const Chat = () => {
 
         const handleGenerationComplete = () => {
             setIsGenerating(false);
-        };//hikr215
+        };
+        
+        //hikr215
         eventEmitter.on(EVENT_TYPES.MESSAGE_UPDATE, handleMessageReceived);
         eventEmitter.on(EVENT_TYPES.CHANGE_PERSONA, handlePersona);
         eventEmitter.on(EVENT_TYPES.GENERATION_STARTING, handleGenerationStart);
         eventEmitter.on(EVENT_TYPES.GENERATION_COMPLETE, handleGenerationComplete);
         return () => {
             eventEmitter.off(EVENT_TYPES.MESSAGE_UPDATE, handleMessageReceived);
+            eventEmitter.off(EVENT_TYPES.CHANGE_PERSONA, handlePersona);
             eventEmitter.off(EVENT_TYPES.GENERATION_STARTING, handleGenerationStart);
             eventEmitter.off(EVENT_TYPES.GENERATION_COMPLETE, handleGenerationComplete);
         }
@@ -84,15 +89,14 @@ const Chat = () => {
 
 
     return (
-        <div className="flex-1 flex flex-col h-full">
-
-            <div className="flex-1 overflow-y-auto bg-gray-50">
+        <div className="flex flex-col h-full">
+            <div className="flex-1 overflow-y-auto bg-gray-50 max-h-[calc(100vh-100px)]">
                 <div className="p-4 space-y-4">
                     {renderedMessages}
                     <div ref={messagesEndRef} />
                 </div>
             </div>
-
+    
             <ChatInput
                 inputValue={inputValue}
                 setInputValue={setInputValue}

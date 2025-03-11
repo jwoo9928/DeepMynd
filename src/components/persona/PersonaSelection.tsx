@@ -65,27 +65,40 @@ const PersonaSelection = ({
           <div
             key={persona.id}
             className="border-2 rounded-xl overflow-hidden transition-all duration-300
-                      hover:shadow-lg hover:transform hover:scale-105 cursor-pointer
-                      bg-white border-opacity-50"
-            style={{ borderColor: persona.color }}
+            hover:shadow-lg hover:transform hover:scale-105 cursor-pointer
+            bg-white border-opacity-50"
             onClick={() => {
               handlePersonaClick(persona);
             }}
           >
-            <div className="pb-4">
-              <img
-                src={URL.createObjectURL(persona.avatar)}
-                alt={persona.name}
-                className="w-full h-48 object-cover"
-              />
-              <div className="flex flex-col items-center mb-3">
-
-                <h3 className="font-bold text-lg mb-1">{persona.name}</h3>
-                <div className="text-xs px-2 py-1 rounded-full" style={{ backgroundColor: `${persona.color}33` }}>
-                  {persona.producer}
+            <div className="flex flex-col h-full">
+              <div className="relative">
+                <img
+                  src={URL.createObjectURL(persona.avatar)}
+                  alt={persona.name}
+                  className="w-full h-48 object-cover"
+                />
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+                  <h3 className="text-xl font-semibold text-white truncate">{persona.name}</h3>
+                  <p className="text-sm text-gray-200 truncate">{persona.producer}</p>
                 </div>
               </div>
-              <p className="text-gray-600 text-sm text-center truncate pl-4 pr-4">{persona.description}</p>
+
+              {/* 태그 컨테이너에 flex-wrap 추가하고 정렬 개선 */}
+              {/* <div className="flex flex-wrap gap-2 justify-center p-3 mt-1">
+                {persona.tags?.map(tag => (
+                  <span
+                    key={tag}
+                    className="inline-block px-3 py-1 text-xs font-medium rounded-full text-white shadow-sm transition-all"
+                    style={{ 
+                      backgroundColor: persona.color || '#4B5563',
+                      opacity: 0.85
+                    }}
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div> */}
             </div>
           </div>
         ))}
@@ -95,6 +108,7 @@ const PersonaSelection = ({
         onClose={() => setShowLoginPrompt(false)}
         message="Log in to change or create new Personas! Unlock the full potential of UniMynd with a personalized experience."
       />
+      
     </div>
   );
 }
