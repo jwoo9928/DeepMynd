@@ -60,7 +60,8 @@ export class ChatController {
           boostThinking: false,
           modelId: persona.model_id,
           image: persona.avatar,
-          name: persona.name ?? 'UniMynd'
+          name: persona.name ?? 'UniMynd',
+          activated: false
         });
       }
     }
@@ -94,12 +95,13 @@ export class ChatController {
       boostThinking: false,
       image: persona?.avatar,
       name: persona.name ?? 'UniMynd',
+      activated: false
     };
 
     this.chatRooms.set(roomId, newRoom);
     this.changeChatRoom(roomId);
     eventEmitter.emit(EVENT_TYPES.UPDATED_CHAT_ROOMS, newRoom.roomId);
-    eventEmitter.emit(EVENT_TYPES.MESSAGE_UPDATE, {roomId, messages: [...messages]});
+    eventEmitter.emit(EVENT_TYPES.MESSAGE_UPDATE, { roomId, messages: [...messages] });
   }
 
   private getChatRoom(roomId: string): ChatRoom {
@@ -113,24 +115,22 @@ export class ChatController {
   public async sendMessage(content: string): Promise<void> {
     console.log("#4 sendMessage: ", content);
     this.currentGemrateRoomId = this.focusedRoomId;
-    const isImageCall = content.startsWith('/image');
+    // const isImageCall = content.startsWith('/image');
     //@ts-ignore
     const room = this.getChatRoom(this.currentGemrateRoomId);
     console.log("#5 room: ", room);
     const userMessage: Message = { role: 'user', content: content };
-    let sendMessage: Message[] = [];
     await this.dbController.addMessage({ roomId: room.roomId, sender: room.personaId, message: userMessage, timestamp: Date.now() });
-    if (!room.messages.find((msg) => msg.role === 'user')) {
-      sendMessage = [...room.messages];
-    }
-    sendMessage.push(userMessage);
     room.messages.push(userMessage)
-    eventEmitter.emit(EVENT_TYPES.MESSAGE_UPDATE, {roomId: this.currentGemrateRoomId, messages: sendMessage});
-    if (isImageCall) {
-      // this.llmController.generateImage(content);
-    } else {
-      this.llmController.generateText(room.modelId, sendMessage);
-    }
+    const sendMessage = room.activated ? [userMessage] : room.messages;
+    !room.activated ? room.activated = true : null;
+    eventEmitter.emit(EVENT_TYPES.MESSAGE_UPDATE, { roomId: this.currentGemrateRoomId, messages: sendMessage });
+    // if (isImageCall) {
+    //   // this.llmController.generateImage(content);
+    // } else {
+    //   this.llmController.generateText(room.modelId, sendMessage);
+    // }
+    this.llmController.generateText(room.modelId, sendMessage);
   }
 
 
@@ -145,7 +145,7 @@ export class ChatController {
       return;
     }
     messages.push({ role: 'assistant', content: type == 'text' ? '' : '/image:' });
-    eventEmitter.emit(EVENT_TYPES.MESSAGE_UPDATE, {roomId: this.currentGemrateRoomId, messages: [...messages]});
+    eventEmitter.emit(EVENT_TYPES.MESSAGE_UPDATE, { roomId: this.currentGemrateRoomId, messages: [...messages] });
   }
 
   private handleGenerationUpdate(data: GenerationUpdateData): void {
@@ -169,7 +169,7 @@ export class ChatController {
     };
     messages[lastMessageIndex] = updatedMessage;
 
-    eventEmitter.emit(EVENT_TYPES.MESSAGE_UPDATE, {roomId: this.currentGemrateRoomId, messages: [...messages]});
+    eventEmitter.emit(EVENT_TYPES.MESSAGE_UPDATE, { roomId: this.currentGemrateRoomId, messages: [...messages] });
   }
 
   private handleGenerationComplete(data: {
@@ -203,11 +203,11 @@ export class ChatController {
       eventEmitter.emit(EVENT_TYPES.CHANGE_PERSONA, persona);
     }
     eventEmitter.emit(EVENT_TYPES.ROOM_CHANGED, this.focusedRoomId)
-    eventEmitter.emit(EVENT_TYPES.MESSAGE_UPDATE, {roomId, messages: [...room.messages]});
+    eventEmitter.emit(EVENT_TYPES.MESSAGE_UPDATE, { roomId, messages: [...room.messages] });
   }
 
   public async deleteChatRoom(roomId: string): Promise<void> {
-    eventEmitter.emit(EVENT_TYPES.MESSAGE_UPDATE, {roomId, messages: []});
+    eventEmitter.emit(EVENT_TYPES.MESSAGE_UPDATE, { roomId, messages: [] });
     if (this.currentGemrateRoomId === roomId) {
       this.currentGemrateRoomId = undefined;
       const newCurrentRoom = this.getChatRooms()?.[0];
@@ -218,7 +218,7 @@ export class ChatController {
     this.chatRooms.delete(roomId);
     await this.dbController.deleteMessagesByRoom(roomId);
     eventEmitter.emit(EVENT_TYPES.UPDATED_CHAT_ROOMS);
-    eventEmitter.emit(EVENT_TYPES.MESSAGE_UPDATE, {roomId, messages: []});
+    eventEmitter.emit(EVENT_TYPES.MESSAGE_UPDATE, { roomId, messages: [] });
   }
 
   public pinHandleChatRoom(roomId: string): void {

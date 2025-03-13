@@ -2,7 +2,10 @@ import {
   TextStreamer,
   InterruptableStoppingCriteria,
 } from "@huggingface/transformers";
-import { MLCTextGenePipeline, TextGenerationPipeline } from "../../pipelines/TextGenerationPipeline";
+import {
+  MLCTextGenePipeline,
+  TextGenerationPipeline,
+} from "../../pipelines/TextGenerationPipeline";
 import { WORKER_STATUS, WORKER_EVENTS } from "./event";
 
 /**
@@ -27,12 +30,16 @@ async function load(data) {
   const { modelId } = data;
   console.log("worker: data", data);
   self.postMessage({ type: WORKER_STATUS.STATUS_LOADING });
-  await MLCTextGenePipeline.getInstance(modelId, (x) => {
+  const [model] = await MLCTextGenePipeline.getInstance(modelId, (x) => {
     self.postMessage({
       status: "progress",
       progress: x.progress,
     });
   });
+
+  // model.setAppConfig({
+  //   useIndexedDBCache: true,
+  // });
 
   self.postMessage({ type: WORKER_STATUS.STATUS_READY });
 }

@@ -35,6 +35,7 @@ export class MLCTextGenePipeline {
             this.model_id,
             {
                 initProgressCallback: progress_callback,
+
             },
         );
 

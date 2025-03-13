@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Heart, X, Cpu, Zap, ChevronDown } from "lucide-react";
+import { Heart, X, Cpu, Zap, ChevronDown, Settings } from "lucide-react";
 import { Persona } from "../../controllers/types";
 import { LLMController } from "../../controllers/LLMController";
 import ModelSelectionModal from "../models/ModelSelectionModal";
@@ -28,17 +28,21 @@ const PersonaModal = ({
         }
     }, [selectedPersona])
 
-    useEffect(()=> {
-console.log("selectedModel",selectedModel)
-    },[selectedModel])
+    useEffect(() => {
+        console.log("selectedModel", selectedModel)
+    }, [selectedModel])
 
     if (!selectedPersona || !showPersonaModal) return null;
-    
-    // Mock available models - replace with your actual model list
 
     const handleStartChat = () => {
         // Implement model change logic
         startChat(selectedModel?.id);
+    };
+
+    const handleEditPersona = () => {
+        // if (onEditPersona && selectedPersona) {
+        //     onEditPersona(selectedPersona);
+        // }
     };
 
     return (
@@ -49,6 +53,15 @@ console.log("selectedModel",selectedModel)
                     className="p-6 flex flex-col items-center relative"
                     style={{ backgroundColor: `${selectedPersona?.color || "#7FAEFF"}33` }}
                 >
+                    {/* 편집 버튼 추가 - 왼쪽 상단에 배치 */}
+                    <button
+                        onClick={handleEditPersona}
+                        className="absolute left-4 top-4 text-gray-500 hover:text-gray-700 bg-white rounded-full p-1 shadow-md transition-all duration-200 hover:shadow-lg"
+                        title="Edit Persona"
+                    >
+                        <Settings className="h-5 w-5" />
+                    </button>
+
                     <button
                         onClick={() => setShowPersonaModal(false)}
                         className="absolute right-4 top-4 text-gray-500 hover:text-gray-700 bg-white rounded-full p-1 shadow-md"
@@ -60,18 +73,18 @@ console.log("selectedModel",selectedModel)
                         className="w-24 h-24 rounded-full bg-white p-1 shadow-lg mb-4 overflow-hidden border-4"
                         style={{ borderColor: selectedPersona?.color || "#7FAEFF" }}
                     >
-                        <img 
-                            src={URL.createObjectURL(selectedPersona.avatar)} 
-                            alt={selectedPersona.name} 
-                            className="w-full h-full object-cover rounded-full" 
+                        <img
+                            src={URL.createObjectURL(selectedPersona.avatar)}
+                            alt={selectedPersona.name}
+                            className="w-full h-full object-cover rounded-full"
                         />
                     </div>
 
                     <h3 className="font-bold text-xl mb-2">{selectedPersona.name}</h3>
-                    
+
                     {/* Model selector */}
                     <div className="relative">
-                        <button 
+                        <button
                             className="text-sm bg-white px-3 py-1 rounded-full shadow-sm flex items-center gap-1 hover:bg-gray-50"
                             onClick={() => setShowModelSelector(!showModelSelector)}
                         >
@@ -104,7 +117,7 @@ console.log("selectedModel",selectedModel)
                             )}
                         </div>
                     </div>
-                    
+
                     {/* Processing Type */}
                     <div className="flex items-center justify-center bg-gray-50 py-2 px-4 rounded-lg">
                         <div className="flex items-center space-x-4 mt-2">
@@ -135,9 +148,8 @@ console.log("selectedModel",selectedModel)
             </div>
             <ModelSelectionModal
                 isOpen={showModelSelector}
-                onClose={()=>setShowModelSelector(false)}
+                onClose={() => setShowModelSelector(false)}
                 onConfirm={setSelectedModel}
-
             />
         </div>
     );

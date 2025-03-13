@@ -16,6 +16,7 @@ export interface ChatRoom {
   image: Blob,
   name: string,
   modelId: string;
+  activated: boolean;
 }
 
 export interface ProgressItem {
