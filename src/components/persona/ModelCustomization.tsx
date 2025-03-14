@@ -3,8 +3,8 @@ import { ArrowLeft, Upload, X, Hash, Info } from 'lucide-react';
 import { ModeValues } from '../types';
 import { PersonaController } from '../../controllers/PersonaController';
 import { FastAverageColor } from 'fast-average-color';
-import { NewPersona, Persona } from '../../controllers/types';
-import { useAtom, useAtomValue } from 'jotai';
+import { Persona } from '../../controllers/types';
+import { useAtom } from 'jotai';
 import { uiModeAtom } from '../../stores/ui.store';
 import { Model } from '../models/types';
 import ModelSelectionModal from '../models/ModelSelectionModal';
@@ -107,7 +107,7 @@ const ModelCustomization = () => {
   const [description, setDescription] = useState<string>(targetPersona?.description ?? '');
   const [systemInstruction, setSystemInstruction] = useState<string>(targetPersona?.system ?? '');
   const [firstMessage, setFirstMessage] = useState<string>(targetPersona?.first_message ?? '');
-  const [profileImage, setProfileImage] = useState<string>('');
+  const [profileImage, setProfileImage] = useState<Blob | null>(targetPersona?.avatar ?? null);
   const [profileColor, setProfileColor] = useState<string>('#7FAEFF');
   const [tags, setTags] = useState<string[]>([]);
 
@@ -139,13 +139,14 @@ const ModelCustomization = () => {
     if (files && files[0]) {
       const file = files[0];
       const reader = new FileReader();
-      reader.onloadend = () => {
+      reader.onloadend = async () => {
         if (typeof reader.result === 'string') {
           let image = reader.result;
           fastAverageColor.getColorAsync(image).then(color => {
             setProfileColor(color.hex);
           });
-          setProfileImage(reader.result);
+          let imageBlob = await personaController.current.toBlob(reader.result);
+          setProfileImage(imageBlob);
         }
       };
       reader.readAsDataURL(file);
@@ -164,12 +165,13 @@ const ModelCustomization = () => {
     setIsLoading(true);
     if (name && selectedTextModel && systemInstruction && description && profileColor) {
       if (mode == ModeValues.Create) {
-        const persona: NewPersona = {
+        const persona: Persona = {
+          id: '',
           name,
           description,
           system: systemInstruction,
           first_message: firstMessage,
-          avatar: profileImage,
+          avatar: profileImage ?? new Blob(),
           model_id: selectedTextModel.id,
           model_type: selectedTextModel.format,
           producer: 'local',
@@ -178,14 +180,13 @@ const ModelCustomization = () => {
         };
         await personaController.current.createNewPersona(persona);
       } else if (mode == ModeValues.Edit && targetPersona) {
-        const avatar = await personaController.current.toBlob(profileImage);
         const persona: Persona = {
           ...targetPersona,
           name,
           description,
           system: systemInstruction,
           first_message: firstMessage,
-          avatar: avatar,
+          avatar: profileImage ?? new Blob(),
           model_id: selectedTextModel.id,
           model_type: selectedTextModel.format,
           color: profileColor,
@@ -270,14 +271,14 @@ const ModelCustomization = () => {
                     {profileImage ? (
                       <>
                         <img
-                          src={profileImage}
+                          src={URL.createObjectURL(profileImage)}
                           alt="Profile"
                           className="w-full h-full object-cover"
                         />
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            setProfileImage('');
+                            setProfileImage(null);
                           }}
                           className="absolute top-0 right-0 p-1 bg-gray-800 bg-opacity-50 text-white rounded-bl-lg"
                         >

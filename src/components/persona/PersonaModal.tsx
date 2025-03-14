@@ -4,6 +4,10 @@ import { Persona } from "../../controllers/types";
 import { LLMController } from "../../controllers/LLMController";
 import ModelSelectionModal from "../models/ModelSelectionModal";
 import { DeviceType, Model } from "../models/types";
+import { useSetAtom } from "jotai";
+import { personaForUpdateAtom } from "../../stores/data.store";
+import { uiModeAtom } from "../../stores/ui.store";
+import { ModeValues } from "../types";
 
 interface PersonaModalProps {
     selectedPersona: Persona | null;
@@ -20,6 +24,8 @@ const PersonaModal = ({
 }: PersonaModalProps) => {
     const [showModelSelector, setShowModelSelector] = useState(false);
     const [selectedModel, setSelectedModel] = useState<Model | null>(null);
+    const setTargetPersona = useSetAtom(personaForUpdateAtom)
+    const setMode = useSetAtom(uiModeAtom)
 
     useEffect(() => {
         if (selectedPersona) {
@@ -40,9 +46,8 @@ const PersonaModal = ({
     };
 
     const handleEditPersona = () => {
-        // if (onEditPersona && selectedPersona) {
-        //     onEditPersona(selectedPersona);
-        // }
+        setTargetPersona(selectedPersona)
+        setMode(ModeValues.Edit)
     };
 
     return (

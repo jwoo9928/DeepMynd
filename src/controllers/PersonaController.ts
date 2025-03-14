@@ -25,28 +25,12 @@ export class PersonaController {
         return PersonaController.instance;
     }
 
-    createNewPersona(newPersona: NewPersona): string {
+    createNewPersona(newPersona: Persona): string {
         let persona: Persona;
-        if (newPersona.avatar !== null && newPersona.avatar !== undefined) {
-            const byteString = atob(newPersona.avatar.split(",")[1]);
-            const mimeType = newPersona.avatar.split(",")[0].split(":")[1].split(";")[0];
-            const arrayBuffer = new Uint8Array(byteString.length);
-            for (let i = 0; i < byteString.length; i++) {
-                arrayBuffer[i] = byteString.charCodeAt(i);
-            }
-            const blob = new Blob([arrayBuffer], { type: mimeType });
-            //@ts-ignore
-            persona = {
-                ...newPersona,
-                id: uuid(),
-                avatar: blob
-            }
-        } else {
-            persona = {
-                ...newPersona,
-                id: uuid(),
-                avatar: new Blob()
-            }
+        persona = {
+            ...newPersona,
+            id: uuid(),
+            avatar: newPersona.avatar
         }
         this.personaList.set(persona.id, persona);
         this.dbController.addPersona(persona);

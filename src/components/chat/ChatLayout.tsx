@@ -23,6 +23,7 @@ const ModeScreen = ({
     case ModeValues.Chat:
       return <Chat />
     case ModeValues.Create:
+    case ModeValues.Edit:
       return <ModelCustomization />;
     case ModeValues.Import:
       return <PersonaLayout />
@@ -48,8 +49,8 @@ const ChatLayout = () => {
         <div className="flex-1 flex flex-col">
           <ChatHeader toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
           <div className="flex-1 overflow-y-auto">
-    <ModeScreen mode={mode} />
-  </div>
+            <ModeScreen mode={mode} />
+          </div>
         </div>
       </div>
       <LoadingProgressModal />
