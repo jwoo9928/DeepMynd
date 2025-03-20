@@ -3,6 +3,7 @@ import React, { useMemo, useState } from "react";
 import LoadingDots from "./LoadingDots";
 import ReactMarkdown from "react-markdown";
 import { Message, Persona } from "../../../controllers/types";
+import RenderContent from "./RenderContent";
 
 interface MessageBubbleProps {
     message: Message;
@@ -35,47 +36,6 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isLast, isGenera
                     className={`max-w-full rounded-lg transition-opacity duration-300 ${isImageLoading ? 'opacity-0' : 'opacity-100'}`}
                     onLoad={() => setIsImageLoading(false)}
                 />
-            </div>
-        );
-    };
-
-    const renderContent = () => {
-        const content = message.content;
-        const isThinking = useMemo(() => {
-            return content.length > 0 && content.startsWith('<') && !content.includes('</think>');
-        }, [content]);
-
-        if (isImage === true) {
-            return renderImageOrMarkdown();
-        }
-
-        const parts = content.split('</think>');
-        const [thinkContent, normalContent] = isThinking ? [parts[0], null] : parts.length > 1 ? parts : [null, parts[0]];
-
-        return (
-            <div className="space-y-2">
-                {thinkContent && <div className="relative">
-                    <button
-                        onClick={() => setIsThinkExpanded(!isThinkExpanded)}
-                        className={`flex items-center gap-2 p-2 bg-gray-700${(isGenerating && isThinking) ? '' : '/50'} rounded-lg text-sm`}
-                    >
-                        <div className="flex items-center gap-2 text-gray-300">
-                            <Bot className="w-5 h-5 text-gray-500" />
-                            {isThinking ? 'Thinking...' : 'Done!'}
-                            <div className="w-4 h-4">
-                                {isThinkExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                            </div>
-                        </div>
-                    </button>
-
-                    {isThinkExpanded && (
-                        <div className="mt-2 text-gray-500 italic text-sm">
-                            <ReactMarkdown>{thinkContent.replace('<think>', '')}</ReactMarkdown>
-                        </div>
-                    )}
-                </div>}
-
-                <ReactMarkdown>{normalContent}</ReactMarkdown>
             </div>
         );
     };
@@ -114,7 +74,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isLast, isGenera
                 {message.role === 'user' ?
                     <ReactMarkdown>
                         {message.content}
-                    </ReactMarkdown> : renderContent()}
+                    </ReactMarkdown> : <RenderContent message={message} isGenerating={isGenerating} />}
                 {isLast && isGenerating && <LoadingDots />}
             </div>
         </div>
