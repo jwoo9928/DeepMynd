@@ -231,7 +231,7 @@ export class ChatController {
     return this.focusedRoomId;
   }
 
-  public getGeneratedRoomId(): string | undefined {
+  public getGeneratingRoomId(): string | undefined {
     return this.currentGemrateRoomId;
   }
 

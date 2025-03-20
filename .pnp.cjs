@@ -39,7 +39,7 @@ const RAW_RUNTIME_STATE =
           ["@types/react-dom", "virtual:2823b85e33edcaff0b23c147cc1896fbb94c5a173e0f610c5d06b92f763dadf48ad58776ef7ede7fcb6fe96f4ddb006173860803f7907e78cca557d1790834f6#npm:18.3.5"],\
           ["@types/react-modal", "npm:3.16.3"],\
           ["@vitejs/plugin-react-swc", "virtual:2823b85e33edcaff0b23c147cc1896fbb94c5a173e0f610c5d06b92f763dadf48ad58776ef7ede7fcb6fe96f4ddb006173860803f7907e78cca557d1790834f6#npm:3.7.2"],\
-          ["@wllama/wllama", "npm:2.2.0"],\
+          ["@wllama/wllama", "patch:@wllama/wllama@npm%3A2.2.0#~/.yarn/patches/@wllama-wllama-npm-2.2.0-86e3d72127.patch::version=2.2.0&hash=c15c06"],\
           ["autoprefixer", "virtual:2823b85e33edcaff0b23c147cc1896fbb94c5a173e0f610c5d06b92f763dadf48ad58776ef7ede7fcb6fe96f4ddb006173860803f7907e78cca557d1790834f6#npm:10.4.20"],\
           ["axios", "npm:1.8.1"],\
           ["browser-image-compression", "npm:2.0.2"],\
@@ -2792,10 +2792,10 @@ const RAW_RUNTIME_STATE =
       }]\
     ]],\
     ["@wllama/wllama", [\
-      ["npm:2.2.0", {\
-        "packageLocation": "./.yarn/unplugged/@wllama-wllama-npm-2.2.0-86e3d72127/node_modules/@wllama/wllama/",\
+      ["patch:@wllama/wllama@npm%3A2.2.0#~/.yarn/patches/@wllama-wllama-npm-2.2.0-86e3d72127.patch::version=2.2.0&hash=c15c06", {\
+        "packageLocation": "./.yarn/unplugged/@wllama-wllama-patch-e5be08db36/node_modules/@wllama/wllama/",\
         "packageDependencies": [\
-          ["@wllama/wllama", "npm:2.2.0"]\
+          ["@wllama/wllama", "patch:@wllama/wllama@npm%3A2.2.0#~/.yarn/patches/@wllama-wllama-npm-2.2.0-86e3d72127.patch::version=2.2.0&hash=c15c06"]\
         ],\
         "linkType": "HARD"\
       }]\
@@ -3668,7 +3668,7 @@ const RAW_RUNTIME_STATE =
           ["@types/react-dom", "virtual:2823b85e33edcaff0b23c147cc1896fbb94c5a173e0f610c5d06b92f763dadf48ad58776ef7ede7fcb6fe96f4ddb006173860803f7907e78cca557d1790834f6#npm:18.3.5"],\
           ["@types/react-modal", "npm:3.16.3"],\
           ["@vitejs/plugin-react-swc", "virtual:2823b85e33edcaff0b23c147cc1896fbb94c5a173e0f610c5d06b92f763dadf48ad58776ef7ede7fcb6fe96f4ddb006173860803f7907e78cca557d1790834f6#npm:3.7.2"],\
-          ["@wllama/wllama", "npm:2.2.0"],\
+          ["@wllama/wllama", "patch:@wllama/wllama@npm%3A2.2.0#~/.yarn/patches/@wllama-wllama-npm-2.2.0-86e3d72127.patch::version=2.2.0&hash=c15c06"],\
           ["autoprefixer", "virtual:2823b85e33edcaff0b23c147cc1896fbb94c5a173e0f610c5d06b92f763dadf48ad58776ef7ede7fcb6fe96f4ddb006173860803f7907e78cca557d1790834f6#npm:10.4.20"],\
           ["axios", "npm:1.8.1"],\
           ["browser-image-compression", "npm:2.0.2"],\

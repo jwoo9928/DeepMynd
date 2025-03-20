@@ -78,6 +78,8 @@ const ChatHeader = ({ toggleSidebar }: {
   const trimToFirstNonZero = useCallback((num: number): string => {
     if (num === 0) return '0'; // 0이면 바로 반환
 
+    if (num > 1) return num.toFixed(1); // 1보다 크면 소수점 이하 버림
+
     let str = num.toString(); // 문자열 변환
     let match = str.match(/^-?0\.\d*?[1-9]/); // 0이 아닌 첫 숫자까지 찾기
 
@@ -106,7 +108,7 @@ const ChatHeader = ({ toggleSidebar }: {
 
     const interval = setInterval(() => {
       fetchResources();
-    }, 5000);
+    }, 1000);
 
     fetchResources(); // Initial fetch
 

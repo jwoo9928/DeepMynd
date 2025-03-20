@@ -26,9 +26,13 @@ async function load(data) {
   console.log("wllama");
   self.postMessage({ type: WORKER_STATUS.STATUS_LOADING });
 
-  await WLLAMATextGenPipeline.getInstance('QuantFactory/Qwen2.5-Sex-GGUF', 'Qwen2.5-Sex.Q8_0.gguf', (x) => {
-    self.postMessage(x);
-  });
+  await WLLAMATextGenPipeline.getInstance(
+    "afrideva/Tiny-Vicuna-1B-GGUF",
+    "tiny-vicuna-1b.q4_k_m.gguf",
+    (x) => {
+      self.postMessage(x);
+    }
+  );
 
   self.postMessage({ type: WORKER_STATUS.STATUS_READY });
 }
@@ -48,7 +52,6 @@ async function generate(messages) {
   self.postMessage({ status: WORKER_STATUS.GENERATION_START });
 
   const outputText = await model.createCompletion(message, {
-    nPredict: 50,
     sampling: {
       temp: 0.5,
       top_k: 40,

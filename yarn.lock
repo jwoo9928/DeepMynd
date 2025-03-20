@@ -2070,10 +2070,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@wllama/wllama@npm:^2.2.0":
+"@wllama/wllama@npm:2.2.0":
   version: 2.2.0
   resolution: "@wllama/wllama@npm:2.2.0"
   checksum: 10c0/6944f617be88e3a4a5cf15fc73855a83314825834b970ab64cddfc16e81b98ff2d736acb762cfa87e1d6479ed5a32aa7737320d7ea81ec324a76745f9d5370bb
+  languageName: node
+  linkType: hard
+
+"@wllama/wllama@patch:@wllama/wllama@npm%3A2.2.0#~/.yarn/patches/@wllama-wllama-npm-2.2.0-86e3d72127.patch":
+  version: 2.2.0
+  resolution: "@wllama/wllama@patch:@wllama/wllama@npm%3A2.2.0#~/.yarn/patches/@wllama-wllama-npm-2.2.0-86e3d72127.patch::version=2.2.0&hash=c15c06"
+  checksum: 10c0/8ac0ee7287de846b42c93f01e878e2fb80c55d83e7ce01dc565eb0db6423d24967a371ba68ec4bacf9e284cb8e966bfab439720272fad5e532c503c1ca279b95
   languageName: node
   linkType: hard
 
@@ -2801,7 +2808,7 @@ __metadata:
     "@types/react-dom": "npm:^18.3.5"
     "@types/react-modal": "npm:^3.16.3"
     "@vitejs/plugin-react-swc": "npm:^3.5.0"
-    "@wllama/wllama": "npm:^2.2.0"
+    "@wllama/wllama": "patch:@wllama/wllama@npm%3A2.2.0#~/.yarn/patches/@wllama-wllama-npm-2.2.0-86e3d72127.patch"
     autoprefixer: "npm:^10.4.20"
     axios: "npm:^1.8.1"
     browser-image-compression: "npm:^2.0.2"

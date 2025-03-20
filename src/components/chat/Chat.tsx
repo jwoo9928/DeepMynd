@@ -48,8 +48,13 @@ const Chat = () => {
     const handleMessageReceived = useCallback((data: { roomId: string, messages: Message[] }) => {
         const roomId = chatController.current.getFocusedRoomId();
         console.log("gen_roomId", data.roomId, "roomId", roomId);
-        (roomId == data.roomId && data.messages.length > 0) && setMessages([...data.messages]);
-        scrollToBottom();
+        if (chatController.current.getFocusedRoomId() === chatController.current.getGeneratingRoomId()) {
+            !isGenerating && setIsGenerating(true)
+            setMessages([...data.messages])
+            scrollToBottom();
+        } else {
+            isGenerating && setIsGenerating(false)
+        }
     }, []);
 
     useEffect(() => {

@@ -4,13 +4,27 @@ import { useEffect } from 'react';
 import { DBController } from './controllers/DBController';
 function App() {
 
+  // const test = async () => {
+  //   if ('measureUserAgentSpecificMemory' in performance) {
+  //     const memoryStats = await performance.measureUserAgentSpecificMemory() as string;
+  //     console.log('메모리 사용량:', memoryStats, 'GB');
+  //   }
+  // }
+
   useEffect(() => {
     DBController.getDatabase();
+    setInterval(() => {
+      // test();
+    }
+      , 1000);
     // DBController.getDatabase().delete();
     // LLMController.getInstance();
     // ChatController.getInstance();
     // PersonaController.getInstance();
+
   }, []);
+
+
 
   return (
     <Routes>
