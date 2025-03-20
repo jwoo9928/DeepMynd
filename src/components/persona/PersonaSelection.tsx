@@ -11,7 +11,6 @@ const PersonaSelection = ({
 }) => {
   const personaController = PersonaController.getInstance();
   const [personas, setPersonas] = useState<Persona[]>([]);
-  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
   // Avatar URL 캐싱을 위한 메모이제이션
   const avatarUrls = useMemo(() => {

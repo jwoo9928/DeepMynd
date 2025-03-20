@@ -236,25 +236,6 @@ const ModelCustomization = () => {
 
       <div className="flex h-full">
         <div className="flex-1 flex flex-col h-full">
-          {/* Header */}
-          <div className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 shadow-sm">
-            <button
-              onClick={onBack}
-              className="flex items-center space-x-2 text-gray-600 hover:text-gray-900"
-            >
-              <ArrowLeft className="h-5 w-5" />
-              <span>Back to Chat</span>
-            </button>
-
-            <button
-              onClick={() => setRunTour(true)}
-              className="flex items-center space-x-1 text-blue-500 hover:text-blue-600"
-            >
-              <Info className="h-4 w-4" />
-              <span>Tour</span>
-            </button>
-          </div>
-
           {/* Main Content */}
           <div className="flex-1 overflow-y-auto p-6">
             <div className="max-w-2xl mx-auto space-y-6">

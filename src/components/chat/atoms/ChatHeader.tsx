@@ -1,8 +1,8 @@
-import { Menu, MoreVertical, X, Cpu, HardDrive } from "lucide-react";
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import { Menu, MoreVertical, X, Cpu, HardDrive, ArrowLeft } from "lucide-react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { LLMController } from "../../../controllers/LLMController";
 import { EVENT_TYPES, eventEmitter } from "../../../controllers/events";
-import { useSetAtom } from "jotai";
+import { useAtom, useSetAtom } from "jotai";
 import { ModeValues } from "../../types";
 import { uiModeAtom } from "../../../stores/ui.store";
 
@@ -43,7 +43,12 @@ const ChatHeader = ({ toggleSidebar }: {
   const [showTerminatePrompt, setShowTerminatePrompt] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [showResourceInfo, setShowResourceInfo] = useState<'ram' | 'vram' | null>(null);
-  const setMode = useSetAtom(uiModeAtom);
+  const [mode, setMode] = useAtom(uiModeAtom);
+
+
+  const activateBackButton = useMemo(() => {
+    return mode == ModeValues.Manage || mode == ModeValues.Create || mode == ModeValues.Manage;
+  }, [mode])
 
   const llmController = useRef<LLMController>(LLMController.getInstance())
 
@@ -138,9 +143,21 @@ const ChatHeader = ({ toggleSidebar }: {
     setMode(ModeValues.Manage) //import
   }, []);
 
+  const onBack = useCallback(() => {
+    setMode(ModeValues.Import)
+  }
+    , []);
+
 
   return (
     <div className="h-16 bg-white border-b border-gray-200 flex items-center px-4 justify-between">
+      {activateBackButton && <button
+        onClick={onBack}
+        className="flex items-center space-x-2 text-gray-600 hover:text-gray-900"
+      >
+        <ArrowLeft className="h-5 w-5" />
+        <span>Back to Chat</span>
+      </button>}
       <div className="flex items-center space-x-4">
         <button
           className="md:hidden"
