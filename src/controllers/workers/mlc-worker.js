@@ -8,6 +8,8 @@ import {
 } from "../../pipelines/TextGenerationPipeline";
 import { WORKER_STATUS, WORKER_EVENTS } from "./event";
 
+let messageDB = [];
+
 /**
  * Helper function to perform feature detection for WebGPU
  */
@@ -37,9 +39,9 @@ async function load(data) {
     });
   });
 
-  // model.setAppConfig({
-  //   useIndexedDBCache: true,
-  // });
+  model.setAppConfig({
+    useIndexedDBCache: true,
+  });
 
   self.postMessage({ type: WORKER_STATUS.STATUS_READY });
 }
@@ -50,7 +52,8 @@ async function load(data) {
 
 async function generate(messages) {
   const [model] = await MLCTextGenePipeline.getInstance();
-
+  console.log("messages: ", messages);
+  messageDB.push(...messages);
   self.postMessage({ status: WORKER_STATUS.GENERATION_START });
 
   const callback_function = (output) => {
@@ -63,7 +66,7 @@ async function generate(messages) {
   };
 
   const chunks = await model.chat.completions.create({
-    messages,
+    messages: messageDB,
     temperature: 1,
     stream: true, // <-- Enable streaming
     stream_options: { include_usage: true },

@@ -16,6 +16,10 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isLast, isGenera
     const [isImageLoading, setIsImageLoading] = useState(true);
     const isImage = message.content.startsWith('/image:');
 
+    if (message.role === 'system') {
+        return;
+    }
+
     const renderImageOrMarkdown = () => {
         const imageData = message.content.replace('/image:', '');
         return (

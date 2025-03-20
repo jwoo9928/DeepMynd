@@ -100,7 +100,7 @@ export class LLMController {
                     console.log("loading")
                     break;
                 case WORKER_STATUS.STATUS_READY: //모델 준비 완료
-                    console.log("Array.from(this.workers.keys())" ,Array.from(this.workers.keys()))
+                    console.log("Array.from(this.workers.keys())", Array.from(this.workers.keys()))
                     eventEmitter.emit(EVENT_TYPES.MODEL_READY, Array.from(this.workers.keys()));
                     break;
                 case WORKER_STATUS.STATUS_ERROR:
@@ -157,12 +157,12 @@ export class LLMController {
         }
         if (this.focusedWokerId) {
             console.log("generateText testing")
-            console.log("이벤트 발생 시 타입:", EVENT_TYPES.GENERATION_STARTING);
-            eventEmitter.emit(EVENT_TYPES.GENERATION_STARTING, { type: 'text' });
             const id = this.focusedWokerId;
             let worker = this.workers.get(id);
             this.workerStates.set(id, 'busy');
             worker?.postMessage({ type: WORKER_EVENTS.GENERATION, data: messages });
+            console.log("이벤트 발생 시 타입:", EVENT_TYPES.GENERATION_STARTING);
+            eventEmitter.emit(EVENT_TYPES.GENERATION_STARTING, { type: 'text' });
         }
     }
 
@@ -196,16 +196,16 @@ export class LLMController {
                 limit: 0
             }
         };
-    
+
         // WebGPU 관련 정보
         if ('gpu' in navigator) {
             try {
-                  //@ts-ignore
+                //@ts-ignore
                 const adapter = await navigator.gpu.requestAdapter();
                 if (adapter) {
                     const device = await adapter.requestDevice();
                     let totalMemoryUsage = 0;
-    
+
                     // 메모리 사용량 추적 (예시)
                     const buffer = device.createBuffer({
                         size: 1024, // 1KB 예시 버퍼
@@ -213,21 +213,21 @@ export class LLMController {
                         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC
                     });
                     totalMemoryUsage += buffer.size;
-    
+
                     const texture = device.createTexture({
                         size: [256, 256, 1], // 256x256 텍스처
                         format: 'r8unorm', // 1바이트/픽셀
-                          //@ts-ignore
+                        //@ts-ignore
                         usage: GPUTextureUsage.STORAGE | GPUTextureUsage.COPY_SRC
                     });
                     const bytesPerPixel = 1; // r8unorm 포맷의 경우
                     const textureSize = texture.width * texture.height * texture.depthOrArrayLayers * bytesPerPixel;
                     totalMemoryUsage += textureSize;
-    
+
                     // WebGPU 메모리 사용량 및 총 용량
                     memoryStats.webGPU.used = totalMemoryUsage; // 추적된 메모리 사용량 (바이트)
                     memoryStats.webGPU.total = adapter.limits.maxBufferSize + adapter.limits.maxUniformBufferBindingSize + adapter.limits.maxTextureDimension2D; // WebGPU API에서 총 용량 제공 안 함
-    
+
                     // WebGPU 제한 정보
                     memoryStats.webGPU.limits = {
                         maxTextureDimension2D: device.limits.maxTextureDimension2D,
@@ -247,22 +247,22 @@ export class LLMController {
             memoryStats.webGPU.used = 0;
             memoryStats.webGPU.total = 0;
         }
-    
+
         // JS Heap 메모리 관련 정보 (Chrome 등 일부 브라우저에서 지원)
-          //@ts-ignore
+        //@ts-ignore
         if (performance && performance.memory) {
-              //@ts-ignore
+            //@ts-ignore
             memoryStats.jsHeap.used = performance.memory.usedJSHeapSize;
-              //@ts-ignore
+            //@ts-ignore
             memoryStats.jsHeap.total = navigator.deviceMemory//performance.memory.totalJSHeapSize;
-              //@ts-ignore
+            //@ts-ignore
             memoryStats.jsHeap.limit = navigator.deviceMemory//performance.memory.jsHeapSizeLimit;
         } else {
             memoryStats.jsHeap.used = 0;
             memoryStats.jsHeap.total = 0;
             memoryStats.jsHeap.limit = 0;
         }
-    
+
         return memoryStats;
     }
 

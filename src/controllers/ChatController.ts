@@ -188,11 +188,13 @@ export class ChatController {
       const messages = this.getMessages();
       this.dbController.addMessage({ roomId: room.roomId, sender: room.personaId, message: messages[messages.length - 1], timestamp: Date.now() });
       this.chatRooms.set(roomId, { ...room, messages: [...messages] });
+      this.currentGemrateRoomId = undefined;
     }
   }
 
   public stopGeneration(): void {
     this.llmController.stopGeneration();
+    this.currentGemrateRoomId = undefined;
   }
 
   public changeChatRoom(roomId: string): void {
@@ -208,8 +210,11 @@ export class ChatController {
 
   public async deleteChatRoom(roomId: string): Promise<void> {
     eventEmitter.emit(EVENT_TYPES.MESSAGE_UPDATE, { roomId, messages: [] });
-    if (this.currentGemrateRoomId === roomId) {
-      this.currentGemrateRoomId = undefined;
+    if (this.currentGemrateRoomId == roomId) {
+      this.stopGeneration();
+    }
+    if (this.focusedRoomId === roomId) {
+      this.focusedRoomId = undefined;
       const newCurrentRoom = this.getChatRooms()?.[0];
       if (newCurrentRoom) {
         this.changeChatRoom(newCurrentRoom.roomId);
@@ -244,10 +249,6 @@ export class ChatController {
     }
     return this.chatRooms.get(this.currentGemrateRoomId)?.messages ?? [];
   }
-
-  // public isGenerating(roomId: string): boolean {
-  //   return this.getChatRoom(roomId).isRunning;
-  // }
 
   public getChatRooms(): ChatRoom[] {
     return Array.from(this.chatRooms.values());

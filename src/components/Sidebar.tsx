@@ -239,7 +239,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
       await chatController.current.deleteChatRoom(roomId);
 
       // Update the rooms list after deletion
-      setRooms(chatController.current.getChatRooms());
+      let rooms = chatController.current.getChatRooms();
+      setRooms(rooms);
+      if (rooms.length <= 0) {
+        setMode(ModeValues.Import)
+      }
 
       setIsRemoveComplete(true);
     } catch (error) {
