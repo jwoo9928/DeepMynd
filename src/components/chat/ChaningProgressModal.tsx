@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Bot, Loader2, X, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { EVENT_TYPES, eventEmitter } from "../../controllers/events";
 import { ModeValues } from "../types";
 import { useSetAtom } from "jotai";
@@ -15,29 +15,30 @@ const ModelChangeModal = () => {
   useEffect(() => {
     const handleModelChanging = () => {
       setIsOpen(true);
-
-      // Simulate steps progression
-      const interval = setInterval(() => {
-        setCurrentStep(prev => {
-          if (prev >= totalSteps) {
-            clearInterval(interval);
-            setTimeout(() => {
-              setIsOpen(false);
-              setMode(ModeValues.Chat);
-            }, 500);
-            return prev;
-          }
-          return prev + 1;
-        });
-      }, 1000);
-
-      return () => clearInterval(interval);
     };
 
+    const handleModelInitializing = () => {
+      currentStep <= 1 && setCurrentStep(2);
+    };
+
+    const onClose = async () => {
+      setCurrentStep(3);
+      setTimeout(() => {
+        setCurrentStep(4);
+        setIsOpen(false);
+        setMode(ModeValues.Chat);
+      }
+        , 1000);
+    }
+
     eventEmitter.on(EVENT_TYPES.MODEL_CHANGING, handleModelChanging);
+    eventEmitter.on(EVENT_TYPES.MODEL_INITIALIZING, handleModelInitializing);
+    eventEmitter.on(EVENT_TYPES.MODEL_READY, onClose);
 
     return () => {
       eventEmitter.off(EVENT_TYPES.MODEL_CHANGING, handleModelChanging);
+      eventEmitter.off(EVENT_TYPES.MODEL_INITIALIZING, handleModelInitializing);
+      eventEmitter.off(EVENT_TYPES.MODEL_READY, onClose);
     };
   }, []);
 
@@ -72,7 +73,7 @@ const ModelChangeModal = () => {
                   )}
                 </div>
                 <div className="text-xs mt-2 text-gray-500">
-                  {index === 0 ? 'Unloading' : index === 1 ? 'Switching' : 'Preparing'}
+                  {index === 0 ? 'initializing' : index === 1 ? 'Switching' : 'Preparing'}
                 </div>
               </div>
             ))}
@@ -86,7 +87,7 @@ const ModelChangeModal = () => {
           </div>
 
           <p className="text-sm text-gray-500">
-            Your new AI model will be ready in a moment
+            Your AI model will be ready in a moment
           </p>
         </div>
       </div>

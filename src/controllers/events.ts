@@ -4,7 +4,7 @@ export const EVENT_TYPES = {
   //model
   MODEL_STATUS: 'model_status',
   MODEL_INITIALIZING: 'model_initializing',
-  MODEL_INITIALIZING_2: 'model_initializing_2',
+  MODEL_CHANGING: 'model_changing',
   MODEL_READY: 'model_ready',
   MODELS_UPDATED: 'models_updated',
   MODEL_DELETED: 'model_deleted',

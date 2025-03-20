@@ -4,6 +4,7 @@ import React, { useMemo, useState, useEffect, useCallback, useRef } from "react"
 import { EVENT_TYPES, eventEmitter } from "../../controllers/events";
 import { ChatController } from "../../controllers/ChatController";
 import ChatInput from "./atoms/ChatInput";
+import { PersonaController } from "../../controllers/PersonaController";
 
 const Chat = () => {
     const [messages, setMessages] = useState<Message[]>([]);
@@ -60,7 +61,10 @@ const Chat = () => {
         const handleGenerationComplete = () => {
             setIsGenerating(false);
         };
-        
+        setMessages([...chatController.current.getFocusedRoomMessages()]);
+        setPersona(PersonaController.getInstance().getFocusedPersona() ?? null)
+
+
         //hikr215
         eventEmitter.on(EVENT_TYPES.MESSAGE_UPDATE, handleMessageReceived);
         eventEmitter.on(EVENT_TYPES.CHANGE_PERSONA, handlePersona);
@@ -96,7 +100,7 @@ const Chat = () => {
                     <div ref={messagesEndRef} />
                 </div>
             </div>
-    
+
             <ChatInput
                 inputValue={inputValue}
                 setInputValue={setInputValue}

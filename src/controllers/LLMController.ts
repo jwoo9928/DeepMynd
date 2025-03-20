@@ -151,7 +151,9 @@ export class LLMController {
                 this.focusedWokerId = modelId;
                 this.focused_worker_id = modelId;
             } else {
-                eventEmitter.emit(EVENT_TYPES.MODEL_INITIALIZING_2);
+                this.workers.size > 0 ?
+                    eventEmitter.emit(EVENT_TYPES.MODEL_CHANGING) :
+                    eventEmitter.emit(EVENT_TYPES.MODEL_INITIALIZING);
                 await this.initializeModel(modelId)
             }
         }

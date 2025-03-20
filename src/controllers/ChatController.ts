@@ -250,6 +250,13 @@ export class ChatController {
     return this.chatRooms.get(this.currentGemrateRoomId)?.messages ?? [];
   }
 
+  public getFocusedRoomMessages(): Message[] {
+    if (!this.focusedRoomId) {
+      throw new Error('No chat room is focused');
+    }
+    return this.chatRooms.get(this.focusedRoomId)?.messages ?? [];
+  }
+
   public getChatRooms(): ChatRoom[] {
     return Array.from(this.chatRooms.values());
   }

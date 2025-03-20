@@ -10,6 +10,7 @@ import { uiModeAtom } from '../../stores/ui.store';
 import { DBController } from '../../controllers/DBController';
 import ModelCustomization from '../persona/ModelCustomization';
 import ChatHeader from './atoms/ChatHeader';
+import ModelChangeModal from './ChaningProgressModal';
 
 
 const ModeScreen = ({
@@ -54,6 +55,7 @@ const ChatLayout = () => {
         </div>
       </div>
       <LoadingProgressModal />
+      <ModelChangeModal />
     </div>
   );
 };

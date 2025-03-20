@@ -3,13 +3,14 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import Auth from './components/auth/Auth';
 import { useEffect } from 'react';
 import { DBController } from './controllers/DBController';
-import { pipeline } from '@huggingface/transformers';
-
 function App() {
 
   useEffect(() => {
     DBController.getDatabase();
     // DBController.getDatabase().delete();
+    // LLMController.getInstance();
+    // ChatController.getInstance();
+    // PersonaController.getInstance();
   }, []);
 
   return (
