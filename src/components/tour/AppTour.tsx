@@ -25,7 +25,7 @@ const steps: Step[] = [
     }
 ];
 
-const AppTour: React.FC<AppTourProps> = ({ isOpen, onClose }) => {
+const AppTour: React.FC<AppTourProps> = ({ onClose }) => {
     const handleCallback = (data: CallBackProps) => {
         const { status } = data;
         if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {

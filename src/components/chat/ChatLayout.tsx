@@ -7,10 +7,11 @@ import { useState } from 'react';
 import WelcomeChat from './WelcomeSequence';
 import { useAtomValue } from 'jotai';
 import { uiModeAtom } from '../../stores/ui.store';
-import { DBController } from '../../controllers/DBController';
+// import { DBController } from '../../controllers/DBController';
 import ModelCustomization from '../persona/ModelCustomization';
 import ChatHeader from './atoms/ChatHeader';
 import ModelChangeModal from './ChaningProgressModal';
+import LoginModal from '../auth/\bAuthModal';
 
 
 const ModeScreen = ({
@@ -54,6 +55,7 @@ const ChatLayout = () => {
           </div>
         </div>
       </div>
+      <LoginModal />
       <LoadingProgressModal />
       <ModelChangeModal />
     </div>

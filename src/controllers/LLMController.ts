@@ -1,9 +1,7 @@
-import { prebuiltAppConfig } from '@mlc-ai/web-llm';
 import { ModelFormat, ModelList } from '../components/models/types';
 import { eventEmitter, EVENT_TYPES } from './events';
 import { Message } from './types';
 import { WORKER_EVENTS, WORKER_STATUS } from "./workers/event";
-import { v4 as uuid } from 'uuid';
 import ONNX_Worker from "./workers/main-worker?worker";
 import GGUF_Worker from "./workers/wllama-worker?worker";
 import Image_worker from "./workers/image-worker?worker";

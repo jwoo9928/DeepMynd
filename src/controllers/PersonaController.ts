@@ -1,5 +1,5 @@
 import { v4 as uuid } from 'uuid';
-import { NewPersona, Persona } from './types';
+import { Persona } from './types';
 import { EVENT_TYPES, eventEmitter } from './events';
 import { DBController } from './DBController';
 

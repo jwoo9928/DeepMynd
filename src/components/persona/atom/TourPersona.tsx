@@ -1,5 +1,5 @@
-import React, { useCallback, useMemo, useState, useEffect } from 'react';
-import Joyride, { CallBackProps, STATUS, Step } from 'react-joyride';
+import React, { useCallback, useMemo } from 'react';
+import Joyride, { CallBackProps, Step } from 'react-joyride';
 
 interface TourPersonaProps {
   isOpen: boolean;
@@ -49,17 +49,17 @@ const TourPersona: React.FC<TourPersonaProps> = ({ isOpen, onClose }) => {
     if (type === 'step:before') {
       const targetId = steps[index].target.toString().replace('#', '');
       const targetElement = document.getElementById(targetId);
-      
+
       if (targetElement) {
-        targetElement.scrollIntoView({ 
-          behavior: 'smooth', 
-          block: 'center' 
+        targetElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
         });
       }
     }
 
     // Handle tour completion
-    if ([STATUS.FINISHED, STATUS.SKIPPED].includes(status)) {
+    if (['finished', 'skipped'].includes(status as string)) {
       onClose();
     }
   }, [steps, onClose]);

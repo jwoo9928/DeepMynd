@@ -9,6 +9,9 @@ interface UserProfile {
     provider?: string;
     provider_id?: string;
     last_sign_in?: string;
+    google_drive_access_token?: string;
+    google_drive_refresh_token?: string;
+    google_drive_token_expiry?: number;
 }
 
 export class AuthController {
@@ -28,8 +31,10 @@ export class AuthController {
         }
 
         this.supabase = createClient(supabaseUrl, supabaseAnonKey);
-        // this.initAuthListener();
-        // this.restoreSession();
+
+        // Initialize auth listener and restore session immediately
+        this.initAuthListener();
+        this.restoreSession();
     }
 
     public static getInstance(): AuthController {
@@ -46,20 +51,25 @@ export class AuthController {
     // Initialize auth state listener
     private initAuthListener(): void {
         this.supabase.auth.onAuthStateChange(async (event, session) => {
+            console.log('Auth state changed:', event);
+
             this.currentSession = session;
             this.currentUser = session?.user || null;
 
             if (this.currentUser) {
                 await this.fetchUserProfile();
+
+                // If this is a new sign-in with Google, request Google Drive scope
+                if (event === 'SIGNED_IN' &&
+                    this.currentUser.app_metadata?.provider === 'google') {
+                    await this.requestGoogleDriveAccess();
+                }
             } else {
                 this.userProfile = null;
             }
 
             // Notify all listeners about auth state change
             this.authStateListeners.forEach(listener => listener(this.currentUser));
-
-            // Log auth events for debugging
-            console.log('Auth event:', event);
         });
     }
 
@@ -76,8 +86,43 @@ export class AuthController {
             if (this.currentUser) {
                 await this.fetchUserProfile();
             }
+
+            console.log('Session restored:', !!this.currentUser);
         } catch (error) {
             console.error('Error restoring session:', error);
+        }
+    }
+
+    // Request Google Drive access if not already granted
+    private async requestGoogleDriveAccess(): Promise<void> {
+        if (!this.currentUser ||
+            this.currentUser.app_metadata?.provider !== 'google' ||
+            (this.userProfile?.google_drive_access_token &&
+                this.userProfile?.google_drive_token_expiry &&
+                this.userProfile.google_drive_token_expiry > Date.now())) {
+            return;
+        }
+
+        try {
+            // Re-authenticate with additional scopes if needed
+            const { data, error } = await this.supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: `${window.location.origin}/auth/callback`,
+                    scopes: 'https://www.googleapis.com/auth/drive.file',
+                    queryParams: {
+                        access_type: 'offline',
+                        prompt: 'consent'
+                    }
+                }
+            });
+            console.log(data)
+
+            if (error) throw error;
+
+            console.log('Requested Google Drive access');
+        } catch (error) {
+            console.error('Error requesting Google Drive access:', error);
         }
     }
 
@@ -118,7 +163,7 @@ export class AuthController {
             email: this.currentUser.email || '',
             full_name: this.currentUser.user_metadata?.full_name || '',
             avatar_url: this.currentUser.user_metadata?.avatar_url || '',
-            provider: this.currentUser.app_metadata?.provider || 'google',
+            provider: this.currentUser.app_metadata?.provider || 'email',
             provider_id: this.currentUser.app_metadata?.provider_id,
             last_sign_in: new Date().toISOString()
         };
@@ -139,23 +184,92 @@ export class AuthController {
     // Handle social login (Google, Apple)
     public async handleSocialLogin(provider: 'google' | 'apple'): Promise<boolean> {
         try {
+            const scopes = provider === 'google'
+                ? 'https://www.googleapis.com/auth/drive.file'
+                : '';
+
             const { error } = await this.supabase.auth.signInWithOAuth({
                 provider,
                 options: {
-                    redirectTo: `${window.location.origin}/chat`,
+                    redirectTo: `${window.location.origin}/auth/callback`,
+                    scopes,
                     queryParams: {
                         access_type: 'offline',
                         prompt: 'consent'
                     }
                 }
             });
+
             if (error) throw error;
             return true;
         } catch (error) {
-            console.error('Error:', error);
+            console.error('Error signing in:', error);
             alert('Error signing in. Please try again.');
             return false;
         }
+    }
+
+    // Store Google Drive tokens after OAuth callback
+    public async storeGoogleDriveTokens(accessToken: string, refreshToken: string, expiresIn: number): Promise<boolean> {
+        if (!this.currentUser) return false;
+
+        try {
+            const updates: Partial<UserProfile> = {
+                google_drive_access_token: accessToken,
+                google_drive_refresh_token: refreshToken,
+                google_drive_token_expiry: Date.now() + (expiresIn * 1000)
+            };
+
+            const { error } = await this.supabase
+                .from('profiles')
+                .update(updates)
+                .eq('id', this.currentUser.id);
+
+            if (error) throw error;
+
+            // Update local profile data
+            this.userProfile = { ...this.userProfile, ...updates } as UserProfile;
+            return true;
+        } catch (error) {
+            console.error('Error storing Google Drive tokens:', error);
+            return false;
+        }
+    }
+
+    // Get Google Drive access token (refreshing if needed)
+    public async getGoogleDriveAccessToken(): Promise<string | null> {
+        if (!this.userProfile?.google_drive_access_token) return null;
+
+        // Check if token is expired
+        if (this.userProfile.google_drive_token_expiry &&
+            this.userProfile.google_drive_token_expiry < Date.now() &&
+            this.userProfile.google_drive_refresh_token) {
+
+            // Token is expired, refresh it
+            try {
+                // This would need a server-side function to refresh the token
+                const { data, error } = await this.supabase.functions.invoke('refresh-google-token', {
+                    body: { refresh_token: this.userProfile.google_drive_refresh_token }
+                });
+
+                if (error) throw error;
+
+                // Update tokens in profile
+                await this.storeGoogleDriveTokens(
+                    data.access_token,
+                    data.refresh_token || this.userProfile.google_drive_refresh_token,
+                    data.expires_in
+                );
+
+                return data.access_token;
+            } catch (error) {
+                console.error('Error refreshing Google Drive token:', error);
+                return null;
+            }
+        }
+
+        // Token is still valid
+        return this.userProfile.google_drive_access_token;
     }
 
     // Check if user is logged in
@@ -263,70 +377,5 @@ export class AuthController {
         const timeBuffer = 5 * 60 * 1000; // 5 minutes buffer
 
         return currentTime >= (expiresAt - timeBuffer);
-    }
-
-    // Handle passwordless login (via email)
-    public async signInWithEmail(email: string): Promise<boolean> {
-        try {
-            const { error } = await this.supabase.auth.signInWithOtp({
-                email,
-                options: {
-                    emailRedirectTo: `${window.location.origin}/chat`
-                }
-            });
-
-            if (error) throw error;
-            return true;
-        } catch (error) {
-            console.error('Error signing in with email:', error);
-            return false;
-        }
-    }
-
-    // Handle token verification after email link click
-    public async verifyOtp(email: string, token: string): Promise<boolean> {
-        try {
-            const { error } = await this.supabase.auth.verifyOtp({
-                email,
-                token,
-                type: 'magiclink'
-            });
-
-            if (error) throw error;
-            return true;
-        } catch (error) {
-            console.error('Error verifying OTP:', error);
-            return false;
-        }
-    }
-
-    // Security method: Delete account
-    public async deleteAccount(): Promise<boolean> {
-        if (!this.currentUser) return false;
-
-        try {
-            // First delete profile data
-            const { error: profileError } = await this.supabase
-                .from('profiles')
-                .delete()
-                .eq('id', this.currentUser.id);
-
-            if (profileError) throw profileError;
-
-            // Then use admin function to delete user
-            // This requires a server-side function as client can't delete users
-            const { error } = await this.supabase.functions.invoke('delete-user', {
-                body: { user_id: this.currentUser.id }
-            });
-
-            if (error) throw error;
-
-            // Sign out after deletion
-            await this.signOut();
-            return true;
-        } catch (error) {
-            console.error('Error deleting account:', error);
-            return false;
-        }
     }
 }

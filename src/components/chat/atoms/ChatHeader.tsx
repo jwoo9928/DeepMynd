@@ -1,8 +1,7 @@
-import { Menu, MoreVertical, X, Cpu, HardDrive, Info } from "lucide-react";
+import { Menu, MoreVertical, X, Cpu, HardDrive } from "lucide-react";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { LLMController } from "../../../controllers/LLMController";
 import { EVENT_TYPES, eventEmitter } from "../../../controllers/events";
-import { personaForUpdateAtom } from "../../../stores/data.store";
 import { useSetAtom } from "jotai";
 import { ModeValues } from "../../types";
 import { uiModeAtom } from "../../../stores/ui.store";
@@ -129,11 +128,11 @@ const ChatHeader = ({ toggleSidebar }: {
   };
 
   // Set focus to a model
-  const setFocus = (modelId: string) => {
-    // setActiveModels(activeModels.map(model => ({
-    //   ...model,
-    // })));
-  };
+  // const setFocus = (modelId: string) => {
+  //   // setActiveModels(activeModels.map(model => ({
+  //   //   ...model,
+  //   // })));
+  // };
 
   const editPersona = useCallback(() => {
     setMode(ModeValues.Create) //import
@@ -159,7 +158,7 @@ const ChatHeader = ({ toggleSidebar }: {
               className="relative"
               onMouseEnter={() => setHoveredModel(model.id)}
               onMouseLeave={() => setHoveredModel(null)}
-              onClick={() => setFocus(model.id)}
+              // onClick={() => setFocus(model.id)}
               onTouchStart={() => {
                 const timer = setTimeout(() => handleLongPress(model.id), 800);
                 return () => clearTimeout(timer);

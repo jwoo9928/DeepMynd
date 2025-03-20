@@ -1,5 +1,5 @@
 import { Persona } from "../../controllers/types";
-import React, { useState, useRef } from "react";
+import { useState, useRef } from "react";
 import PersonaSelection from "./PersonaSelection";
 import PersonaModal from "./PersonaModal";
 import { EVENT_TYPES, eventEmitter } from "../../controllers/events";

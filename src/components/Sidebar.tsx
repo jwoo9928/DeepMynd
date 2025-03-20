@@ -7,7 +7,7 @@ import NewChatModal from "./NewChatModal";
 import { ChatRoom } from "../controllers/types";
 import LoadingModal from "./models/LoadingModal";
 import { useAtom, useSetAtom } from "jotai";
-import { uiModeAtom } from "../stores/ui.store";
+import { authModalOpen, uiModeAtom } from "../stores/ui.store";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -48,7 +48,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   const setMode = useSetAtom(uiModeAtom);
 
   // User information (mock data - replace with actual auth state)
-  const [userInfo, setUserInfo] = useState<UserInfo>({
+  const [userInfo,] = useState<UserInfo>({
     isLoggedIn: false,
     profile: undefined
   });
@@ -491,46 +491,51 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   );
 
   // Render user info section
-  const UserInfoSection = () => (
-    <div className="border-t border-gray-200 p-4">
-      {userInfo.isLoggedIn ? (
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-gray-300 rounded-full overflow-hidden">
-            <img
-              src={userInfo.profile?.avatar || "/default-avatar.png"}
-              alt="Profile"
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <div className="flex-1">
-            <h3 className="font-medium text-sm">{userInfo.profile?.name || "User"}</h3>
-            <p className="text-xs text-gray-500">{userInfo.profile?.email || "user@example.com"}</p>
-          </div>
-          <button className="p-2 text-gray-600 hover:text-blue-500 hover:bg-blue-50 rounded-full transition-colors">
-            <MoreVertical className="h-4 w-4" />
-          </button>
-        </div>
-      ) : (
-        <div className="flex items-center justify-between">
+  const UserInfoSection = () => {
+    const setAuthModalIsOpen = useSetAtom(authModalOpen);
+
+    return (
+      <div className="border-t border-gray-200 p-4">
+        {userInfo.isLoggedIn ? (
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-              <User className="h-5 w-5 text-gray-500" />
+            <div className="w-10 h-10 bg-gray-300 rounded-full overflow-hidden">
+              <img
+                src={userInfo.profile?.avatar || "/default-avatar.png"}
+                alt="Profile"
+                className="w-full h-full object-cover"
+              />
             </div>
-            <div>
-              <p className="text-sm font-medium">Not logged in</p>
-              <p className="text-xs text-gray-500">Sign in to sync your chats</p>
+            <div className="flex-1">
+              <h3 className="font-medium text-sm">{userInfo.profile?.name || "User"}</h3>
+              <p className="text-xs text-gray-500">{userInfo.profile?.email || "user@example.com"}</p>
             </div>
+            <button className="p-2 text-gray-600 hover:text-blue-500 hover:bg-blue-50 rounded-full transition-colors">
+              <MoreVertical className="h-4 w-4" />
+            </button>
           </div>
-          <button
-            className="px-3 py-1.5 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-1"
-          >
-            <LogIn className="h-3.5 w-3.5" />
-            Log In
-          </button>
-        </div>
-      )}
-    </div>
-  );
+        ) : (
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                <User className="h-5 w-5 text-gray-500" />
+              </div>
+              <div>
+                <p className="text-sm font-medium">Not logged in</p>
+                <p className="text-xs text-gray-500">Sign in to sync your chats</p>
+              </div>
+            </div>
+            <button
+              className="px-3 py-1.5 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-1"
+              onClick={() => setAuthModalIsOpen(true)}
+            >
+              <LogIn className="h-3.5 w-3.5" />
+              Log In
+            </button>
+          </div>
+        )}
+      </div>
+    )
+  };
 
   // Download apps section
   const DownloadAppsSection = () => (
@@ -610,7 +615,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
         <UserInfoSection />
 
         {/* Download apps section */}
-        {/* <DownloadAppsSection /> */}
+        <DownloadAppsSection />
       </div>
 
       <NewChatModal

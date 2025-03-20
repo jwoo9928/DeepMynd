@@ -172,19 +172,11 @@ export class ChatController {
     eventEmitter.emit(EVENT_TYPES.MESSAGE_UPDATE, { roomId: this.currentGemrateRoomId, messages: [...messages] });
   }
 
-  private handleGenerationComplete(data: {
-    output?: string;
-    blob?: Blob;
-  }): void {
+  private handleGenerationComplete(): void {
     const roomId = this.currentGemrateRoomId;
     if (roomId) {
       const room = this.getChatRoom(roomId);
       room.lastMessageTimestamp = Date.now();
-      // if (data?.blob) {
-      //   const url = URL.createObjectURL(data.blob);
-      //   this.currentMessages[this.currentMessages.length - 1].content = `/image:${url}`;
-      //   eventEmitter.emit(EVENT_TYPES.MESSAGE_UPDATE, this.currentMessages);
-      // }
       const messages = this.getMessages();
       this.dbController.addMessage({ roomId: room.roomId, sender: room.personaId, message: messages[messages.length - 1], timestamp: Date.now() });
       this.chatRooms.set(roomId, { ...room, messages: [...messages] });
