@@ -538,36 +538,36 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   };
 
   // Download apps section
-  const DownloadAppsSection = () => (
-    <div className="border-t border-gray-200 p-4">
-      <div className="bg-gray-50 rounded-lg p-4">
-        <h3 className="text-sm font-medium mb-2">Get DeepMynd apps</h3>
-        <div className="grid grid-cols-3 gap-2 mt-3">
-          <a
-            href="#"
-            className="flex flex-col items-center justify-center p-3 bg-white rounded-lg hover:bg-gray-100 transition-colors"
-          >
-            <Download className="h-5 w-5 text-blue-500 mb-1" />
-            <span className="text-xs">Web App</span>
-          </a>
-          <a
-            href="#"
-            className="flex flex-col items-center justify-center p-3 bg-white rounded-lg hover:bg-gray-100 transition-colors"
-          >
-            <Download className="h-5 w-5 text-blue-500 mb-1" />
-            <span className="text-xs">Windows</span>
-          </a>
-          <a
-            href="#"
-            className="flex flex-col items-center justify-center p-3 bg-white rounded-lg hover:bg-gray-100 transition-colors"
-          >
-            <Download className="h-5 w-5 text-blue-500 mb-1" />
-            <span className="text-xs">macOS</span>
-          </a>
-        </div>
-      </div>
-    </div>
-  );
+  // const DownloadAppsSection = () => (
+  //   <div className="border-t border-gray-200 p-4">
+  //     <div className="bg-gray-50 rounded-lg p-4">
+  //       <h3 className="text-sm font-medium mb-2">Get DeepMynd apps</h3>
+  //       <div className="grid grid-cols-3 gap-2 mt-3">
+  //         <a
+  //           href="#"
+  //           className="flex flex-col items-center justify-center p-3 bg-white rounded-lg hover:bg-gray-100 transition-colors"
+  //         >
+  //           <Download className="h-5 w-5 text-blue-500 mb-1" />
+  //           <span className="text-xs">Web App</span>
+  //         </a>
+  //         <a
+  //           href="#"
+  //           className="flex flex-col items-center justify-center p-3 bg-white rounded-lg hover:bg-gray-100 transition-colors"
+  //         >
+  //           <Download className="h-5 w-5 text-blue-500 mb-1" />
+  //           <span className="text-xs">Windows</span>
+  //         </a>
+  //         <a
+  //           href="#"
+  //           className="flex flex-col items-center justify-center p-3 bg-white rounded-lg hover:bg-gray-100 transition-colors"
+  //         >
+  //           <Download className="h-5 w-5 text-blue-500 mb-1" />
+  //           <span className="text-xs">macOS</span>
+  //         </a>
+  //       </div>
+  //     </div>
+  //   </div>
+  // );
 
   return (
     <>
@@ -615,7 +615,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
         <UserInfoSection />
 
         {/* Download apps section */}
-        <DownloadAppsSection />
+        {/* <DownloadAppsSection /> */}
       </div>
 
       <NewChatModal

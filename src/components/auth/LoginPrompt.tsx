@@ -1,14 +1,15 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, Save, Users, History } from 'lucide-react';
+import { useAtom } from 'jotai';
+import { authModalOpen } from '../../stores/ui.store';
 
 interface LoginPromptProps {
-    isOpen: boolean;
-    onClose: () => void;
     message?: string;
 }
 
-const LoginPrompt: React.FC<LoginPromptProps> = ({ isOpen, onClose, message = "Login to unlock all features" }) => {
+const LoginPrompt: React.FC<LoginPromptProps> = ({ message = "Login to unlock all features" }) => {
+    const [isOpen, setIsOpen] = useAtom(authModalOpen)
     const navigate = useNavigate();
 
     if (!isOpen) return null;
@@ -19,7 +20,7 @@ const LoginPrompt: React.FC<LoginPromptProps> = ({ isOpen, onClose, message = "L
                 {/* Header */}
                 <div className="p-6 relative bg-blue-50">
                     <button
-                        onClick={onClose}
+                        onClick={() => setIsOpen(false)}
                         className="absolute right-4 top-4 text-gray-500 hover:text-gray-700 bg-white rounded-full p-1 shadow-md"
                     >
                         <X className="h-5 w-5" />
@@ -88,7 +89,7 @@ const LoginPrompt: React.FC<LoginPromptProps> = ({ isOpen, onClose, message = "L
                     </button>
 
                     <button
-                        onClick={onClose}
+                        onClick={() => setIsOpen(false)}
                         className="w-full py-3 px-4 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium rounded-lg transition-colors duration-200"
                     >
                         Maybe Later

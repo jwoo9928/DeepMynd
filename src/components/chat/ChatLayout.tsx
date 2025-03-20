@@ -11,7 +11,8 @@ import { uiModeAtom } from '../../stores/ui.store';
 import ModelCustomization from '../persona/ModelCustomization';
 import ChatHeader from './atoms/ChatHeader';
 import ModelChangeModal from './ChaningProgressModal';
-import LoginModal from '../auth/\bAuthModal';
+import LoginPrompt from '../auth/LoginPrompt';
+import ManagePersonas from '../persona/ManagePersonas';
 
 
 const ModeScreen = ({
@@ -29,6 +30,8 @@ const ModeScreen = ({
       return <ModelCustomization />;
     case ModeValues.Import:
       return <PersonaLayout />
+    case ModeValues.Manage:
+      return <ManagePersonas />
   }
 }
 
@@ -55,7 +58,9 @@ const ChatLayout = () => {
           </div>
         </div>
       </div>
-      <LoginModal />
+      <LoginPrompt
+        message="Log in to change or create new Personas! Unlock the full potential of UniMynd with a personalized experience."
+      />
       <LoadingProgressModal />
       <ModelChangeModal />
     </div>

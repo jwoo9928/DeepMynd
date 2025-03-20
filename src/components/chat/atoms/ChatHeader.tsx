@@ -135,7 +135,7 @@ const ChatHeader = ({ toggleSidebar }: {
   // };
 
   const editPersona = useCallback(() => {
-    setMode(ModeValues.Create) //import
+    setMode(ModeValues.Manage) //import
   }, []);
 
 

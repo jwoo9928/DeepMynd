@@ -103,12 +103,6 @@ const PersonaSelection = ({
           </div>
         ))}
       </div>
-      <LoginPrompt
-        isOpen={showLoginPrompt}
-        onClose={() => setShowLoginPrompt(false)}
-        message="Log in to change or create new Personas! Unlock the full potential of UniMynd with a personalized experience."
-      />
-      
     </div>
   );
 }
