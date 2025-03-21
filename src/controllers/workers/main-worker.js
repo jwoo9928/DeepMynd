@@ -25,7 +25,6 @@ async function check() {
 
 async function load(data) {
   const { modelId } = data;
-  console.log("worker: data", data);
   self.postMessage({ type: WORKER_STATUS.STATUS_LOADING });
 
   await TextGenerationPipeline.getInstance(modelId, (x) => {
@@ -125,7 +124,6 @@ self.addEventListener("message", async (e) => {
       check();
       break;
     case WORKER_EVENTS.LOAD:
-      console.log("load start", data);
       load(data);
       break;
     case WORKER_EVENTS.GENERATION:

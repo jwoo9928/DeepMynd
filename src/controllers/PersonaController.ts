@@ -65,7 +65,8 @@ export class PersonaController {
         if (this.focused_p_id) {
             return this.personaList.get(this.focused_p_id);
         }
-        throw new Error('No focused persona');
+        // throw new Error('No focused persona');
+        return undefined;
     }
 
     setFocusedPersona(persona: Persona): void {

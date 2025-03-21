@@ -30,7 +30,6 @@ async function check() {
 
 async function load(data) {
   const { modelId } = data;
-  console.log("worker: data", data);
   self.postMessage({ type: WORKER_STATUS.STATUS_LOADING });
   const [model] = await MLCTextGenePipeline.getInstance(modelId, (x) => {
     self.postMessage({
@@ -52,7 +51,6 @@ async function load(data) {
 
 async function generate(messages) {
   const [model] = await MLCTextGenePipeline.getInstance();
-  console.log("messages: ", messages);
   messageDB.push(...messages);
   self.postMessage({ status: WORKER_STATUS.GENERATION_START });
 
@@ -75,9 +73,6 @@ async function generate(messages) {
   for await (const chunk of chunks) {
     reply += chunk.choices[0]?.delta.content || "";
     callback_function(reply);
-    if (chunk.usage) {
-      console.log(chunk.usage); // only last chunk has usage
-    }
   }
 
   self.postMessage({ type: WORKER_STATUS.GENERATION_COMPLETE });
@@ -96,7 +91,6 @@ self.addEventListener("message", async (e) => {
       check();
       break;
     case WORKER_EVENTS.LOAD:
-      console.log("load start", data);
       load(data);
       break;
     case WORKER_EVENTS.GENERATION:

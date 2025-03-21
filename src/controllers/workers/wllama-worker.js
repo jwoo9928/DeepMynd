@@ -23,16 +23,11 @@ async function check() {
 
 async function load(data) {
   const { modelId, modelfile } = data;
-  console.log("wllama");
   self.postMessage({ type: WORKER_STATUS.STATUS_LOADING });
 
-  await WLLAMATextGenPipeline.getInstance(
-    "afrideva/Tiny-Vicuna-1B-GGUF",
-    "tiny-vicuna-1b.q4_k_m.gguf",
-    (x) => {
-      self.postMessage(x);
-    }
-  );
+  await WLLAMATextGenPipeline.getInstance(modelId, modelfile, (x) => {
+    self.postMessage(x);
+  });
 
   self.postMessage({ type: WORKER_STATUS.STATUS_READY });
 }
@@ -47,7 +42,6 @@ async function generate(messages) {
   if (messages.length === 2) {
     message += messages[0].content + "\n" + messages[1].content;
   }
-  console.log("message test:", message);
 
   self.postMessage({ status: WORKER_STATUS.GENERATION_START });
 
@@ -69,7 +63,6 @@ async function generate(messages) {
       });
     },
   });
-  console.log(outputText);
   self.postMessage({
     type: WORKER_STATUS.GENERATION_UPDATE,
     data: {
