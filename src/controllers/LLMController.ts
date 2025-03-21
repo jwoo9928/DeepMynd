@@ -266,7 +266,7 @@ export class LLMController {
         //@ts-ignore
         if (performance && performance.memory) {
             //@ts-ignore
-            memoryStats.jsHeap.used = (await performance.measureUserAgentSpecificMemory()).bytes//performance.memory.usedJSHeapSize;
+            memoryStats.jsHeap.used = performance.memory.usedJSHeapSize; //(await performance?.measureUserAgentSpecificMemory())?.bytes ?? 
             //@ts-ignore
             memoryStats.jsHeap.total = navigator.deviceMemory//performance.memory.totalJSHeapSize;
             //@ts-ignore

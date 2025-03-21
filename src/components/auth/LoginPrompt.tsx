@@ -1,8 +1,8 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useRef } from 'react';
 import { X, Save, Users, History } from 'lucide-react';
 import { useAtom } from 'jotai';
 import { authModalOpen } from '../../stores/ui.store';
+import { AuthController } from '../../controllers/AuthController';
 
 interface LoginPromptProps {
     message?: string;
@@ -10,7 +10,7 @@ interface LoginPromptProps {
 
 const LoginPrompt: React.FC<LoginPromptProps> = ({ message = "Login to unlock all features" }) => {
     const [isOpen, setIsOpen] = useAtom(authModalOpen)
-    const navigate = useNavigate();
+    const authController = useRef<AuthController>(AuthController.getInstance());
 
     if (!isOpen) return null;
 
@@ -29,11 +29,11 @@ const LoginPrompt: React.FC<LoginPromptProps> = ({ message = "Login to unlock al
                     <div className="flex flex-col items-center">
                         <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
                             <img
-                                src="/assets/deepmynd-logo.png"
+                                src="public/assets/deepmynd.jpg"
                                 alt="DeepMynd Logo"
-                                className="w-12 h-12"
+                                className="w-16 h-16 border-2 border-blue-500 rounded-full"
                                 onError={(e) => {
-                                    e.currentTarget.src = "https://via.placeholder.com/48";
+                                    e.currentTarget.src = "./public/assets/deepmynd-logo.png";
                                 }}
                             />
                         </div>
@@ -82,10 +82,10 @@ const LoginPrompt: React.FC<LoginPromptProps> = ({ message = "Login to unlock al
                 {/* Action Buttons */}
                 <div className="p-6 bg-gray-50 flex flex-col gap-3">
                     <button
-                        onClick={() => navigate('/auth')}
+                        onClick={() => authController.current.handleSocialLogin("google")}
                         className="w-full py-3 px-4 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-colors duration-200 flex items-center justify-center"
                     >
-                        Continue with Email
+                        Continue with Google
                     </button>
 
                     <button

@@ -4,7 +4,6 @@ import { Mode, ModeValues } from '../types';
 import LoadingProgressModal from './LoadingProgressModal';
 import PersonaLayout from '../persona/PersonaLayout';
 import { useState } from 'react';
-import WelcomeChat from './WelcomeSequence';
 import { useAtomValue } from 'jotai';
 import { uiModeAtom } from '../../stores/ui.store';
 // import { DBController } from '../../controllers/DBController';
@@ -22,7 +21,7 @@ const ModeScreen = ({
 }) => {
   switch (mode) {
     case ModeValues.Welcome:
-      return <WelcomeChat />
+    // return <WelcomeChat />
     case ModeValues.Chat:
       return <Chat />
     case ModeValues.Create:

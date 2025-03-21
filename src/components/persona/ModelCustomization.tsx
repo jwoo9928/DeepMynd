@@ -1,5 +1,5 @@
 import React, { useState, useRef, useMemo, useCallback, useEffect } from 'react';
-import { ArrowLeft, Upload, X, Hash, Info } from 'lucide-react';
+import { Upload, X, Hash } from 'lucide-react';
 import { ModeValues } from '../types';
 import { PersonaController } from '../../controllers/PersonaController';
 import { FastAverageColor } from 'fast-average-color';

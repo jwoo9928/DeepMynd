@@ -1,4 +1,4 @@
-import { Search, X, Plus, MoreVertical, Pin, Trash2, User, Download, LogIn, Bot } from "lucide-react";
+import { Search, X, Plus, MoreVertical, Pin, Trash2, Bot } from "lucide-react";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { EVENT_TYPES, eventEmitter } from "../controllers/events";
 import { ModeValues } from "./types";
@@ -7,7 +7,8 @@ import NewChatModal from "./NewChatModal";
 import { ChatRoom } from "../controllers/types";
 import LoadingModal from "./models/LoadingModal";
 import { useAtom, useSetAtom } from "jotai";
-import { authModalOpen, uiModeAtom } from "../stores/ui.store";
+import { uiModeAtom } from "../stores/ui.store";
+import UserInfoSection from "./sidebar/UserInfoSection";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -25,15 +26,6 @@ interface SwipeState {
   revealed: boolean;
 }
 
-interface UserInfo {
-  isLoggedIn: boolean;
-  profile?: {
-    name: string;
-    email: string;
-    avatar: string;
-  };
-}
-
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   const chatController = useRef(ChatController.getInstance());
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -47,11 +39,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const setMode = useSetAtom(uiModeAtom);
 
-  // User information (mock data - replace with actual auth state)
-  const [userInfo,] = useState<UserInfo>({
-    isLoggedIn: false,
-    profile: undefined
-  });
 
   // Store dropdown position for proper rendering
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 });
@@ -489,53 +476,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
       </button>
     </div>
   );
-
-  // Render user info section
-  const UserInfoSection = () => {
-    const setAuthModalIsOpen = useSetAtom(authModalOpen);
-
-    return (
-      <div className="border-t border-gray-200 p-4">
-        {userInfo.isLoggedIn ? (
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gray-300 rounded-full overflow-hidden">
-              <img
-                src={userInfo.profile?.avatar || "/default-avatar.png"}
-                alt="Profile"
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-medium text-sm">{userInfo.profile?.name || "User"}</h3>
-              <p className="text-xs text-gray-500">{userInfo.profile?.email || "user@example.com"}</p>
-            </div>
-            <button className="p-2 text-gray-600 hover:text-blue-500 hover:bg-blue-50 rounded-full transition-colors">
-              <MoreVertical className="h-4 w-4" />
-            </button>
-          </div>
-        ) : (
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                <User className="h-5 w-5 text-gray-500" />
-              </div>
-              <div>
-                <p className="text-sm font-medium">Not logged in</p>
-                <p className="text-xs text-gray-500">Sign in to sync your chats</p>
-              </div>
-            </div>
-            <button
-              className="px-3 py-1.5 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-1"
-              onClick={() => setAuthModalIsOpen(true)}
-            >
-              <LogIn className="h-3.5 w-3.5" />
-              Log In
-            </button>
-          </div>
-        )}
-      </div>
-    )
-  };
 
   // Download apps section
   // const DownloadAppsSection = () => (

@@ -2,7 +2,6 @@ import { useEffect, useState, useMemo } from "react";
 import { Persona } from "../../controllers/types";
 import { PersonaController } from "../../controllers/PersonaController";
 import { EVENT_TYPES, eventEmitter } from "../../controllers/events";
-import LoginPrompt from '../auth/LoginPrompt';
 
 const PersonaSelection = ({
   handlePersonaSelection
@@ -35,7 +34,6 @@ const PersonaSelection = ({
     }
 
     const handlePersonaList = (personaList: Map<string, Persona>) => {
-      console.log("personaList", personaList);
       setPersonas(Array.from(personaList.values()));
     }
 

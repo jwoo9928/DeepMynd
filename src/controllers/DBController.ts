@@ -86,7 +86,6 @@ export class DBController extends Dexie {
             onnx: [],
         };
         if (models.length > 0) {
-            console.log('Models already loaded:', models);
             models.forEach((model) => {
                 const format = model.format.toLowerCase().split('-')[0] as ModelFormat;
                 modelList[format].push(model);

@@ -30,6 +30,11 @@ export const EVENT_TYPES = {
   UPDATED_CHAT_ROOMS: 'updated_chat_rooms',
   ROOM_CHANGED: 'room_changed',
 
+  //auth
+  SESSION_CHANGED: 'session_changed',
+  SESSION_RESTORED: 'session_restored',
+  SESSION_EXPIRED: 'session_expired',
+
 } as const;
 
 export const eventEmitter = new EventEmitter();

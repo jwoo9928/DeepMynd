@@ -1,7 +1,6 @@
 import React, { memo } from "react";
-import { Bot, Loader2 } from "lucide-react";
+import { Bot } from "lucide-react";
 import LoadingDots from "./LoadingDots";
-import ReactMarkdown from "react-markdown";
 import { Message, Persona } from "../../../controllers/types";
 import MessageContent from "./message/MessageContent";
 

@@ -7,7 +7,6 @@ import { useSetAtom } from "jotai";
 import { isTermsAccepted, uiModeAtom } from "../../stores/ui.store";
 import { ModeValues } from "../types";
 import TermsModal from "../terms/TermsModal";
-import { userInfoAtom } from "../../stores/data.store";
 
 // 시간대별 인사말 생성 함수
 const getTimeBasedGreeting = () => {
@@ -97,7 +96,6 @@ const WelcomeChat = () => {
     const [showTerms, setShowTerms] = useState<boolean>(false);
     const setIsTermsAccepted = useSetAtom(isTermsAccepted);
     const setMode = useSetAtom(uiModeAtom);
-    const setName = useSetAtom(userInfoAtom);
 
     const currentMessageIndex = useRef(0);
     const currentCharIndex = useRef(0);
@@ -201,9 +199,9 @@ const WelcomeChat = () => {
         switch (chatStage) {
             case ChatStage.NAME_INPUT:
                 // 이름 입력 처리
-                setName({
-                    name: inputValue,
-                });
+                // setName({
+                //     name: inputValue,
+                // });
 
                 // 잠시 대기 후 nameMessages 시작
                 setTimeout(() => {

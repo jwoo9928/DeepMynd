@@ -1,4 +1,5 @@
 import { createClient, SupabaseClient, User, Session } from "@supabase/supabase-js";
+import { EVENT_TYPES, eventEmitter } from "./events";
 
 // User profile interface for type safety
 interface UserProfile {
@@ -20,7 +21,7 @@ export class AuthController {
     private currentUser: User | null = null;
     private currentSession: Session | null = null;
     private userProfile: UserProfile | null = null;
-    private authStateListeners: ((user: User | null) => void)[] = [];
+    private tokenRefreshTimer: number | null = null;
 
     private constructor() {
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -51,25 +52,35 @@ export class AuthController {
     // Initialize auth state listener
     private initAuthListener(): void {
         this.supabase.auth.onAuthStateChange(async (event, session) => {
-            console.log('Auth state changed:', event);
+            console.log('Auth state changed:', event, session);
 
             this.currentSession = session;
             this.currentUser = session?.user || null;
 
             if (this.currentUser) {
                 await this.fetchUserProfile();
+                eventEmitter.emit(EVENT_TYPES.SESSION_CHANGED, this.currentUser);
+
+                // Start token refresh timer when user is logged in
+                this.startTokenRefreshTimer();
 
                 // If this is a new sign-in with Google, request Google Drive scope
                 if (event === 'SIGNED_IN' &&
                     this.currentUser.app_metadata?.provider === 'google') {
-                    await this.requestGoogleDriveAccess();
+                    // Only request Google Drive access if we don't already have valid tokens
+                    if (!this.userProfile?.google_drive_access_token ||
+                        !this.userProfile?.google_drive_token_expiry ||
+                        this.userProfile.google_drive_token_expiry < Date.now()) {
+                        await this.requestGoogleDriveAccess();
+                    }
                 }
             } else {
                 this.userProfile = null;
-            }
+                eventEmitter.emit(EVENT_TYPES.SESSION_CHANGED, null);
 
-            // Notify all listeners about auth state change
-            this.authStateListeners.forEach(listener => listener(this.currentUser));
+                // Clear token refresh timer when user is logged out
+                this.stopTokenRefreshTimer();
+            }
         });
     }
 
@@ -85,26 +96,39 @@ export class AuthController {
 
             if (this.currentUser) {
                 await this.fetchUserProfile();
-            }
+                eventEmitter.emit(EVENT_TYPES.SESSION_RESTORED, this.currentUser);
 
-            console.log('Session restored:', !!this.currentUser);
+                // Start token refresh timer when session is restored
+                this.startTokenRefreshTimer();
+            } else {
+                eventEmitter.emit(EVENT_TYPES.SESSION_RESTORED, null);
+            }
         } catch (error) {
             console.error('Error restoring session:', error);
+            eventEmitter.emit(EVENT_TYPES.SESSION_RESTORED, null);
         }
     }
 
     // Request Google Drive access if not already granted
-    private async requestGoogleDriveAccess(): Promise<void> {
+    public async requestGoogleDriveAccess(): Promise<void> {
+        console.log("Requesting Google Drive access");
+
         if (!this.currentUser ||
-            this.currentUser.app_metadata?.provider !== 'google' ||
-            (this.userProfile?.google_drive_access_token &&
-                this.userProfile?.google_drive_token_expiry &&
-                this.userProfile.google_drive_token_expiry > Date.now())) {
+            this.currentUser.app_metadata?.provider !== 'google') {
+            console.log("User not logged in with Google, cannot request Drive access");
+            return;
+        }
+
+        // Check if we already have valid tokens
+        if (this.userProfile?.google_drive_access_token &&
+            this.userProfile?.google_drive_token_expiry &&
+            this.userProfile.google_drive_token_expiry > Date.now()) {
+            console.log("Already have valid Google Drive access token");
             return;
         }
 
         try {
-            // Re-authenticate with additional scopes if needed
+            // Re-authenticate with additional scopes
             const { data, error } = await this.supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
@@ -116,11 +140,9 @@ export class AuthController {
                     }
                 }
             });
-            console.log(data)
 
             if (error) throw error;
-
-            console.log('Requested Google Drive access');
+            console.log('Requested Google Drive access:', data);
         } catch (error) {
             console.error('Error requesting Google Drive access:', error);
         }
@@ -145,6 +167,12 @@ export class AuthController {
 
             if (data) {
                 this.userProfile = data as UserProfile;
+                console.log('Fetched user profile:', this.userProfile);
+
+                // Update last_sign_in field
+                await this.updateUserProfile({
+                    last_sign_in: new Date().toISOString()
+                });
             } else {
                 // Create new profile if not exists
                 await this.createUserProfile();
@@ -176,6 +204,7 @@ export class AuthController {
             if (error) throw error;
 
             this.userProfile = newProfile as UserProfile;
+            console.log('Created new user profile:', this.userProfile);
         } catch (error) {
             console.error('Error creating user profile:', error);
         }
@@ -214,10 +243,12 @@ export class AuthController {
         if (!this.currentUser) return false;
 
         try {
+            const tokenExpiry = Date.now() + (expiresIn * 1000);
+
             const updates: Partial<UserProfile> = {
                 google_drive_access_token: accessToken,
                 google_drive_refresh_token: refreshToken,
-                google_drive_token_expiry: Date.now() + (expiresIn * 1000)
+                google_drive_token_expiry: tokenExpiry
             };
 
             const { error } = await this.supabase
@@ -229,6 +260,7 @@ export class AuthController {
 
             // Update local profile data
             this.userProfile = { ...this.userProfile, ...updates } as UserProfile;
+            console.log('Stored Google Drive tokens, expiry:', new Date(tokenExpiry).toISOString());
             return true;
         } catch (error) {
             console.error('Error storing Google Drive tokens:', error);
@@ -238,12 +270,17 @@ export class AuthController {
 
     // Get Google Drive access token (refreshing if needed)
     public async getGoogleDriveAccessToken(): Promise<string | null> {
-        if (!this.userProfile?.google_drive_access_token) return null;
+        if (!this.userProfile?.google_drive_access_token) {
+            console.log('No Google Drive access token available');
+            return null;
+        }
 
         // Check if token is expired
         if (this.userProfile.google_drive_token_expiry &&
             this.userProfile.google_drive_token_expiry < Date.now() &&
             this.userProfile.google_drive_refresh_token) {
+
+            console.log('Google Drive token expired, refreshing...');
 
             // Token is expired, refresh it
             try {
@@ -270,6 +307,39 @@ export class AuthController {
 
         // Token is still valid
         return this.userProfile.google_drive_access_token;
+    }
+
+    // Start token refresh timer to automatically refresh session
+    private startTokenRefreshTimer(): void {
+        // Clear any existing timer first
+        this.stopTokenRefreshTimer();
+
+        const checkAndRefreshToken = async () => {
+            if (this.isTokenExpired()) {
+                console.log("Auth token is expired or close to expiry, refreshing...");
+                const success = await this.refreshSession();
+                if (success) {
+                    console.log("Session refreshed successfully");
+                } else {
+                    console.error("Failed to refresh session, user may need to re-login");
+                    eventEmitter.emit(EVENT_TYPES.SESSION_EXPIRED, null);
+                }
+            }
+        };
+
+        // Check token every 5 minutes
+        this.tokenRefreshTimer = window.setInterval(checkAndRefreshToken, 5 * 60 * 1000);
+
+        // Initial check
+        checkAndRefreshToken();
+    }
+
+    // Stop token refresh timer
+    private stopTokenRefreshTimer(): void {
+        if (this.tokenRefreshTimer) {
+            window.clearInterval(this.tokenRefreshTimer);
+            this.tokenRefreshTimer = null;
+        }
     }
 
     // Check if user is logged in
@@ -316,12 +386,18 @@ export class AuthController {
     // Sign out user
     public async signOut(): Promise<boolean> {
         try {
+            // Stop token refresh timer before signing out
+            this.stopTokenRefreshTimer();
+
             const { error } = await this.supabase.auth.signOut();
             if (error) throw error;
 
             this.currentUser = null;
             this.currentSession = null;
             this.userProfile = null;
+
+            // Notify listeners about sign out
+            eventEmitter.emit(EVENT_TYPES.SESSION_CHANGED, null);
 
             return true;
         } catch (error) {
@@ -333,7 +409,10 @@ export class AuthController {
     // Refresh session
     public async refreshSession(): Promise<boolean> {
         try {
-            if (!this.currentSession) return false;
+            if (!this.currentSession) {
+                console.log('No active session to refresh');
+                return false;
+            }
 
             const { data, error } = await this.supabase.auth.refreshSession();
 
@@ -342,6 +421,16 @@ export class AuthController {
             this.currentSession = data.session;
             this.currentUser = data.user;
 
+            // Update last sign in time
+            if (this.userProfile) {
+                await this.updateUserProfile({
+                    last_sign_in: new Date().toISOString()
+                });
+            }
+
+            // Notify listeners about refreshed session
+            eventEmitter.emit(EVENT_TYPES.SESSION_CHANGED, this.currentUser);
+
             return true;
         } catch (error) {
             console.error('Error refreshing session:', error);
@@ -349,21 +438,14 @@ export class AuthController {
         }
     }
 
-    // Add auth state listener
-    public addAuthStateListener(listener: (user: User | null) => void): void {
-        this.authStateListeners.push(listener);
-
-        // Call immediately with current state
-        listener(this.currentUser);
-    }
-
-    // Remove auth state listener
-    public removeAuthStateListener(listener: (user: User | null) => void): void {
-        this.authStateListeners = this.authStateListeners.filter(l => l !== listener);
-    }
-
     // Get id token for API calls
     public async getIdToken(): Promise<string | null> {
+        // Check if token is expired and refresh if needed
+        if (this.isTokenExpired()) {
+            const refreshed = await this.refreshSession();
+            if (!refreshed) return null;
+        }
+
         if (!this.currentSession) return null;
         return this.currentSession.access_token;
     }

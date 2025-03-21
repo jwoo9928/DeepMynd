@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Message } from "../../../controllers/types";
 import { Bot, ChevronDown, ChevronUp } from "lucide-react";
 import ReactMarkdown from "react-markdown";

@@ -2,24 +2,36 @@ import ChatLayout from './components/chat/ChatLayout'
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useEffect } from 'react';
 import { DBController } from './controllers/DBController';
-function App() {
+import { AuthController } from './controllers/AuthController';
+import { User } from '@supabase/supabase-js';
+import { useSetAtom } from 'jotai';
+import { userInfoAtom } from './stores/data.store';
+import { EVENT_TYPES, eventEmitter } from './controllers/events';
 
-  // const test = async () => {
-  //   if ('measureUserAgentSpecificMemory' in performance) {
-  //     const memoryStats = await performance.measureUserAgentSpecificMemory() as string;
-  //     console.log('메모리 사용량:', memoryStats, 'GB');
-  //   }
-  // }
+function App() {
+  const setUser = useSetAtom(userInfoAtom);
 
   useEffect(() => {
     DBController.getDatabase();
-    console.log("CPU 코어 개수:", navigator.hardwareConcurrency);
-    console.log("SharedArrayBuffer 지원:", typeof SharedArrayBuffer !== "undefined");
-    // DBController.getDatabase().delete();
-    // LLMController.getInstance();
-    // ChatController.getInstance();
-    // PersonaController.getInstance();
 
+    const handleAuthChange = (newUser: User | null) => {
+      setUser(newUser);
+      console.log("newUser 2", newUser);
+    };
+
+    eventEmitter.on(EVENT_TYPES.SESSION_CHANGED, handleAuthChange);
+    eventEmitter.on(EVENT_TYPES.SESSION_RESTORED, handleAuthChange);
+    eventEmitter.on(EVENT_TYPES.SESSION_EXPIRED, handleAuthChange);
+
+    AuthController.getInstance();
+
+
+    // Clean up listener on unmount
+    return () => {
+      eventEmitter.off(EVENT_TYPES.SESSION_CHANGED, handleAuthChange);
+      eventEmitter.off(EVENT_TYPES.SESSION_RESTORED, handleAuthChange);
+      eventEmitter.off(EVENT_TYPES.SESSION_EXPIRED, handleAuthChange);
+    };
   }, []);
 
 
