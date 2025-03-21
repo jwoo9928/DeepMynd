@@ -45,22 +45,19 @@ const Chat = () => {
         }
     }, [handleSendMessage]);
 
-    const handleMessageReceived = useCallback((data: { roomId: string, messages: Message[] }) => {
-        const roomId = chatController.current.getFocusedRoomId();
-        console.log("gen_roomId", data.roomId, "roomId", roomId);
-        if (chatController.current.getFocusedRoomId() === chatController.current.getGeneratingRoomId()) {
-            !isGenerating && setIsGenerating(true)
-            setMessages([...data.messages])
-            scrollToBottom();
-        } else {
-            isGenerating && setIsGenerating(false)
+    const handleMessageReceived = useCallback((messages: Message[]) => {
+        if (!isGenerating && chatController.current.isFocusingRoomGenerating()) {
+            setIsGenerating(true);
         }
+        setMessages([...messages])
+        scrollToBottom();
     }, []);
 
     useEffect(() => {
 
         const handleGenerationStart = () => {
-            setIsGenerating(true);
+            chatController.current.isFocusingRoomGenerating() &&
+                setIsGenerating(true);
         };
 
         const handleGenerationComplete = () => {

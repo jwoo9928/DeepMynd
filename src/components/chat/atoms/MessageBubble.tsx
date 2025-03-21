@@ -1,89 +1,100 @@
-import { ChevronUp, ChevronDown, Bot, Loader2 } from "lucide-react";
-import React, { useMemo, useState } from "react";
+import React, { memo } from "react";
+import { Bot, Loader2 } from "lucide-react";
 import LoadingDots from "./LoadingDots";
 import ReactMarkdown from "react-markdown";
 import { Message, Persona } from "../../../controllers/types";
-import RenderContent from "./RenderContent";
+import MessageContent from "./message/MessageContent";
 
 interface MessageBubbleProps {
     message: Message;
     isLast: boolean;
     isGenerating: boolean;
-    persona: Persona | null
+    persona: Persona | null;
 }
 
-const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isLast, isGenerating, persona }) => {
-    const [isThinkExpanded, setIsThinkExpanded] = useState(true);
-    const [isImageLoading, setIsImageLoading] = useState(true);
-    const isImage = message.content.startsWith('/image:');
-
+const MessageBubble: React.FC<MessageBubbleProps> = ({
+    message,
+    isLast,
+    isGenerating,
+    persona
+}) => {
+    // Early return for system messages
     if (message.role === 'system') {
-        return;
+        return null;
     }
 
-    const renderImageOrMarkdown = () => {
-        const imageData = message.content.replace('/image:', '');
-        return (
-            <div className="relative">
-                {isImageLoading && (
-                    <div className="flex items-center justify-center p-8 bg-gray-100 rounded-lg">
-                        <Loader2 className="w-8 h-8 text-gray-400 animate-spin" />
-                    </div>
-                )}
-                <img
-                    src={imageData}
-                    alt="Generated content"
-                    className={`max-w-full rounded-lg transition-opacity duration-300 ${isImageLoading ? 'opacity-0' : 'opacity-100'}`}
-                    onLoad={() => setIsImageLoading(false)}
-                />
-            </div>
-        );
-    };
+    const isUserMessage = message.role === 'user';
+
+    // 색상 스타일을 올바르게 설정
+    const bubbleClassNames = isUserMessage
+        ? 'bg-blue-500 text-white rounded-br-none'
+        : 'bg-gray-200 text-gray-900 rounded-tl-none';
+
+    // 메시지가 생성 중일 때만 애니메이션 클래스 추가
+    const animationClass = isLast && isGenerating
+        ? 'animate-[bubble_0.5s_ease-in-out_infinite]'
+        : '';
 
     return (
-        <div className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            {message.role !== 'user' && (
-                <div className="mr-2 flex-shrink-0">
-                    {persona ? (
-                        <img
-                            src={URL.createObjectURL(persona.avatar)}
-                            alt="Assistant avatar"
-                            className="w-8 h-8 rounded-full object-cover"
-                        />
-                    ) : (
-                        <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
-                            <Bot className="w-4 h-4 text-gray-600" />
-                        </div>
-                    )}
-                    {/* <span className="text-sm text-gray bold mb-1 mb-2 mt-1">
+        <div className={`flex flex-col ${isUserMessage ? 'items-end' : 'items-start'} mb-4`}>
+            {/* 어시스턴트 메시지일 때만 아바타와 이름 표시 */}
+            {!isUserMessage && (
+                <div className="flex items-center mb-1">
+                    {/* 아바타 */}
+                    <div className="mr-2">
+                        {persona ? (
+                            <img
+                                src={URL.createObjectURL(persona.avatar)}
+                                alt="Assistant avatar"
+                                className="w-8 h-8 rounded-full object-cover"
+                            />
+                        ) : (
+                            <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
+                                <Bot className="w-4 h-4 text-gray-600" />
+                            </div>
+                        )}
+                    </div>
+
+                    {/* 페르소나 이름 */}
+                    <span className="text-sm text-gray-600 font-medium">
                         {persona?.name ?? 'Assistant'}
-                    </span> */}
+                    </span>
                 </div>
             )}
 
-            <div
-                className={`
-          max-w-[70%] p-3 rounded-2xl transition-all duration-300 ease-in-out
-          ${message.role === 'user'
-                        ? 'bg-blue-500 text-white rounded-br-none'
-                        : 'bg-gray-200 text-gray-900 rounded-tl-none'
-                    }
-          ${isLast && isGenerating ? 'animate-[bubble_0.5s_ease-in-out_infinite]' : ''}
-        `}
-            >
-                {message.role === 'user' ?
-                    <ReactMarkdown>
-                        {message.content}
-                    </ReactMarkdown> : <RenderContent message={message} isGenerating={isGenerating} />}
-                {isLast && isGenerating && <LoadingDots />}
+            {/* 메시지 버블 */}
+            <div className={`flex ${isUserMessage ? 'justify-end' : 'justify-start ml-6'} w-full`}>
+                <div
+                    className={`
+            max-w-[70%] p-3 rounded-2xl 
+            ${bubbleClassNames}
+            ${animationClass}
+          `}
+                >
+                    <MessageContent
+                        message={message}
+                        isGenerating={isGenerating}
+                        isUserMessage={isUserMessage}
+                    />
+
+                    {isLast && isGenerating && <LoadingDots />}
+                </div>
             </div>
         </div>
     );
 };
 
-export default React.memo(MessageBubble, (prevProps, nextProps) => {
-    return prevProps.message.content === nextProps.message.content &&
+// 메모이제이션 비교 함수 - 필요한 속성들만 비교
+export default memo(MessageBubble, (prevProps, nextProps) => {
+    // 메시지 역할은 절대 변경되지 않으므로 내용만 비교
+    const contentUnchanged = prevProps.message.content === nextProps.message.content;
+    const roleUnchanged = prevProps.message.role === nextProps.message.role;
+
+    return (
+        contentUnchanged &&
+        roleUnchanged &&
         prevProps.isLast === nextProps.isLast &&
-        prevProps.persona === nextProps.persona &&
-        prevProps.isGenerating === nextProps.isGenerating;
+        prevProps.isGenerating === nextProps.isGenerating &&
+        prevProps.persona === nextProps.persona
+    );
 });

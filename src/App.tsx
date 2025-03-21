@@ -13,10 +13,8 @@ function App() {
 
   useEffect(() => {
     DBController.getDatabase();
-    setInterval(() => {
-      // test();
-    }
-      , 1000);
+    console.log("CPU 코어 개수:", navigator.hardwareConcurrency);
+    console.log("SharedArrayBuffer 지원:", typeof SharedArrayBuffer !== "undefined");
     // DBController.getDatabase().delete();
     // LLMController.getInstance();
     // ChatController.getInstance();
