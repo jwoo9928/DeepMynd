@@ -12,9 +12,10 @@ export class LLMController {
     // private generationStatus: GenerationStatus | null = null;
     private workers: Map<string, Worker> = new Map();
     private focusedWokerId: string | null = null;
-    private workerStates: Map<string, 'idle' | 'busy'> = new Map();
+    private workerStates: Map<string, { state: 'idle' | 'busy'; lastActive: number }> = new Map();
     private focused_worker_id: string | null = null;
     private model_list: ModelList | null = null;
+    private worker_limit = navigator.hardwareConcurrency;
     // private modelStatus: ModelStatus = {
     //     text: null,
     //     image: null
@@ -62,6 +63,19 @@ export class LLMController {
 
     public async initializeModel(id: string) {
         try {
+            if (this.worker_limit <= this.workers.size) {
+                let oldestWorkerId: string | null = null;
+                let oldestTime = Infinity;
+
+                for (const [workerId, { lastActive }] of this.workerStates) {
+                    if (lastActive < oldestTime) {
+                        oldestTime = lastActive;
+                        oldestWorkerId = workerId;
+                    }
+                }
+                this.deleteWorker(oldestWorkerId!);
+
+            }
             if (!this.model_list) {
                 throw new Error('Model list is not initialized');
             }
@@ -81,7 +95,7 @@ export class LLMController {
             this.focusedWokerId = workerId;
             worker.onmessage = (e) => this.eventHandler(workerId, e);
             this.workers.set(workerId, worker);
-            this.workerStates.set(workerId, 'idle');
+            this.workerStates.set(workerId, { state: 'idle', lastActive: Date.now() });
             console.log("worker is initialized")
             worker.postMessage({ type: WORKER_EVENTS.LOAD, data: { modelId: model_id, modelfile: file } });
             this.focused_worker_id = id;
@@ -108,11 +122,11 @@ export class LLMController {
                     eventEmitter.emit(EVENT_TYPES.GENERATION_UPDATE, data);
                     break;
                 case WORKER_STATUS.GENERATION_COMPLETE:
-                    this.workerStates.set(workerId, 'idle');
+                    this.workerStates.set(workerId, { state: 'idle', lastActive: Date.now() });
                     eventEmitter.emit(EVENT_TYPES.GENERATION_COMPLETE, data);
                     break;
                 case WORKER_STATUS.IMAGE_GEN_COMPLETE:
-                    this.workerStates.set(workerId, 'idle');
+                    this.workerStates.set(workerId, { state: 'idle', lastActive: Date.now() });
                     eventEmitter.emit(EVENT_TYPES.GENERATION_COMPLETE, data);
                     break;
                 case WORKER_STATUS.STATUS_ERROR:
@@ -140,7 +154,7 @@ export class LLMController {
 
     public async generateText(modelId: string, messages: Message[]) {
         console.log("generateText input id: ", modelId)
-        if (this.workerStates.get(modelId) === 'busy') {
+        if (this.workerStates.get(modelId)?.state === 'busy') {
             //error처리
             return;
         }
@@ -159,7 +173,7 @@ export class LLMController {
             console.log("generateText testing")
             const id = this.focusedWokerId;
             let worker = this.workers.get(id);
-            this.workerStates.set(id, 'busy');
+            this.workerStates.set(id, { state: 'busy', lastActive: Date.now() });
             worker?.postMessage({ type: WORKER_EVENTS.GENERATION, data: messages });
             console.log("이벤트 발생 시 타입:", EVENT_TYPES.GENERATION_STARTING);
             eventEmitter.emit(EVENT_TYPES.GENERATION_STARTING, { type: 'text' });
@@ -170,7 +184,7 @@ export class LLMController {
         if (this.focusedWokerId) {
             const id = this.focusedWokerId;
             let worker = this.workers.get(id);
-            this.workerStates.set(id, 'idle');
+            this.workerStates.set(id, { state: 'idle', lastActive: Date.now() });
             worker?.postMessage({ type: WORKER_EVENTS.GENERATION_STOP });
         }
     }
