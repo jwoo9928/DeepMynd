@@ -17,6 +17,7 @@ export class LLMController {
     private workerStates: Map<string, { state: 'idle' | 'busy'; lastActive: number }> = new Map();
     private focused_worker_id: string | null = null;
     private model_list: ModelList | null = null;
+    private translator_worker: Worker | null = null;
     private worker_limit = navigator.hardwareConcurrency;
     private isActivate_translator = false;
 
@@ -38,10 +39,9 @@ export class LLMController {
     }
 
     public setTranslater() {
-        const worker = new Trans_Worker();
-        this.workers.set('translater', worker);
-        worker.onmessage = (e) => this.eventHandler('translater', e);
-        worker.postMessage({ type: WORKER_EVENTS.LOAD });
+        this.translator_worker = new Trans_Worker();
+        this.translator_worker.onmessage = (e) => this.eventHandler('translater', e);
+        this.translator_worker.postMessage({ type: WORKER_EVENTS.LOAD });
     }
 
     private setModelList(modelList: ModelList) {
@@ -234,7 +234,7 @@ export class LLMController {
 
     public translate(text: string): Promise<any> {
         return new Promise((resolve, reject) => {
-            const translator = this.workers.get('translater');
+            const translator = this.translator_worker;
 
             // 응답을 받을 때 resolve 또는 reject
             const messageHandler = (event: MessageEvent) => {

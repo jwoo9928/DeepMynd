@@ -6,6 +6,58 @@ import { ChatController } from "../../controllers/ChatController";
 import ChatInput from "./atoms/ChatInput";
 import { PersonaController } from "../../controllers/PersonaController";
 
+// Helper to group related messages
+const processMessagesForGrouping = (messages: Message[]): Message[][] => {
+    const groupedMessages: Message[][] = [];
+    let currentGroup: Message[] = [];
+
+    messages.forEach((message, index) => {
+        // Start a new group if this is a user message
+        if (message.role === 'user') {
+            if (currentGroup.length > 0) {
+                groupedMessages.push([...currentGroup]);
+                currentGroup = [];
+            }
+            currentGroup.push(message);
+
+            // Check if the next message is a translation
+            const nextMessage = messages[index + 1];
+            if (nextMessage && nextMessage.role === 'ts') {
+                currentGroup.push(nextMessage);
+            }
+        }
+        // Start a new group if this is an assistant message
+        else if (message.role === 'assistant') {
+            if (currentGroup.length > 0 &&
+                (currentGroup[0].role === 'user' || currentGroup[0].role === 'ts')) {
+                groupedMessages.push([...currentGroup]);
+                currentGroup = [];
+            }
+            currentGroup.push(message);
+
+            // Check if the next message is an original message
+            const nextMessage = messages[index + 1];
+            if (nextMessage && nextMessage.role === 'origin') {
+                currentGroup.push(nextMessage);
+            }
+        }
+        // Skip standalone ts or origin messages as they should be paired
+        else if (message.role !== 'ts' && message.role !== 'origin' && message.role !== 'system') {
+            if (currentGroup.length > 0) {
+                groupedMessages.push([...currentGroup]);
+            }
+            currentGroup = [message];
+        }
+    });
+
+    // Add the last group if it exists
+    if (currentGroup.length > 0) {
+        groupedMessages.push(currentGroup);
+    }
+
+    return groupedMessages;
+};
+
 const Chat = () => {
     const [messages, setMessages] = useState<Message[]>([]);
     const [isGenerating, setIsGenerating] = useState(false);
@@ -31,7 +83,6 @@ const Chat = () => {
         setPersona(persona)
     }, []);
 
-
     const handleSendMessage = useCallback(() => {
         if (!inputValue.trim()) return;
         chatController.current.sendMessage(inputValue.trim());
@@ -54,7 +105,6 @@ const Chat = () => {
     }, []);
 
     useEffect(() => {
-
         const handleGenerationStart = () => {
             chatController.current.isFocusingRoomGenerating() &&
                 setIsGenerating(true);
@@ -66,8 +116,6 @@ const Chat = () => {
         setMessages([...chatController.current.getFocusedRoomMessages()]);
         setPersona(PersonaController.getInstance().getFocusedPersona() ?? null)
 
-
-        //hikr215
         eventEmitter.on(EVENT_TYPES.MESSAGE_UPDATE, handleMessageReceived);
         eventEmitter.on(EVENT_TYPES.CHANGE_PERSONA, handlePersona);
         eventEmitter.on(EVENT_TYPES.GENERATION_STARTING, handleGenerationStart);
@@ -80,19 +128,30 @@ const Chat = () => {
         }
     }, []);
 
-    // messages가 변경될 때만 새 배열을 생성하고, 그렇지 않으면 캐싱된 결과를 사용
-    const renderedMessages = useMemo(() => {
-        return messages.map((msg, index) => (
-            <MessageBubble
-                key={index}
-                persona={persona}
-                message={msg}
-                isLast={index === messages.length - 1}
-                isGenerating={isGenerating}
-            />
-        ));
-    }, [messages, isGenerating, persona]);
+    // Process messages into grouped format
+    const groupedMessages = useMemo(() => {
+        return processMessagesForGrouping(messages);
+    }, [messages]);
 
+    // Render messages with proper grouping
+    const renderedMessages = useMemo(() => {
+        return groupedMessages.map((group, groupIndex) => {
+            const isLastGroup = groupIndex === groupedMessages.length - 1;
+            const mainMessage = group[0]; // The primary message (user or assistant)
+            const secondaryMessage = group.length > 1 ? group[1] : null; // ts or origin message
+
+            return (
+                <MessageBubble
+                    key={groupIndex}
+                    mainMessage={mainMessage}
+                    secondaryMessage={secondaryMessage}
+                    isLast={isLastGroup && mainMessage.role === 'assistant'}
+                    isGenerating={isGenerating}
+                    persona={persona}
+                />
+            );
+        });
+    }, [groupedMessages, isGenerating, persona]);
 
     return (
         <div className="flex flex-col h-full">
@@ -109,9 +168,10 @@ const Chat = () => {
                 handleKeyPress={handleKeyPress}
                 handleSendMessage={handleSendMessage}
                 isGenerating={isGenerating}
+                currentModel={persona?.name || "Assistant"}
             />
         </div>
     )
 }
 
-export default Chat
+export default Chat;

@@ -15,15 +15,15 @@ const MessageContent: React.FC<MessageContentProps> = ({
     isGenerating,
     isUserMessage
 }) => {
-    const { content } = message;
+    const { content, role } = message;
 
     // Handle image content
     if (content.startsWith('/image:')) {
         return <ImageContent imageData={content.replace('/image:', '')} />;
     }
 
-    // User messages are simple markdown
-    if (isUserMessage) {
+    // Use appropriate rendering for different message types
+    if (role === 'ts' || role === 'origin' || isUserMessage) {
         return <ReactMarkdown>{content}</ReactMarkdown>;
     }
 
@@ -31,4 +31,11 @@ const MessageContent: React.FC<MessageContentProps> = ({
     return <ThinkingContent content={content} isGenerating={isGenerating} />;
 };
 
-export default React.memo(MessageContent);
+export default React.memo(MessageContent, (prevProps, nextProps) => {
+    return (
+        prevProps.message.content === nextProps.message.content &&
+        prevProps.message.role === nextProps.message.role &&
+        prevProps.isGenerating === nextProps.isGenerating &&
+        prevProps.isUserMessage === nextProps.isUserMessage
+    );
+});
