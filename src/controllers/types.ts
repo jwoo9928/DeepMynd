@@ -1,7 +1,7 @@
 import { ModelFormat } from "../components/models/types";
 
 export interface Message {
-  role: 'user' | 'assistant' | 'system';
+  role: 'user' | 'assistant' | 'system' | 'ts' | 'origin';
   content: string;
 }
 

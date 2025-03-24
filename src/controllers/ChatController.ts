@@ -122,14 +122,28 @@ export class ChatController {
     this.currentGemrateRoomId = this.focusedRoomId;
     //@ts-ignore
     const room = this.getChatRoom(this.currentGemrateRoomId);
-    console.log("#5 room: ", room);
-    const userMessage: Message = { role: 'user', content: content };
+    const isActivateTranslator = this.llmController.getIsActivateTranslator();
+
+    //user message
+    let userMessage: Message = { role: 'user', content: content };
     await this.dbController.addMessage({ roomId: room.roomId, sender: room.personaId, message: userMessage, timestamp: Date.now() });
     room.messages.push(userMessage)
-    const sendMessage = room.activated ? [userMessage] : room.messages;
-    !room.activated ? room.activated = true : false;
     this.updateMessage();
+
+    //translate message
+    if (isActivateTranslator) { //번역기 활성화
+      const translate = (await this.llmController.translate(content))?.data.output?.[0].translation_text;
+      const llmMessage: Message = { role: 'ts', content: translate }
+      this.dbController.addMessage({ roomId: room.roomId, sender: room.personaId, message: llmMessage, timestamp: Date.now() });
+      room.messages.push(llmMessage);
+      userMessage = { role: 'user', content: translate };
+      this.updateMessage();
+    }
+    const sendMessage = room.activated ? [userMessage] : this.transformMessages(room.messages)
+    !room.activated ? room.activated = true : false;
     this.llmController.generateText(room.modelId, sendMessage);
+
+
   }
 
 
@@ -161,21 +175,25 @@ export class ChatController {
     console.log("format", format)
     const updatedMessage: Message = {
       ...lastMessage,
-      content: format?.toLowerCase() == ModelFormat.ONNX ? lastMessage.content + output : output,
+      content: format?.toLowerCase() == ModelFormat.GGUF ? output : (lastMessage.content + output),
     };
     messages[lastMessageIndex] = updatedMessage;
 
     this.updateMessage();
   }
 
-  private handleGenerationComplete(): void {
+  private handleGenerationComplete(data: { output: string }): void {
     const roomId = this.currentGemrateRoomId;
     if (roomId) {
       const room = this.getChatRoom(roomId);
       room.lastMessageTimestamp = Date.now();
       const messages = this.getMessages();
       this.dbController.addMessage({ roomId: room.roomId, sender: room.personaId, message: messages[messages.length - 1], timestamp: Date.now() });
-      this.chatRooms.set(roomId, { ...room, messages: [...messages] });
+      const isActivateTranslator = this.llmController.getIsActivateTranslator();
+      if (isActivateTranslator) {
+        room.messages.push({ role: 'origin', content: data.output });
+        this.dbController.addMessage({ roomId: room.roomId, sender: room.personaId, message: { role: 'origin', content: data.output }, timestamp: Date.now() });
+      }
       this.currentGemrateRoomId = undefined;
       this.updateMessage();
     }
@@ -252,5 +270,43 @@ export class ChatController {
 
   public getChatRooms(): ChatRoom[] {
     return Array.from(this.chatRooms.values());
+  }
+
+  public transformMessages(messages: Message[]): Message[] {
+    const transformed = [];
+    let lastUser = null;
+    let lastAssistant = null;
+
+    for (const msg of messages) {
+      if (msg.role === 'user') {
+        if (lastUser !== null) {
+          transformed.push(msg); // 변환 없이 추가
+        }
+        lastUser = msg.content; // 원본 저장
+      } else if (msg.role === 'assistant') {
+        if (lastAssistant !== null) {
+          transformed.push(msg); // 변환 없이 추가
+        }
+        lastAssistant = msg.content; // 원본 저장
+      } else if (msg.role === 'ts' || msg.role === 'origin') {
+        if (lastUser !== null) {
+          transformed.push({ role: 'user', content: msg.content });
+          lastUser = null; // 변환 완료 후 초기화
+        } else if (lastAssistant !== null) {
+          transformed.push({ role: 'assistant', content: msg.content });
+          lastAssistant = null; // 변환 완료 후 초기화
+        }
+      }
+    }
+    if (lastAssistant !== null) {
+      transformed.push({ role: 'assistant', content: lastAssistant });
+    }
+    if (lastUser !== null) {
+      transformed.push({ role: 'user', content: lastUser });
+    }
+    console.log("transformed", transformed)
+    console.log("messages", messages)
+
+    return transformed as Message[];
   }
 }

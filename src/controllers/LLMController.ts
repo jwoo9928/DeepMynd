@@ -6,22 +6,26 @@ import ONNX_Worker from "./workers/main-worker?worker";
 import GGUF_Worker from "./workers/wllama-worker?worker";
 import Image_worker from "./workers/image-worker?worker";
 import MLC_Worker from "./workers/mlc-worker?worker";
+import Trans_Worker from "./workers/translate-worker?worker";
+import { getDefaultStore } from 'jotai';
+import { isActivateTranslator } from '../stores/ui.store';
 
 export class LLMController {
     private static instance: LLMController;
-    // private generationStatus: GenerationStatus | null = null;
     private workers: Map<string, Worker> = new Map();
     private focusedWokerId: string | null = null;
     private workerStates: Map<string, { state: 'idle' | 'busy'; lastActive: number }> = new Map();
     private focused_worker_id: string | null = null;
     private model_list: ModelList | null = null;
     private worker_limit = navigator.hardwareConcurrency;
-    // private modelStatus: ModelStatus = {
-    //     text: null,
-    //     image: null
-    // }
+    private isActivate_translator = false;
+
+    private store = getDefaultStore();
+
 
     private constructor() {
+        this.isActivate_translator = this.store.get(isActivateTranslator);
+        this.isActivate_translator && this.setTranslater.bind(this)();
         eventEmitter.on(EVENT_TYPES.MODEL_INITIALIZING, this.initializeModel.bind(this));
         eventEmitter.on(EVENT_TYPES.MODELS_UPDATED, this.setModelList.bind(this));
     }
@@ -31,6 +35,13 @@ export class LLMController {
             LLMController.instance = new LLMController();
         }
         return LLMController.instance;
+    }
+
+    public setTranslater() {
+        const worker = new Trans_Worker();
+        this.workers.set('translater', worker);
+        worker.onmessage = (e) => this.eventHandler('translater', e);
+        worker.postMessage({ type: WORKER_EVENTS.LOAD });
     }
 
     private setModelList(modelList: ModelList) {
@@ -119,10 +130,21 @@ export class LLMController {
                     eventEmitter.emit(EVENT_TYPES.ERROR, data);
                     break;
                 case WORKER_STATUS.GENERATION_UPDATE:
+                    if (this.isActivate_translator) {
+                        this.translate_generation(data);
+                    } else {
+                        eventEmitter.emit(EVENT_TYPES.GENERATION_UPDATE, data);
+                    }
+                    break;
+                case WORKER_STATUS.TRANSLATION_UPDATE:
+                    console.log("translation update", data)
                     eventEmitter.emit(EVENT_TYPES.GENERATION_UPDATE, data);
                     break;
                 case WORKER_STATUS.GENERATION_COMPLETE:
                     this.workerStates.set(workerId, { state: 'idle', lastActive: Date.now() });
+                    !this.isActivate_translator && eventEmitter.emit(EVENT_TYPES.GENERATION_COMPLETE, data);
+                    break;
+                case WORKER_STATUS.TRANSLATION_COMPLETE:
                     eventEmitter.emit(EVENT_TYPES.GENERATION_COMPLETE, data);
                     break;
                 case WORKER_STATUS.IMAGE_GEN_COMPLETE:
@@ -197,6 +219,42 @@ export class LLMController {
         return this.focused_worker_id;
     }
 
+    public getIsActivateTranslator() {
+        return this.isActivate_translator
+    }
+
+    public translate_generation(text: string) {
+        const translator = this.workers.get('translater');
+        translator?.postMessage({ type: WORKER_EVENTS.GENERATION, data: text });
+    }
+
+    public async toggleTranslator(value: boolean) {
+        this.isActivate_translator = value;
+    }
+
+    public translate(text: string): Promise<any> {
+        return new Promise((resolve, reject) => {
+            const translator = this.workers.get('translater');
+
+            // 응답을 받을 때 resolve 또는 reject
+            const messageHandler = (event: MessageEvent) => {
+                if (event.data?.type === WORKER_EVENTS.TRANSLATION_END) {
+                    // 응답을 처리 (예: event.data.translation)
+                    resolve(event.data);
+                    // 응답을 처리한 후 이벤트 리스너 제거
+                    translator?.removeEventListener('message', messageHandler);
+                }
+            };
+
+            // 메시지 수신 대기 이벤트 리스너 추가
+            translator?.addEventListener('message', messageHandler);
+
+            // 워커에게 번역 요청 메시지 보내기
+            translator?.postMessage({ type: WORKER_EVENTS.TRANSLATION_ALL, data: text });
+        });
+    }
+
+
     public async getMemoryUsage() {
         const memoryStats = {
             webGPU: {
@@ -266,7 +324,7 @@ export class LLMController {
         //@ts-ignore
         if (performance && performance.memory) {
             //@ts-ignore
-            memoryStats.jsHeap.used = performance.memory.usedJSHeapSize; //(await performance?.measureUserAgentSpecificMemory())?.bytes ?? 
+            memoryStats.jsHeap.used = (await performance?.measureUserAgentSpecificMemory?.())?.bytes ?? performance.memory.usedJSHeapSize; //(await performance?.measureUserAgentSpecificMemory())?.bytes ?? 
             //@ts-ignore
             memoryStats.jsHeap.total = navigator.deviceMemory//performance.memory.totalJSHeapSize;
             //@ts-ignore

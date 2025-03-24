@@ -69,10 +69,10 @@ async function generate(messages) {
     stream: true, // <-- Enable streaming
     stream_options: { include_usage: true },
   });
-  let reply = "";
+  // let reply = "";
   for await (const chunk of chunks) {
-    reply += chunk.choices[0]?.delta.content || "";
-    callback_function(reply);
+    // reply += chunk.choices[0]?.delta.content || "";
+    callback_function(chunk.choices[0]?.delta.content);
   }
 
   self.postMessage({ type: WORKER_STATUS.GENERATION_COMPLETE });

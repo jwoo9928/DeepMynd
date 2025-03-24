@@ -19,6 +19,13 @@ export const WORKER_STATUS = {
     IMAGE_GEN_COMPLETE: 'image_gen_complete',
     INTERRUPT: 'interrupt',
     RESET: 'reset',
+
+    //translation status
+    TRANSLATOR_LOADING: 'translator_loading',
+    TRANSLATOR_READY: 'translator_ready',
+    TRANSLATION_UPDATE: 'translation_update',
+    TRANSLATOR_ERROR: 'translator_error',
+    TRANSLATION_COMPLETE: 'translation_complete',
 }
 
 export const WORKER_EVENTS = {
@@ -28,5 +35,7 @@ export const WORKER_EVENTS = {
     RESET: 'reset',
     GENERATION: 'generation',
     GENERATION_STOP: 'generation_stop',
+    TRANSLATION_ALL: 'translation_all',
+    TRANSLATION_END: 'translation_end',
 
 }
