@@ -10,7 +10,7 @@ export interface ChatRoom {
   roomId: string;
   personaId: string;
   systemMessage: string;
-  lastMessageTimestamp?: number;
+  lastMessageTimestamp: number;
   isPin: boolean;
   boostThinking: boolean;
   image: Blob,

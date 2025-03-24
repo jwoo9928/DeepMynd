@@ -224,7 +224,7 @@ export class LLMController {
     }
 
     public translate_generation(text: string) {
-        const translator = this.workers.get('translater');
+        const translator = this.translator_worker;
         translator?.postMessage({ type: WORKER_EVENTS.GENERATION, data: text });
     }
 

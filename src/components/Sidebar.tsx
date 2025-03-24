@@ -50,6 +50,32 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
     subSuccessTitle: "The chat data has been removed successfully",
   }), []);
 
+  function formatTimestamp(lastMessageTimestamp: number | Date): string {
+    const now = new Date();
+    const lastDate = new Date(lastMessageTimestamp);
+
+    const diffTime = now.getTime() - lastDate.getTime(); // 밀리초 차이
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)); // 일 단위 차이
+
+    if (diffDays === 0) {
+      // 오늘: 시간 + AM/PM
+      const hours = lastDate.getHours();
+      const minutes = lastDate.getMinutes().toString().padStart(2, '0');
+      const period = hours >= 12 ? 'PM' : 'AM';
+      const formattedHours = hours % 12 || 12; // 12시간제 변환
+      return `${formattedHours}:${minutes} ${period}`;
+    } else if (diffDays === 1) {
+      return 'Yesterday';
+    } else if (diffDays <= 7) {
+      return 'Last 7 days';
+    } else if (diffDays <= 30) {
+      return 'Last 30 days';
+    } else {
+      // 월과 연도 출력 (예: "March 2024")
+      return lastDate.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+    }
+  }
+
   const [swipeState, setSwipeState] = useState<SwipeState>({
     roomId: null,
     startX: 0,
@@ -436,7 +462,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
                     {room.name}
                   </h3>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-500">12:30 PM</span>
+                    <span className="text-xs text-gray-500">{formatTimestamp(room.lastMessageTimestamp ?? 0)}</span>
                     {isDesktop && (
                       <button
                         onClick={(e) => handleOpenDropdown(e, room.roomId)}

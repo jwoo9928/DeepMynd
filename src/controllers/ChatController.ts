@@ -68,7 +68,8 @@ export class ChatController {
           modelId: persona.model_id,
           image: persona.avatar,
           name: persona.name ?? 'UniMynd',
-          activated: false
+          activated: false,
+          lastMessageTimestamp: roomMessages[roomMessages.length - 1].timestamp
         });
       }
     }
@@ -101,7 +102,8 @@ export class ChatController {
       boostThinking: false,
       image: persona?.avatar,
       name: persona.name ?? 'UniMynd',
-      activated: false
+      activated: false,
+      lastMessageTimestamp: Date.now()
     };
 
     this.chatRooms.set(roomId, newRoom);
