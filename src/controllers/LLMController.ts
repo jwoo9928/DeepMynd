@@ -23,10 +23,8 @@ export class LLMController {
 
     private store = getDefaultStore();
 
-
     private constructor() {
-        this.isActivate_translator = this.store.get(isActivateTranslator);
-        this.isActivate_translator && this.setTranslater.bind(this)();
+        this.store.sub(isActivateTranslator, this.toggleTranslator.bind(this));
         eventEmitter.on(EVENT_TYPES.MODEL_INITIALIZING, this.initializeModel.bind(this));
         eventEmitter.on(EVENT_TYPES.MODELS_UPDATED, this.setModelList.bind(this));
     }
@@ -228,8 +226,14 @@ export class LLMController {
         translator?.postMessage({ type: WORKER_EVENTS.GENERATION, data: text });
     }
 
-    public async toggleTranslator(value: boolean) {
-        this.isActivate_translator = value;
+    public toggleTranslator() {
+        this.isActivate_translator = this.store.get(isActivateTranslator);
+        if (this.isActivate_translator && this.translator_worker == null) {
+            this.setTranslater()
+        } else {
+            this.translator_worker?.terminate();
+            this.translator_worker = null;
+        }
     }
 
     public translate(text: string): Promise<any> {

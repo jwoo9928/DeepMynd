@@ -1,8 +1,8 @@
 import { ChevronUp, ChevronDown, Bot, Loader2 } from "lucide-react";
 import React, { useMemo, useState } from "react";
-import LoadingDots from "./LoadingDots";
+import LoadingDots from "../LoadingDots";
 import ReactMarkdown from "react-markdown";
-import { Message, Persona } from "../../../controllers/types";
+import { Message, Persona } from "../../../../controllers/types";
 
 interface MessageBubbleProps {
     message: Message;

@@ -17,11 +17,18 @@ export interface ChatMessage {
     timestamp: number;
 }
 
+export interface Language {
+    id: number;
+    language: string;
+    FLORES_200: string;
+}
+
 // Dexie 데이터베이스 설정
 export class DBController extends Dexie {
     private messages!: Table<ChatMessage, number>;
     private personas!: Table<Persona, string>;
     private models!: Table<Model, string>;
+    private languages!: Table<Language, string>;
     private supabase: SupabaseClient;
 
     private static instance: DBController;
@@ -34,10 +41,12 @@ export class DBController extends Dexie {
             messages: "++id, roomId, timestamp",
             personas: "id, name, system", // id를 기본 키로 설정
             models: "id, name, format, system",
+            languages: "id, language, FLORES_200",
         });
 
         this.initModelsList.bind(this)();
         this.initPersonas.bind(this)();
+        this.initLanaguageList.bind(this)();
     }
 
     // 싱글턴 패턴으로 DB 인스턴스 관리
@@ -203,6 +212,35 @@ export class DBController extends Dexie {
 
     public async updatePersona(persona: Persona): Promise<number> {
         return await this.personas.update(persona.id, persona);
+    }
+
+    // languages
+    private async initLanaguageList() {
+        const languages = await this.getLanguages();
+        if (languages.length > 0) {
+
+        } else {
+            const { data, error } = await this.supabase.from('language').select('*');
+            if (error) {
+                console.error('Error fetching languages from Supabase:', error.message);
+            }
+            if (data && data.length > 0) {
+                await Promise.all(
+                    data.map(async (language) => {
+                        this.languages.put({
+                            id: language.index,
+                            language: language.language,
+                            FLORES_200: language['FLORES-200'],
+                        });
+                    })
+                );
+            }
+        }
+
+    }
+
+    public getLanguages(): Promise<Language[]> {
+        return this.languages.toArray();
     }
 
     public getSupabase(): SupabaseClient {

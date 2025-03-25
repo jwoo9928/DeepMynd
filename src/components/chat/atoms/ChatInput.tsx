@@ -1,9 +1,10 @@
-import React, { useRef, useState, useEffect } from "react";
-import { Paperclip, Pause, Send, Globe, Loader2 } from "lucide-react";
+import React, { useRef, useState } from "react";
+import { Paperclip, Pause, Send, Globe } from "lucide-react";
 import { ChatController } from "../../../controllers/ChatController";
-import { useAtom } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 import { isActivateTranslator } from "../../../stores/ui.store";
-import { LLMController } from "../../../controllers/LLMController";
+import { activateTranslateLanguageAtom } from "../../../stores/data.store";
+import Languages from "./Languages";
 
 interface ChatInputProps {
 	inputValue: string;
@@ -24,65 +25,47 @@ const ChatInput: React.FC<ChatInputProps> = ({
 }) => {
 	const chatController = useRef(ChatController.getInstance());
 	const [translationEnabled, setTranslationEnabled] = useAtom(isActivateTranslator);
-	const [isTranslationLoading, setIsTranslationLoading] = useState(false);
+	const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(false);
+	const activatedLanguage = useAtomValue(activateTranslateLanguageAtom);
 
 	const toggleTranslation = () => {
-		if (!translationEnabled) {
-			setIsTranslationLoading(true);
-			// Simulate loading time for translation engine
-			setTimeout(() => {
-				setIsTranslationLoading(false);
-				setTranslationEnabled(true);
-			}, 2000); // Adjust timing as needed
-		} else {
-			setTranslationEnabled(false);
-		}
+		setTranslationEnabled(!translationEnabled);
 	};
-
-	// Optional: Cleanup timeout if component unmounts during loading
-	useEffect(() => {
-		return () => {
-			if (isTranslationLoading) {
-				setIsTranslationLoading(false);
-			}
-		};
-	}, []);
-
-	useEffect(() => {
-		LLMController.getInstance().toggleTranslator(translationEnabled);
-	}, [translationEnabled])
 
 	return (
 		<div className="bg-white border-t border-gray-200 p-4 space-y-2">
-			{/* Model info and AI translation toggle */}
+			{/* Model info and AI translation features */}
 			<div className="flex items-center justify-between mb-2 px-2">
 				<div className="text-sm text-gray-500 flex items-center">
 					<div className="h-2 w-2 rounded-full bg-green-500 mr-2"></div>
 					{currentModel}
 				</div>
+				<div className="flex items-center space-x-2">
+					{/* Translation Toggle with Label */}
+					<div className="flex items-center">
+						<span className="text-xs text-gray-500 mr-2">Translate</span>
+						<div
+							onClick={toggleTranslation}
+							className={`relative w-10 h-5 rounded-full cursor-pointer transition-colors duration-200 ${translationEnabled ? 'bg-blue-500' : 'bg-gray-300'}`}
+						>
+							<div
+								className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transform transition-transform duration-200 ${translationEnabled ? 'translate-x-5' : ''}`}
+							/>
+						</div>
+					</div>
 
-				<button
-					onClick={toggleTranslation}
-					disabled={isTranslationLoading}
-					className={`flex items-center text-sm px-3 py-1 rounded-full transition-colors duration-200 ${isTranslationLoading
-						? "bg-blue-50 text-blue-400 cursor-not-allowed"
-						: translationEnabled
-							? "bg-blue-100 text-blue-600"
-							: "bg-gray-100 text-gray-500 hover:bg-gray-200"
-						}`}
-				>
-					{isTranslationLoading ? (
-						<>
-							<Loader2 className="h-3 w-3 mr-1 animate-spin" />
-							<span>Loading...</span>
-						</>
-					) : (
-						<>
-							<Globe className="h-3 w-3 mr-1" />
-							<span>{translationEnabled ? "Translation ON" : "Translation OFF"}</span>
-						</>
-					)}
-				</button>
+					{/* Language Selection Button - Compact */}
+					<button
+						onClick={() => setIsLanguageModalOpen(true)}
+						className={`flex items-center text-xs px-2 py-1 rounded-md border transition-colors ${activatedLanguage
+							? 'border-blue-300 bg-blue-50 text-blue-600'
+							: 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+							}`}
+					>
+						<Globe className="h-3 w-3 mr-1" />
+						{activatedLanguage ? activatedLanguage.language : 'Lang'}
+					</button>
+				</div>
 			</div>
 
 			{/* Input field and buttons */}
@@ -91,7 +74,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
 					data-tour="chat-input"
 					value={inputValue}
 					onChange={(e) => setInputValue(e.target.value)}
-					onKeyPress={handleKeyPress}
+					onKeyDown={handleKeyPress}
 					type="text"
 					placeholder="Type a message..."
 					className="flex-1 bg-gray-100 rounded-full px-4 py-2 outline-none"
@@ -121,6 +104,11 @@ const ChatInput: React.FC<ChatInputProps> = ({
 					</button>
 				)}
 			</div>
+
+			<Languages
+				isLanguageModalOpen={isLanguageModalOpen}
+				setIsLanguageModalOpen={setIsLanguageModalOpen}
+			/>
 		</div>
 	);
 };
