@@ -25,6 +25,7 @@
     "dexie": "^4.0.11",
     "eventemitter3": "^5.0.1",
     "fast-average-color": "^9.4.0",
+    "googleapis": "^148.0.0",
     "gpt-tokenizer": "^2.8.1",
     "jotai": "^2.12.1",
     "kokoro-js": "^1.2.0",

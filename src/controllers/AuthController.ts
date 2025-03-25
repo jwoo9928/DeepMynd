@@ -1,43 +1,56 @@
 import { createClient, SupabaseClient, User, Session } from "@supabase/supabase-js";
 import { EVENT_TYPES, eventEmitter } from "./events";
+import { GoogleDriveController } from "./GoogleDriveController";
 
-// User profile interface for type safety
+// 더 명확하고 안전한 인터페이스 정의
 interface UserProfile {
     id: string;
     email: string;
     full_name?: string;
     avatar_url?: string;
     provider?: string;
-    provider_id?: string;
+    google_drive_tokens?: {
+        access_token?: string;
+        refresh_token?: string;
+        expires_at?: number;
+    };
     last_sign_in?: string;
-    google_drive_access_token?: string;
-    google_drive_refresh_token?: string;
-    google_drive_token_expiry?: number;
 }
 
 export class AuthController {
     private static instance: AuthController;
     private supabase: SupabaseClient;
-    private currentUser: User | null = null;
-    private currentSession: Session | null = null;
-    private userProfile: UserProfile | null = null;
-    private tokenRefreshTimer: number | null = null;
+    private googleDriveController: GoogleDriveController | null = null;
+
+    // 더 안전한 상태 관리
+    private _currentUser: User | null = null;
+    private _currentSession: Session | null = null;
+    private _userProfile: UserProfile | null = null;
+    private _isInitialized: boolean = false;
+    private _isRedirecting: boolean = false;  // 리다이렉트 상태 추적
 
     private constructor() {
+        // 환경 변수 검증 강화
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
         const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
         if (!supabaseUrl || !supabaseAnonKey) {
-            throw new Error('Missing Supabase environment variables');
+            throw new Error('Supabase 환경 변수가 설정되지 않았습니다.');
         }
 
-        this.supabase = createClient(supabaseUrl, supabaseAnonKey);
+        this.supabase = createClient(supabaseUrl, supabaseAnonKey, {
+            auth: {
+                persistSession: true, // 세션을 로컬 스토리지에 지속적으로 저장
+                autoRefreshToken: true, // 토큰 자동 갱신
+                detectSessionInUrl: true, // URL에 세션 정보가 있다면 자동으로 감지
+            }
+        });
 
-        // Initialize auth listener and restore session immediately
-        this.initAuthListener();
-        this.restoreSession();
+        this.initializeAuthListeners();
+        this.setupInitialSession();
     }
 
+    // 싱글톤 인스턴스 메서드
     public static getInstance(): AuthController {
         if (!AuthController.instance) {
             AuthController.instance = new AuthController();
@@ -45,419 +58,321 @@ export class AuthController {
         return AuthController.instance;
     }
 
-    public getSupabase() {
-        return this.supabase;
-    }
-
-    // Initialize auth state listener
-    private initAuthListener(): void {
+    // 인증 상태 리스너 초기화
+    private initializeAuthListeners(): void {
         this.supabase.auth.onAuthStateChange(async (event, session) => {
-            console.log('Auth state changed:', event, session);
+            console.log('Auth 상태 변경:', event, session);
 
-            this.currentSession = session;
-            this.currentUser = session?.user || null;
+            // 리다이렉트 중인 경우 일부 이벤트 무시
+            if (this._isRedirecting && event === 'INITIAL_SESSION') {
+                console.log('리다이렉트 중이므로 INITIAL_SESSION 이벤트 무시');
+                return;
+            }
 
-            if (this.currentUser) {
-                await this.fetchUserProfile();
-                eventEmitter.emit(EVENT_TYPES.SESSION_CHANGED, this.currentUser);
-
-                // Start token refresh timer when user is logged in
-                this.startTokenRefreshTimer();
-
-                // If this is a new sign-in with Google, request Google Drive scope
-                if (event === 'SIGNED_IN' &&
-                    this.currentUser.app_metadata?.provider === 'google') {
-                    // Only request Google Drive access if we don't already have valid tokens
-                    if (!this.userProfile?.google_drive_access_token ||
-                        !this.userProfile?.google_drive_token_expiry ||
-                        this.userProfile.google_drive_token_expiry < Date.now()) {
-                        await this.requestGoogleDriveAccess();
+            switch (event) {
+                case 'SIGNED_IN':
+                    await this.handleSignedIn(session);
+                    break;
+                case 'TOKEN_REFRESHED':
+                    if (session) {
+                        this._currentSession = session;
+                        this._currentUser = session.user;
+                        this.emitEvent(EVENT_TYPES.TOKEN_REFRESHED, this._currentUser);
                     }
-                }
-            } else {
-                this.userProfile = null;
-                eventEmitter.emit(EVENT_TYPES.SESSION_CHANGED, null);
+                    break;
+                case 'SIGNED_OUT':
+                    this.handleSignedOut();
+                    break;
+                case 'USER_UPDATED':
+                    if (session) {
+                        this._currentSession = session;
+                        this._currentUser = session.user;
+                        await this.fetchOrCreateUserProfile();
+                    }
+                    break;
+                case 'INITIAL_SESSION':
+                    // INITIAL_SESSION에서 세션이 null이면 무시하고 기존 세션 유지
+                    console.log("session: ", session)
+                    if (!session && this._currentSession) {
+                        console.log('INITIAL_SESSION에서 세션이 null이지만 기존 세션 유지');
+                        return;
+                    }
 
-                // Clear token refresh timer when user is logged out
-                this.stopTokenRefreshTimer();
+                    if (session) {
+                        await this.handleSignedIn(session);
+                    }
+                    break;
             }
         });
     }
 
-    // Restore session on page reload
-    private async restoreSession(): Promise<void> {
+    // 초기 세션 설정
+    private async setupInitialSession(): Promise<void> {
         try {
             const { data, error } = await this.supabase.auth.getSession();
 
-            if (error) throw error;
-
-            this.currentSession = data.session;
-            this.currentUser = data.session?.user || null;
-
-            if (this.currentUser) {
-                await this.fetchUserProfile();
-                eventEmitter.emit(EVENT_TYPES.SESSION_RESTORED, this.currentUser);
-
-                // Start token refresh timer when session is restored
-                this.startTokenRefreshTimer();
-            } else {
-                eventEmitter.emit(EVENT_TYPES.SESSION_RESTORED, null);
-            }
-        } catch (error) {
-            console.error('Error restoring session:', error);
-            eventEmitter.emit(EVENT_TYPES.SESSION_RESTORED, null);
-        }
-    }
-
-    // Request Google Drive access if not already granted
-    public async requestGoogleDriveAccess(): Promise<void> {
-        console.log("Requesting Google Drive access");
-
-        if (!this.currentUser ||
-            this.currentUser.app_metadata?.provider !== 'google') {
-            console.log("User not logged in with Google, cannot request Drive access");
-            return;
-        }
-
-        // Check if we already have valid tokens
-        if (this.userProfile?.google_drive_access_token &&
-            this.userProfile?.google_drive_token_expiry &&
-            this.userProfile.google_drive_token_expiry > Date.now()) {
-            console.log("Already have valid Google Drive access token");
-            return;
-        }
-
-        try {
-            // Re-authenticate with additional scopes
-            const { data, error } = await this.supabase.auth.signInWithOAuth({
-                provider: 'google',
-                options: {
-                    redirectTo: `${window.location.origin}/auth/callback`,
-                    scopes: 'https://www.googleapis.com/auth/drive.file',
-                    queryParams: {
-                        access_type: 'offline',
-                        prompt: 'consent'
-                    }
-                }
-            });
-
-            if (error) throw error;
-            console.log('Requested Google Drive access:', data);
-        } catch (error) {
-            console.error('Error requesting Google Drive access:', error);
-        }
-    }
-
-    // Fetch user profile data from profiles table
-    private async fetchUserProfile(): Promise<void> {
-        if (!this.currentUser) return;
-
-        try {
-            // First check if profile exists
-            const { data, error } = await this.supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', this.currentUser.id)
-                .single();
-
-            if (error && error.code !== 'PGRST116') {
-                // PGRST116 is for "no rows returned" which is normal for new users
+            if (error) {
                 throw error;
             }
 
-            if (data) {
-                this.userProfile = data as UserProfile;
-                console.log('Fetched user profile:', this.userProfile);
+            console.log("data: ", data)
 
-                // Update last_sign_in field
-                await this.updateUserProfile({
-                    last_sign_in: new Date().toISOString()
-                });
+            if (data.session) {
+                await this.handleSignedIn(data.session);
             } else {
-                // Create new profile if not exists
-                await this.createUserProfile();
+                this._isInitialized = true;
+                this.emitEvent(EVENT_TYPES.SESSION_RESTORED, null);
+                this.emitEvent(EVENT_TYPES.AUTH_READY, false);
             }
         } catch (error) {
-            console.error('Error fetching user profile:', error);
+            console.error('초기 세션 설정 중 오류:', error);
+            this._isInitialized = true;
+            this.emitEvent(EVENT_TYPES.SESSION_RESTORED, null);
+            this.emitEvent(EVENT_TYPES.AUTH_READY, false);
         }
     }
 
-    // Create new user profile in profiles table
-    private async createUserProfile(): Promise<void> {
-        if (!this.currentUser) return;
+    // 로그인 처리
+    private async handleSignedIn(session: Session | null): Promise<void> {
+        if (!session || !session.user) return;
 
-        const newProfile: Partial<UserProfile> = {
-            id: this.currentUser.id,
-            email: this.currentUser.email || '',
-            full_name: this.currentUser.user_metadata?.full_name || '',
-            avatar_url: this.currentUser.user_metadata?.avatar_url || '',
-            provider: this.currentUser.app_metadata?.provider || 'email',
-            provider_id: this.currentUser.app_metadata?.provider_id,
+        this._currentSession = session;
+        this._currentUser = session.user;
+
+        try {
+            // await this.fetchOrCreateUserProfile();
+
+            const isInitialSetup = !this._isInitialized;
+            this._isInitialized = true;
+
+            if (isInitialSetup) {
+                this.emitEvent(EVENT_TYPES.SESSION_RESTORED, this._currentUser);
+                this.emitEvent(EVENT_TYPES.AUTH_READY, true);
+            } else {
+                this.emitEvent(EVENT_TYPES.SESSION_CHANGED, this._currentUser);
+            }
+
+            // Google 로그인 시 추가 처리
+            if (this.isGoogleLogin()) {
+                await this.handleGoogleDriveAccess();
+            }
+        } catch (error) {
+            console.error('로그인 처리 중 오류:', error);
+            if (!this._isInitialized) {
+                this._isInitialized = true;
+                this.emitEvent(EVENT_TYPES.SESSION_RESTORED, null);
+                this.emitEvent(EVENT_TYPES.AUTH_READY, false);
+            }
+        }
+    }
+
+    // 로그아웃 처리
+    private handleSignedOut(): void {
+        this._currentUser = null;
+        this._currentSession = null;
+        this._userProfile = null;
+        this.emitEvent(EVENT_TYPES.SESSION_EXPIRED, null);
+    }
+
+    // 사용자 프로필 조회 또는 생성
+    private async fetchOrCreateUserProfile(): Promise<void> {
+        if (!this._currentUser) return;
+
+        try {
+            const { data, error } = await this.supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', this._currentUser.id)
+                .single();
+
+            if (error && error.code !== 'PGRST116') {
+                throw error;
+            }
+
+            this._userProfile = data || await this.createUserProfile();
+
+            // 마지막 로그인 시간 업데이트
+            await this.updateUserProfile({
+                last_sign_in: new Date().toISOString()
+            });
+        } catch (error) {
+            console.error('프로필 처리 중 오류:', error);
+        }
+    }
+
+    // 새 사용자 프로필 생성
+    private async createUserProfile(): Promise<UserProfile> {
+        if (!this._currentUser) throw new Error('사용자 없음');
+
+        const newProfile: UserProfile = {
+            id: this._currentUser.id,
+            email: this._currentUser.email || '',
+            full_name: this._currentUser.user_metadata?.full_name || '',
+            avatar_url: this._currentUser.user_metadata?.avatar_url || '',
+            provider: this._currentUser.app_metadata?.provider || 'email',
             last_sign_in: new Date().toISOString()
         };
 
-        try {
-            const { error } = await this.supabase
-                .from('profiles')
-                .insert(newProfile);
+        const { error } = await this.supabase.from('profiles').insert(newProfile);
 
-            if (error) throw error;
+        if (error) throw error;
 
-            this.userProfile = newProfile as UserProfile;
-            console.log('Created new user profile:', this.userProfile);
-        } catch (error) {
-            console.error('Error creating user profile:', error);
-        }
+        return newProfile;
     }
 
-    // Handle social login (Google, Apple)
-    public async handleSocialLogin(provider: 'google' | 'apple'): Promise<boolean> {
+    // 소셜 로그인 처리
+    public async socialLogin(provider: 'google' | 'apple'): Promise<boolean> {
         try {
-            const scopes = provider === 'google'
-                ? 'https://www.googleapis.com/auth/drive.file'
-                : '';
+            // 리다이렉트 상태 설정
+            this._isRedirecting = true;
+            this.emitEvent(EVENT_TYPES.LOGIN_REDIRECT, provider);
 
             const { error } = await this.supabase.auth.signInWithOAuth({
                 provider,
                 options: {
-                    redirectTo: `${window.location.origin}/auth/callback`,
-                    scopes,
-                    queryParams: {
-                        access_type: 'offline',
-                        prompt: 'consent'
-                    }
+                    redirectTo: 'https://pfunquxromkwaadhnhci.supabase.co/auth/v1/callback',
+                    // scopes: provider === 'google'
+                    //     ? 'https://www.googleapis.com/auth/drive.file'
+                    //     : ''
                 }
             });
 
-            if (error) throw error;
-            return true;
-        } catch (error) {
-            console.error('Error signing in:', error);
-            alert('Error signing in. Please try again.');
-            return false;
-        }
-    }
-
-    // Store Google Drive tokens after OAuth callback
-    public async storeGoogleDriveTokens(accessToken: string, refreshToken: string, expiresIn: number): Promise<boolean> {
-        if (!this.currentUser) return false;
-
-        try {
-            const tokenExpiry = Date.now() + (expiresIn * 1000);
-
-            const updates: Partial<UserProfile> = {
-                google_drive_access_token: accessToken,
-                google_drive_refresh_token: refreshToken,
-                google_drive_token_expiry: tokenExpiry
-            };
-
-            const { error } = await this.supabase
-                .from('profiles')
-                .update(updates)
-                .eq('id', this.currentUser.id);
-
-            if (error) throw error;
-
-            // Update local profile data
-            this.userProfile = { ...this.userProfile, ...updates } as UserProfile;
-            console.log('Stored Google Drive tokens, expiry:', new Date(tokenExpiry).toISOString());
-            return true;
-        } catch (error) {
-            console.error('Error storing Google Drive tokens:', error);
-            return false;
-        }
-    }
-
-    // Get Google Drive access token (refreshing if needed)
-    public async getGoogleDriveAccessToken(): Promise<string | null> {
-        if (!this.userProfile?.google_drive_access_token) {
-            console.log('No Google Drive access token available');
-            return null;
-        }
-
-        // Check if token is expired
-        if (this.userProfile.google_drive_token_expiry &&
-            this.userProfile.google_drive_token_expiry < Date.now() &&
-            this.userProfile.google_drive_refresh_token) {
-
-            console.log('Google Drive token expired, refreshing...');
-
-            // Token is expired, refresh it
-            try {
-                // This would need a server-side function to refresh the token
-                const { data, error } = await this.supabase.functions.invoke('refresh-google-token', {
-                    body: { refresh_token: this.userProfile.google_drive_refresh_token }
-                });
-
-                if (error) throw error;
-
-                // Update tokens in profile
-                await this.storeGoogleDriveTokens(
-                    data.access_token,
-                    data.refresh_token || this.userProfile.google_drive_refresh_token,
-                    data.expires_in
-                );
-
-                return data.access_token;
-            } catch (error) {
-                console.error('Error refreshing Google Drive token:', error);
-                return null;
+            if (error) {
+                this._isRedirecting = false;
+                throw error;
             }
-        }
 
-        // Token is still valid
-        return this.userProfile.google_drive_access_token;
-    }
-
-    // Start token refresh timer to automatically refresh session
-    private startTokenRefreshTimer(): void {
-        // Clear any existing timer first
-        this.stopTokenRefreshTimer();
-
-        const checkAndRefreshToken = async () => {
-            if (this.isTokenExpired()) {
-                console.log("Auth token is expired or close to expiry, refreshing...");
-                const success = await this.refreshSession();
-                if (success) {
-                    console.log("Session refreshed successfully");
-                } else {
-                    console.error("Failed to refresh session, user may need to re-login");
-                    eventEmitter.emit(EVENT_TYPES.SESSION_EXPIRED, null);
-                }
-            }
-        };
-
-        // Check token every 5 minutes
-        this.tokenRefreshTimer = window.setInterval(checkAndRefreshToken, 5 * 60 * 1000);
-
-        // Initial check
-        checkAndRefreshToken();
-    }
-
-    // Stop token refresh timer
-    private stopTokenRefreshTimer(): void {
-        if (this.tokenRefreshTimer) {
-            window.clearInterval(this.tokenRefreshTimer);
-            this.tokenRefreshTimer = null;
-        }
-    }
-
-    // Check if user is logged in
-    public isLoggedIn(): boolean {
-        return !!this.currentUser;
-    }
-
-    // Get current user
-    public getCurrentUser(): User | null {
-        return this.currentUser;
-    }
-
-    // Get current session
-    public getCurrentSession(): Session | null {
-        return this.currentSession;
-    }
-
-    // Get user profile
-    public getUserProfile(): UserProfile | null {
-        return this.userProfile;
-    }
-
-    // Update user profile
-    public async updateUserProfile(updates: Partial<UserProfile>): Promise<boolean> {
-        if (!this.currentUser) return false;
-
-        try {
-            const { error } = await this.supabase
-                .from('profiles')
-                .update(updates)
-                .eq('id', this.currentUser.id);
-
-            if (error) throw error;
-
-            // Update local profile data
-            this.userProfile = { ...this.userProfile, ...updates } as UserProfile;
             return true;
         } catch (error) {
-            console.error('Error updating profile:', error);
+            console.error('소셜 로그인 오류:', error);
+            this._isRedirecting = false;
             return false;
         }
     }
 
-    // Sign out user
-    public async signOut(): Promise<boolean> {
-        try {
-            // Stop token refresh timer before signing out
-            this.stopTokenRefreshTimer();
+    // Google Drive 접근 처리
+    private async handleGoogleDriveAccess(): Promise<void> {
+        if (!this.isGoogleLogin()) return;
 
-            const { error } = await this.supabase.auth.signOut();
-            if (error) throw error;
+        // try {
+        //     const tokens = this._userProfile?.google_drive_tokens;
+        //     this.googleDriveController ??= new GoogleDriveController(tokens?.access_token || '');
+        // } catch (e) {
+        //     console.log("error: ", e)
+        // }
 
-            this.currentUser = null;
-            this.currentSession = null;
-            this.userProfile = null;
-
-            // Notify listeners about sign out
-            eventEmitter.emit(EVENT_TYPES.SESSION_CHANGED, null);
-
-            return true;
-        } catch (error) {
-            console.error('Error signing out:', error);
-            return false;
-        }
+        // const needsTokenRefresh = this.needsGoogleDriveTokenRefresh();
+        // if (needsTokenRefresh) {
+        //     await this.refreshGoogleDriveTokens();
+        // }
     }
 
-    // Refresh session
+    // 세션 갱신
     public async refreshSession(): Promise<boolean> {
         try {
-            if (!this.currentSession) {
-                console.log('No active session to refresh');
-                return false;
-            }
-
             const { data, error } = await this.supabase.auth.refreshSession();
 
             if (error) throw error;
 
-            this.currentSession = data.session;
-            this.currentUser = data.user;
-
-            // Update last sign in time
-            if (this.userProfile) {
-                await this.updateUserProfile({
-                    last_sign_in: new Date().toISOString()
-                });
+            if (data.session) {
+                this._currentSession = data.session;
+                this._currentUser = data.user;
+                this.emitEvent(EVENT_TYPES.TOKEN_REFRESHED, this._currentUser);
+                return true;
             }
 
-            // Notify listeners about refreshed session
-            eventEmitter.emit(EVENT_TYPES.SESSION_CHANGED, this.currentUser);
-
-            return true;
+            return false;
         } catch (error) {
-            console.error('Error refreshing session:', error);
+            console.error('세션 갱신 오류:', error);
             return false;
         }
     }
 
-    // Get id token for API calls
-    public async getIdToken(): Promise<string | null> {
-        // Check if token is expired and refresh if needed
-        if (this.isTokenExpired()) {
-            const refreshed = await this.refreshSession();
-            if (!refreshed) return null;
+    // 보조 메서드들
+    private isTokenExpired(): boolean {
+        if (!this._currentSession || !this._currentSession.expires_at) {
+            return true;
         }
-
-        if (!this.currentSession) return null;
-        return this.currentSession.access_token;
+        return Date.now() >= ((this._currentSession.expires_at * 1000) - (5 * 60 * 1000));
     }
 
-    // Check if token is expired or close to expiry
-    public isTokenExpired(): boolean {
-        if (!this.currentSession?.expires_at) return true;
+    private isGoogleLogin(): boolean {
+        return this._currentUser?.app_metadata?.provider === 'google';
+    }
 
-        const expiresAt = this.currentSession.expires_at * 1000; // Convert to milliseconds
-        const currentTime = Date.now();
-        const timeBuffer = 5 * 60 * 1000; // 5 minutes buffer
+    // private needsGoogleDriveTokenRefresh(): boolean {
+    //     const tokens = this._userProfile?.google_drive_tokens;
+    //     return !tokens?.access_token ||
+    //         !tokens.expires_at ||
+    //         Date.now() >= tokens.expires_at;
+    // }
 
-        return currentTime >= (expiresAt - timeBuffer);
+    // 공개 메서드들
+    public on(event: string, callback: (...args: any[]) => void): void {
+        eventEmitter.on(event, callback);
+
+        // 이미 초기화가 완료된 경우 AUTH_READY 이벤트를 즉시 발생시킴
+        if (event === EVENT_TYPES.AUTH_READY && this._isInitialized) {
+            callback(!!this._currentUser);
+        }
+    }
+
+    public off(event: string, callback: (...args: any[]) => void): void {
+        eventEmitter.off(event, callback);
+    }
+
+    private emitEvent(event: string, data: any): void {
+        eventEmitter.emit(event, data);
+    }
+
+    public getCurrentUser(): User | null {
+        return this._currentUser;
+    }
+
+    public getUserProfile(): UserProfile | null {
+        return this._userProfile;
+    }
+
+    public isAuthenticated(): boolean {
+        return !!this._currentUser && !this.isTokenExpired();
+    }
+
+    public async updateUserProfile(updates: Partial<UserProfile>): Promise<boolean> {
+        if (!this._currentUser) return false;
+
+        try {
+            const { error } = await this.supabase
+                .from('profiles')
+                .update(updates)
+                .eq('id', this._currentUser.id);
+
+            if (error) throw error;
+
+            this._userProfile = { ...this._userProfile, ...updates } as UserProfile;
+            return true;
+        } catch (error) {
+            console.error('프로필 업데이트 오류:', error);
+            return false;
+        }
+    }
+
+    public async signOut(): Promise<boolean> {
+        try {
+            const { error } = await this.supabase.auth.signOut();
+
+            if (error) throw error;
+            return true;
+        } catch (error) {
+            console.error('로그아웃 오류:', error);
+            return false;
+        }
+    }
+
+    public getSupabase() {
+        return this.supabase
+    }
+
+    public getGoogleDriveController() {
+        return this.googleDriveController
     }
 }

@@ -26,17 +26,21 @@ const UserInfoSection = () => {
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-gray-300 rounded-full overflow-hidden">
             <img
-              src={userInfo.user_metadata?.avatar_url ?? "public/assets/deepmynd.jpg"}
+              src={userInfo.user_metadata?.picture ?? "public/assets/deepmynd.jpg"}
               alt="Profile"
               className="w-full h-full object-cover"
             />
           </div>
           <div className="flex-1">
-            <h3 className="font-medium text-sm">{extractEmailPrefix(userInfo.email ?? "") || "User"}</h3>
+            <h3 className="font-medium text-sm">{extractEmailPrefix(userInfo.user_metadata.name ?? "") || "User"}</h3>
             <p className="text-xs text-gray-500">{userInfo.email || "user@example.com"}</p>
           </div>
           <button className="p-2 text-gray-600 hover:text-blue-500 hover:bg-blue-50 rounded-full transition-colors"
-            onClick={() => { AuthController.getInstance().signOut() }}>
+            onClick={() => {
+              AuthController.getInstance().getGoogleDriveController()?.uploadJsonToDrive({
+                "test": "google"
+              });
+            }}>
             <MoreVertical className="h-4 w-4" />
           </button>
         </div>

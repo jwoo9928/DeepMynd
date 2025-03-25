@@ -82,7 +82,7 @@ const LoginPrompt: React.FC<LoginPromptProps> = ({ message = "Login to unlock al
                 {/* Action Buttons */}
                 <div className="p-6 bg-gray-50 flex flex-col gap-3">
                     <button
-                        onClick={() => authController.current.handleSocialLogin("google")}
+                        onClick={() => authController.current.socialLogin("google")}
                         className="w-full py-3 px-4 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-colors duration-200 flex items-center justify-center"
                     >
                         Continue with Google

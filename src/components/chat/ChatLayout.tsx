@@ -12,6 +12,7 @@ import ChatHeader from './atoms/ChatHeader';
 import ModelChangeModal from './ChaningProgressModal';
 import LoginPrompt from '../auth/LoginPrompt';
 import ManagePersonas from '../persona/ManagePersonas';
+import { AuthController } from '../../controllers/AuthController';
 
 
 const ModeScreen = ({
@@ -38,6 +39,7 @@ const ModeScreen = ({
 
 const ChatLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
+  AuthController.getInstance();
   const mode = useAtomValue(uiModeAtom);
   // DBController.getDatabase().delete()
 

@@ -33,8 +33,13 @@ export const EVENT_TYPES = {
   //auth
   SESSION_CHANGED: 'session_changed',
   SESSION_RESTORED: 'session_restored',
-  SESSION_EXPIRED: 'session_expired',
+  TOKEN_REFRESHED: 'token_refreshed',
+  SESSION_EXPIRED: 'logout',
+  AUTH_READY: 'auth_ready',
+  LOGIN_REDIRECT: 'login_redirect',
 
-} as const;
+};
+
+export type EventTypes = typeof EVENT_TYPES;
 
 export const eventEmitter = new EventEmitter();

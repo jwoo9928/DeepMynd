@@ -237,7 +237,7 @@ export class LLMController {
     }
 
     public translate(text: string): Promise<any> {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             const translator = this.translator_worker;
 
             // 응답을 받을 때 resolve 또는 reject

@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { DBController, Language } from "../../../controllers/DBController";
 import { useAtom } from "jotai";
 import { activateTranslateLanguageAtom } from "../../../stores/data.store";
-import { X, Check, Search, ChevronRight } from "lucide-react";
+import { X, Search, ChevronRight } from "lucide-react";
 
 interface LanguagesProps {
     isLanguageModalOpen: boolean;
@@ -82,8 +82,8 @@ const Languages = ({
                                     key={language.id}
                                     onClick={() => handleLanguageSelect(language)}
                                     className={`p-4 border rounded-lg cursor-pointer transition-all ${selectedLanguage?.id === language.id
-                                            ? 'border-blue-500 bg-blue-50'
-                                            : 'border-gray-200 hover:border-blue-500 hover:bg-blue-50'
+                                        ? 'border-blue-500 bg-blue-50'
+                                        : 'border-gray-200 hover:border-blue-500 hover:bg-blue-50'
                                         }`}
                                 >
                                     <div className="flex items-center justify-between">
