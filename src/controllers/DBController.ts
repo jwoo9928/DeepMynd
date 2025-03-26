@@ -37,7 +37,7 @@ export class DBController extends Dexie {
         super("ChatDatabase");
 
         this.supabase = AuthController.getInstance().getSupabase();
-        this.version(3).stores({
+        this.version(4).stores({
             messages: "++id, roomId, timestamp",
             personas: "id, name, system", // id를 기본 키로 설정
             models: "id, name, format, system",

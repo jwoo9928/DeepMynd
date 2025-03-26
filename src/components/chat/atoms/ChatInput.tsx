@@ -74,7 +74,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
 					data-tour="chat-input"
 					value={inputValue}
 					onChange={(e) => setInputValue(e.target.value)}
-					onKeyDown={handleKeyPress}
+					onKeyPress={handleKeyPress}
 					type="text"
 					placeholder="Type a message..."
 					className="flex-1 bg-gray-100 rounded-full px-4 py-2 outline-none"

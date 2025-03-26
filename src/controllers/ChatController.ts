@@ -280,6 +280,9 @@ export class ChatController {
     let lastAssistant = null;
 
     for (const msg of messages) {
+      if (msg.role == "system") {
+        transformed.push(msg); // 변환 없이 추가
+      }
       if (msg.role === 'user') {
         if (lastUser !== null) {
           transformed.push(msg); // 변환 없이 추가
@@ -292,9 +295,17 @@ export class ChatController {
         lastAssistant = msg.content; // 원본 저장
       } else if (msg.role === 'ts' || msg.role === 'origin') {
         if (lastUser !== null) {
+          if (lastAssistant != null) {
+            transformed.push({ role: 'assistant', content: lastAssistant });
+            lastAssistant = null;
+          }
           transformed.push({ role: 'user', content: msg.content });
           lastUser = null; // 변환 완료 후 초기화
         } else if (lastAssistant !== null) {
+          if (lastUser != null) {
+            transformed.push({ role: 'user', content: lastUser });
+            lastUser = null;
+          }
           transformed.push({ role: 'assistant', content: msg.content });
           lastAssistant = null; // 변환 완료 후 초기화
         }

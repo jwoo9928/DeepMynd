@@ -25,6 +25,8 @@ export class LLMController {
 
     private constructor() {
         this.store.sub(isActivateTranslator, this.toggleTranslator.bind(this));
+        this.isActivate_translator = this.store.get(isActivateTranslator);
+        this.isActivate_translator && this.setTranslater();
         eventEmitter.on(EVENT_TYPES.MODEL_INITIALIZING, this.initializeModel.bind(this));
         eventEmitter.on(EVENT_TYPES.MODELS_UPDATED, this.setModelList.bind(this));
     }

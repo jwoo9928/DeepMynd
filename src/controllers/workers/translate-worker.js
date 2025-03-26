@@ -28,9 +28,7 @@ let queue = new SentenceQueue();
 async function load() {
   self.postMessage({ type: WORKER_STATUS.TRANSLATOR_LOADING });
 
-  translator = await pipeline("translation", "Xenova/nllb-200-distilled-600M", {
-    progress_callback: (x) => console.log(x),
-  });
+  translator = await pipeline("translation", "Xenova/nllb-200-distilled-600M");
 
   const callback_function = (output) => {
     self.postMessage({
@@ -67,7 +65,6 @@ async function generate(data) {
   }
   const sentence = await queue.dequeue();
   origin.push(sentence);
-  console.log("sentence", sentence);
   await translator(sentence, {
     src_lang: "eng_Latn", // Hindi
     tgt_lang: "kor_Hang", // French
