@@ -5,6 +5,7 @@ import PersonaModal from "./PersonaModal";
 import { EVENT_TYPES, eventEmitter } from "../../controllers/utils/events";
 import { ChatController } from "../../controllers/ChatController";
 import { Search, Filter, ChevronDown } from "lucide-react";
+import { PersonaController } from "../../controllers/PersonaController";
 
 const PersonaLayout = () => {
     const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null);
@@ -14,14 +15,55 @@ const PersonaLayout = () => {
     const [sortOption, setSortOption] = useState<string>("latest");
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
-    const [allTags, setAllTags] = useState<string[]>([]);
+
+    const [personas, setPersonas] = useState<Persona[]>([]);
+
+    const [allTags,] = useState<string[]>([]);
 
     const chatController = useRef(ChatController.getInstance());
+    const personaController = useRef(PersonaController.getInstance());
 
     const handlePersonaSelection = (persona: Persona) => {
         setSelectedPersona(persona);
         setShowPersonaModal(true);
     };
+
+    useEffect(() => {
+        let pList = personaController.current.getPersonaList();
+        if (pList.length > 0) {
+            setPersonas(Array.from(pList.values()));
+        }
+
+        const handlePersonaList = (personaList: Map<string, Persona>) => {
+            setPersonas(Array.from(personaList.values()));
+        }
+
+        eventEmitter.on(EVENT_TYPES.IMPORTED_PERSONA, handlePersonaList);
+
+        return () => {
+            eventEmitter.off(EVENT_TYPES.IMPORTED_PERSONA, handlePersonaList);
+        };
+    }, []);
+
+    useEffect(() => {
+        if (searchTerm === "" && selectedTags.length === 0) {
+            setPersonas(personaController.current.getPersonaList());
+        } else {
+            setPersonas(personas => {
+                let filteredPersonas = personas.filter(persona =>
+                    persona.name.toLowerCase().includes(searchTerm.toLowerCase() ?? '') ||
+                    (persona.tags && persona.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase() ?? ''))) ||
+                    persona.description?.toLowerCase().includes(searchTerm.toLowerCase() ?? '')
+                );
+                if (selectedTags.length > 0) {
+                    filteredPersonas = filteredPersonas.filter(persona =>
+                        persona.tags?.some(tag => selectedTags.includes(tag))
+                    );
+                }
+                return filteredPersonas;
+            })
+        }
+    }, [searchTerm, selectedTags]);
 
     // Start chat with selected persona
     const startChat = async (model_id?: string) => {
@@ -168,6 +210,7 @@ const PersonaLayout = () => {
                 </div>
 
                 <PersonaSelection
+                    personas={personas}
                     handlePersonaSelection={handlePersonaSelection}
                 />
 

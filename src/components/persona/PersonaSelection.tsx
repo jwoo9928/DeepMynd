@@ -1,15 +1,13 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { Persona } from "../../controllers/types";
-import { PersonaController } from "../../controllers/PersonaController";
-import { EVENT_TYPES, eventEmitter } from "../../controllers/utils/events";
 
 const PersonaSelection = ({
+  personas,
   handlePersonaSelection
 }: {
+  personas: Persona[];
   handlePersonaSelection: (persona: Persona) => void
 }) => {
-  const personaController = PersonaController.getInstance();
-  const [personas, setPersonas] = useState<Persona[]>([]);
 
   // Avatar URL 캐싱을 위한 메모이제이션
   const avatarUrls = useMemo(() => {
@@ -27,23 +25,6 @@ const PersonaSelection = ({
     };
   }, [avatarUrls]);
 
-  useEffect(() => {
-    let pList = personaController.getPersonaList();
-    if (pList.length > 0) {
-      setPersonas(Array.from(pList.values()));
-    }
-
-    const handlePersonaList = (personaList: Map<string, Persona>) => {
-      setPersonas(Array.from(personaList.values()));
-    }
-
-    eventEmitter.on(EVENT_TYPES.IMPORTED_PERSONA, handlePersonaList);
-
-    return () => {
-      eventEmitter.off(EVENT_TYPES.IMPORTED_PERSONA, handlePersonaList);
-    };
-  }, []);
-
   const handlePersonaClick = (persona: Persona) => {
     handlePersonaSelection(persona);
   };
@@ -53,7 +34,7 @@ const PersonaSelection = ({
       {personas.map(persona => (
         <div
           key={persona.id}
-          className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-xl transition-shadow"
+          className="bg-gray-100 rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-xl transition-shadow"
           onClick={() => handlePersonaClick(persona)}
         >
           <div className="relative">
