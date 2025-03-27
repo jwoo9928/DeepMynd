@@ -5,7 +5,7 @@ import { DBController } from './controllers/DBController';
 import { User } from '@supabase/supabase-js';
 import { useSetAtom } from 'jotai';
 import { userInfoAtom } from './stores/data.store';
-import { EVENT_TYPES, eventEmitter } from './controllers/events';
+import { EVENT_TYPES, eventEmitter } from './controllers/utils/events';
 
 function App() {
   const setUser = useSetAtom(userInfoAtom);

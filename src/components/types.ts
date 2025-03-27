@@ -7,6 +7,7 @@ export const ModeValues = {
   Import: 'Import' as Mode,
   Edit: 'Edit' as Mode,
   Manage: 'Manage' as Mode,
+  Settings: 'Settings' as Mode,
 
 };
 

@@ -1,5 +1,5 @@
 import { createClient, SupabaseClient, User, Session } from "@supabase/supabase-js";
-import { EVENT_TYPES, eventEmitter } from "./events";
+import { EVENT_TYPES, eventEmitter } from "./utils/events";
 import { GoogleDriveController } from "./GoogleDriveController";
 
 // 더 명확하고 안전한 인터페이스 정의

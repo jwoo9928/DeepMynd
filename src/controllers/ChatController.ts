@@ -1,4 +1,4 @@
-import { eventEmitter, EVENT_TYPES } from './events';
+import { eventEmitter, EVENT_TYPES } from './utils/events';
 import { ChatRoom, Message, GenerationUpdateData, Persona } from './types';
 import { LLMController } from './LLMController';
 import { v4 as uuid } from 'uuid';

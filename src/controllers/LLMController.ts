@@ -1,5 +1,5 @@
 import { ModelFormat, ModelList } from '../components/models/types';
-import { eventEmitter, EVENT_TYPES } from './events';
+import { eventEmitter, EVENT_TYPES } from './utils/events';
 import { Message } from './types';
 import { WORKER_EVENTS, WORKER_STATUS } from "./workers/event";
 import ONNX_Worker from "./workers/main-worker?worker";

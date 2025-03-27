@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Persona } from "../../controllers/types";
 import { PersonaController } from "../../controllers/PersonaController";
-import { EVENT_TYPES, eventEmitter } from "../../controllers/events";
+import { EVENT_TYPES, eventEmitter } from "../../controllers/utils/events";
 
 const ManagePersonas = () => {
     const personaController = PersonaController.getInstance();

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { EVENT_TYPES, eventEmitter } from "../controllers/events";
+import { EVENT_TYPES, eventEmitter } from "../controllers/utils/events";
 import { Bot, Sparkles } from "lucide-react";
 
 
@@ -109,10 +109,10 @@ const Initialize = () => {
               <div
                 key={index}
                 className={`absolute w-full transition-all duration-500 ease-in-out ${index === currentPromoIndex
-                    ? 'translate-x-0 opacity-100'
-                    : index < currentPromoIndex
-                      ? '-translate-x-full opacity-0'
-                      : 'translate-x-full opacity-0'
+                  ? 'translate-x-0 opacity-100'
+                  : index < currentPromoIndex
+                    ? '-translate-x-full opacity-0'
+                    : 'translate-x-full opacity-0'
                   }`}
               >
                 <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-800/50">

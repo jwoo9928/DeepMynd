@@ -1,4 +1,4 @@
-import Sidebar from '../Sidebar';
+import Sidebar from '../sidebar/Sidebar';
 import Chat from './Chat';
 import { Mode, ModeValues } from '../types';
 import LoadingProgressModal from './LoadingProgressModal';
@@ -13,6 +13,7 @@ import ModelChangeModal from './ChaningProgressModal';
 import LoginPrompt from '../auth/LoginPrompt';
 import ManagePersonas from '../persona/ManagePersonas';
 import { AuthController } from '../../controllers/AuthController';
+import SettingsPage from '../settings';
 
 
 const ModeScreen = ({
@@ -32,6 +33,8 @@ const ModeScreen = ({
       return <PersonaLayout />
     case ModeValues.Manage:
       return <ManagePersonas />
+    case ModeValues.Settings:
+      return <SettingsPage />
   }
 }
 

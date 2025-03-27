@@ -1,14 +1,14 @@
 import { Search, X, Plus, MoreVertical, Pin, Trash2, Bot } from "lucide-react";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { EVENT_TYPES, eventEmitter } from "../controllers/events";
-import { ModeValues } from "./types";
-import { ChatController } from "../controllers/ChatController";
-import NewChatModal from "./NewChatModal";
-import { ChatRoom } from "../controllers/types";
-import LoadingModal from "./models/LoadingModal";
+import { EVENT_TYPES, eventEmitter } from "../../controllers/utils/events";
+import { ModeValues } from "../types";
+import { ChatController } from "../../controllers/ChatController";
+import NewChatModal from "../NewChatModal";
+import { ChatRoom } from "../../controllers/types";
+import LoadingModal from "../models/LoadingModal";
 import { useAtom, useSetAtom } from "jotai";
-import { uiModeAtom } from "../stores/ui.store";
-import UserInfoSection from "./sidebar/UserInfoSection";
+import { uiModeAtom } from "../../stores/ui.store";
+import UserInfoSection from "./UserInfoSection";
 
 interface SidebarProps {
   isOpen: boolean;

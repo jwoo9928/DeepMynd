@@ -1,6 +1,6 @@
 import Dexie, { Table } from 'dexie';
 import { Message, Persona } from './types';
-import { EVENT_TYPES, eventEmitter } from './events';
+import { EVENT_TYPES, eventEmitter } from './utils/events';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { prebuiltAppConfig } from '@mlc-ai/web-llm';
 import { v4 as uuid } from 'uuid';

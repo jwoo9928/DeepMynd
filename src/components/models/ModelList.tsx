@@ -1,7 +1,7 @@
 import { ChevronRight, Cpu, Search, Zap } from "lucide-react";
 import React, { useCallback, useEffect, useState } from "react";
 import { DeviceType, Model, ModelFormat, ModelList } from "./types";
-import { EVENT_TYPES, eventEmitter } from "../../controllers/events";
+import { EVENT_TYPES, eventEmitter } from "../../controllers/utils/events";
 import { LLMController } from "../../controllers/LLMController";
 
 const ModelListSection = ({

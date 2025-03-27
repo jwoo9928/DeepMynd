@@ -1,7 +1,7 @@
 import { Menu, MoreVertical, X, Cpu, HardDrive, ArrowLeft } from "lucide-react";
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { LLMController } from "../../../controllers/LLMController";
-import { EVENT_TYPES, eventEmitter } from "../../../controllers/events";
+import { EVENT_TYPES, eventEmitter } from "../../../controllers/utils/events";
 import { useAtom } from "jotai";
 import { ModeValues } from "../../types";
 import { uiModeAtom } from "../../../stores/ui.store";

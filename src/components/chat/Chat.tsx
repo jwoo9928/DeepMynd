@@ -1,7 +1,7 @@
 import { Message, Persona } from "../../controllers/types";
 import MessageBubble from "./atoms/MessageBubble";
 import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
-import { EVENT_TYPES, eventEmitter } from "../../controllers/events";
+import { EVENT_TYPES, eventEmitter } from "../../controllers/utils/events";
 import { ChatController } from "../../controllers/ChatController";
 import ChatInput from "./atoms/ChatInput";
 import { PersonaController } from "../../controllers/PersonaController";

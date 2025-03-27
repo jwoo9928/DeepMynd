@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Bot, Loader2 } from "lucide-react";
-import { EVENT_TYPES, eventEmitter } from "../../controllers/events";
+import { EVENT_TYPES, eventEmitter } from "../../controllers/utils/events";
 import { ModeValues } from "../types";
 import { useSetAtom } from "jotai";
 import { uiModeAtom } from "../../stores/ui.store";
