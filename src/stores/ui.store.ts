@@ -8,4 +8,4 @@ export const isTermsAccepted = atomWithStorage('accepted', false);
 
 export const authModalOpen = atom<boolean>(false)
 
-export const isActivateTranslator = atomWithStorage('activate_translator', true);
+export const isActivateTranslator = atomWithStorage('activate_translator', false);

@@ -117,20 +117,20 @@ export class DBController extends Dexie {
                 this.models.put(model);
                 return acc;
             }, { onnx: [], gguf: [], mlc: [] });
-            categorizedModels.mlc = categorizedModels.mlc.concat(prebuiltAppConfig.model_list.map((model) => {
-                const filtered = {
-                    id: uuid(),
-                    model_id: model.model_id,
-                    name: model.model_id.split('/').pop() || '',
-                    format: ModelFormat.MLC,
-                    size: model.overrides?.context_window_size || 0,
-                    description: model.model_lib,
-                    available: DeviceType.CPU,
-                    limit: model.vram_required_MB || 0,
-                };
-                this.models.put(filtered);
-                return filtered
-            }))
+            // categorizedModels.mlc = categorizedModels.mlc.concat(prebuiltAppConfig.model_list.map((model) => {
+            //     const filtered = {
+            //         id: uuid(),
+            //         model_id: model.model_id,
+            //         name: model.model_id.split('/').pop() || '',
+            //         format: ModelFormat.MLC,
+            //         size: model.overrides?.context_window_size || 0,
+            //         description: model.model_lib,
+            //         available: DeviceType.CPU,
+            //         limit: model.vram_required_MB || 0,
+            //     };
+            //     this.models.put(filtered);
+            //     return filtered
+            // }))
             modelList = categorizedModels;
         }
         eventEmitter.emit(EVENT_TYPES.MODELS_UPDATED, modelList);

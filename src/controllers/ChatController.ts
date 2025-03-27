@@ -143,7 +143,8 @@ export class ChatController {
     }
     const sendMessage = room.activated ? [userMessage] : this.transformMessages(room.messages)
     !room.activated ? room.activated = true : false;
-    this.llmController.generateText(room.modelId, sendMessage);
+    const quant = this.personaController.getPersona(room.personaId)?.q_type;
+    this.llmController.generateText(room.modelId, sendMessage, quant);
 
 
   }

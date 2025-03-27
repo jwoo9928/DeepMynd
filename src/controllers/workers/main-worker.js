@@ -24,10 +24,10 @@ async function check() {
 }
 
 async function load(data) {
-  const { modelId } = data;
+  const { modelId, quant } = data;
   self.postMessage({ type: WORKER_STATUS.STATUS_LOADING });
 
-  await TextGenerationPipeline.getInstance(modelId, (x) => {
+  await TextGenerationPipeline.getInstance(modelId, quant, (x) => {
     self.postMessage(x);
   });
 

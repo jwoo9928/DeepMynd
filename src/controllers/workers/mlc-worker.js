@@ -29,9 +29,9 @@ async function check() {
 }
 
 async function load(data) {
-  const { modelId } = data;
+  const { modelId, quant } = data;
   self.postMessage({ type: WORKER_STATUS.STATUS_LOADING });
-  const [model] = await MLCTextGenePipeline.getInstance(modelId, (x) => {
+  const [model] = await MLCTextGenePipeline.getInstance(modelId, quant, (x) => {
     self.postMessage({
       status: "progress",
       progress: x.progress,

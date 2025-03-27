@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Heart, X, Cpu, Zap, ChevronDown, Settings } from "lucide-react";
 import { Persona } from "../../controllers/types";
 import { LLMController } from "../../controllers/LLMController";
@@ -13,7 +13,7 @@ interface PersonaModalProps {
     selectedPersona: Persona | null;
     showPersonaModal: boolean;
     setShowPersonaModal: React.Dispatch<React.SetStateAction<boolean>>;
-    startChat: (model_id?: string) => void;
+    startChat: (model_id?: string, qType?: string) => void;
 }
 
 const PersonaModal = ({
@@ -24,6 +24,8 @@ const PersonaModal = ({
 }: PersonaModalProps) => {
     const [showModelSelector, setShowModelSelector] = useState(false);
     const [selectedModel, setSelectedModel] = useState<Model | null>(null);
+    const [qType, setQType] = useState<string>();
+
     const setTargetPersona = useSetAtom(personaForUpdateAtom)
     const setMode = useSetAtom(uiModeAtom)
 
@@ -31,6 +33,7 @@ const PersonaModal = ({
         if (selectedPersona) {
             const model = LLMController.getInstance().getModelInfo(selectedPersona?.model_id || "");
             model && setSelectedModel(model);
+            setQType(model?.option?.quantization_types[0]);
         }
     }, [selectedPersona])
 
@@ -40,9 +43,14 @@ const PersonaModal = ({
 
     if (!selectedPersona || !showPersonaModal) return null;
 
+    const handleSetModel = (model: Model, qType?: string) => {
+        setSelectedModel(model);
+        setQType(qType);
+    };
+
     const handleStartChat = () => {
         // Implement model change logic
-        startChat(selectedModel?.id);
+        startChat(selectedModel?.id, qType);
     };
 
     const handleEditPersona = () => {
@@ -154,7 +162,7 @@ const PersonaModal = ({
             <ModelSelectionModal
                 isOpen={showModelSelector}
                 onClose={() => setShowModelSelector(false)}
-                onConfirm={setSelectedModel}
+                onConfirm={handleSetModel}
             />
         </div>
     );

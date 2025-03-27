@@ -72,7 +72,7 @@ export class LLMController {
         }
     }
 
-    public async initializeModel(id: string) {
+    public async initializeModel(id: string, qType?: string) {
         try {
             if (this.worker_limit <= this.workers.size) {
                 let oldestWorkerId: string | null = null;
@@ -108,7 +108,7 @@ export class LLMController {
             this.workers.set(workerId, worker);
             this.workerStates.set(workerId, { state: 'idle', lastActive: Date.now() });
             console.log("worker is initialized")
-            worker.postMessage({ type: WORKER_EVENTS.LOAD, data: { modelId: model_id, modelfile: file } });
+            worker.postMessage({ type: WORKER_EVENTS.LOAD, data: { modelId: model_id, modelfile: file, quant: qType } });
             this.focused_worker_id = id;
         } catch (error) {
             console.log("error", error)
@@ -174,7 +174,7 @@ export class LLMController {
         eventEmitter.emit(EVENT_TYPES.MODEL_DELETED, Array.from(this.workers.keys()));
     }
 
-    public async generateText(modelId: string, messages: Message[]) {
+    public async generateText(modelId: string, messages: Message[], quant?: string) {
         console.log("generateText input id: ", modelId)
         if (this.workerStates.get(modelId)?.state === 'busy') {
             //error처리
@@ -188,7 +188,7 @@ export class LLMController {
                 this.workers.size > 0 ?
                     eventEmitter.emit(EVENT_TYPES.MODEL_CHANGING) :
                     eventEmitter.emit(EVENT_TYPES.MODEL_INITIALIZING);
-                await this.initializeModel(modelId)
+                await this.initializeModel(modelId, quant)
             }
         }
         if (this.focusedWokerId) {

@@ -66,15 +66,16 @@ const PersonaLayout = () => {
     }, [searchTerm, selectedTags]);
 
     // Start chat with selected persona
-    const startChat = async (model_id?: string) => {
+    const startChat = async (model_id?: string, qType?: string) => {
         if (selectedPersona) {
             let persona: Persona = {
                 ...selectedPersona,
-                model_id: model_id || selectedPersona.model_id
+                model_id: model_id || selectedPersona.model_id,
+                q_type: qType || selectedPersona.q_type
             }
             if (selectedPersona) {
                 console.log("start chat id", persona.model_id);
-                eventEmitter.emit(EVENT_TYPES.MODEL_INITIALIZING, persona.model_id);
+                eventEmitter.emit(EVENT_TYPES.MODEL_INITIALIZING, persona.model_id, persona.q_type);
                 setShowPersonaModal(false);
                 await chatController.current.createChatRoom(persona);
             }

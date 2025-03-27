@@ -1,7 +1,7 @@
 import { Model, ModelFormat } from "./types";
 import ModelList from "./ModelList";
 import { X } from "lucide-react";
-import React from "react";
+import React, { useState } from "react";
 
 const ModelSelectionModal = ({
   isOpen,
@@ -10,12 +10,18 @@ const ModelSelectionModal = ({
 }: {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (model: Model) => void;
+  onConfirm: (model: Model, qType?: string) => void;
 }) => {
 
   if (!isOpen) return null;
-  const [selectedFormat, setSelectedFormat] = React.useState<ModelFormat>(ModelFormat.ONNX);
-  const [selectedModel, setSelectedModel] = React.useState<Model | null>(null);
+  const [selectedFormat, setSelectedFormat] = useState<ModelFormat>(ModelFormat.ONNX);
+  const [selectedModel, setSelectedModel] = useState<Model | null>(null);
+  const [quantizationType, setQuantizationType] = useState<string>();
+
+  const handleSelect = (model: Model, qType?: string) => {
+    setSelectedModel(model);
+    setQuantizationType(qType);
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -46,7 +52,8 @@ const ModelSelectionModal = ({
           <ModelList
             selectedFormat={selectedFormat}
             selectedModel={selectedModel}
-            setSelectedModel={setSelectedModel}
+            handleSelect={handleSelect}
+            quantizationType={quantizationType}
           />
 
           <div className="flex justify-end space-x-3">
@@ -58,7 +65,7 @@ const ModelSelectionModal = ({
             </button>
             <button
               onClick={() => {
-                selectedModel && onConfirm(selectedModel);
+                selectedModel && onConfirm(selectedModel, quantizationType);
                 onClose();
               }}
               disabled={!selectedModel}

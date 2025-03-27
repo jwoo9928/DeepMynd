@@ -52,6 +52,7 @@ export interface Persona {
   first_message?: string;
   color: string;
   tags?: string[];
+  q_type?: string;
 }
 
 export interface NewPersona {

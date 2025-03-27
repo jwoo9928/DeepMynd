@@ -8,14 +8,14 @@ export class TextGenerationPipeline {
     static tokenizer: Promise<PreTrainedTokenizer> | null = null;
     static model: Promise<AutoModelForCausalLM> | null = null;
 
-    static async getInstance(model_id?: string, progress_callback: ((x: any) => void) | null = null): Promise<[PreTrainedTokenizer, AutoModelForCausalLM]> {
+    static async getInstance(model_id?: string, quant?: string, progress_callback: ((x: any) => void) | null = null): Promise<[PreTrainedTokenizer, AutoModelForCausalLM]> {
         model_id ??= this.model_id ?? "onnx-community/DeepSeek-R1-Distill-Qwen-1.5B-ONNX";
         this.tokenizer ??= AutoTokenizer.from_pretrained(model_id, {
             progress_callback: progress_callback || undefined,
         });
 
         this.model ??= AutoModelForCausalLM.from_pretrained(model_id, {
-            dtype: "q4f16",
+            dtype: quant as "auto" | "fp32" | "fp16" | "q8" | "int8" | "uint8" | "q4" | "bnb4" | "q4f16" | undefined,
             device: "webgpu",
             progress_callback: progress_callback || undefined,
         });
@@ -26,16 +26,16 @@ export class TextGenerationPipeline {
 
 
 export class MLCTextGenePipeline {
-    static model_id = "Llama-3.1-8B-Instruct-q4f32_1-MLC"//"onnx-community/DeepSeek-R1-Distill-Qwen-1.5B-ONNX";
+    static model_id: string | null = null
     static model: Promise<MLCEngine> | null = null;
 
-    static async getInstance(model_id?: string, progress_callback?: InitProgressCallback): Promise<[MLCEngine]> {
-        this.model_id = model_id ?? this.model_id;
+    static async getInstance(model_id?: string, quant?: string, progress_callback?: InitProgressCallback): Promise<[MLCEngine]> {
+        this.model_id = this.model_id ?? model_id + "-" + `${quant}-` + "MLC";
+        console.log("model_id", this.model_id)
         this.model ??= CreateMLCEngine(
             this.model_id,
             {
                 initProgressCallback: progress_callback,
-
             },
         );
 
