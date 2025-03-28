@@ -2,9 +2,7 @@ import Dexie, { Table } from 'dexie';
 import { Message, Persona } from './types';
 import { EVENT_TYPES, eventEmitter } from './utils/events';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { prebuiltAppConfig } from '@mlc-ai/web-llm';
-import { v4 as uuid } from 'uuid';
-import { DeviceType, Model, ModelFormat, ModelList } from '../components/models/types';
+import { Model, ModelFormat, ModelList } from '../components/models/types';
 import axios from 'axios';
 import { AuthController } from './AuthController';
 

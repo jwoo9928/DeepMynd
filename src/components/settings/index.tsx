@@ -1,5 +1,5 @@
 import React, { useState, ReactNode } from 'react';
-import { Camera, Edit, Trash2, X, DownloadCloud, Globe, Unlink, Link, Grid3x3, Share2 } from 'lucide-react';
+import { Camera, Edit, Trash2, X, Globe, Unlink, Link, Grid3x3, Share2 } from 'lucide-react';
 
 // Custom Dialog Component
 interface DialogProps {
@@ -85,14 +85,14 @@ const SettingsPage: React.FC = () => {
     const [isNicknameEditing, setIsNicknameEditing] = useState(false);
     const [isAlbumOpen, setIsAlbumOpen] = useState(false);
     const [isDesktopAlbumOpen, setIsDesktopAlbumOpen] = useState(false);
-    const [isModelManageOpen, setIsModelManageOpen] = useState(false);
+    // const [isModelManageOpen, setIsModelManageOpen] = useState(false);
     const [isPersonaManageOpen, setIsPersonaManageOpen] = useState(false);
     const [isGoogleDriveConnected, setIsGoogleDriveConnected] = useState(false);
     const [language, setLanguage] = useState<string>('English');
-    const [cachedModels, setCachedModels] = useState([
-        { id: 1, name: 'Qwen2.5-0.5B-Instruct-ONNX', size: '500MB' },
-        { id: 2, name: 'DeepMynd Image', size: '1.2GB' },
-    ]);
+    // const [cachedModels, setCachedModels] = useState([
+    //     { id: 1, name: 'Qwen2.5-0.5B-Instruct-ONNX', size: '500MB' },
+    //     { id: 2, name: 'DeepMynd Image', size: '1.2GB' },
+    // ]);
     const [sharedPersonas, setSharedPersonas] = useState([
         { id: 1, name: 'Anime Schoolgirl', model: 'UniMynd' },
         { id: 2, name: 'SocRates', model: 'UniMynd' },
@@ -109,9 +109,9 @@ const SettingsPage: React.FC = () => {
         }
     };
 
-    const handleDeleteModel = (id: number) => {
-        setCachedModels(cachedModels.filter(model => model.id !== id));
-    };
+    // const handleDeleteModel = (id: number) => {
+    //     setCachedModels(cachedModels.filter(model => model.id !== id));
+    // };
 
     const handleDeletePersona = (id: number) => {
         setSharedPersonas(sharedPersonas.filter(persona => persona.id !== id));

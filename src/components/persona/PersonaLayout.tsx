@@ -83,13 +83,13 @@ const PersonaLayout = () => {
     };
 
     // Collect unique tags from personas
-    const collectTags = (personas: Persona[]) => {
-        const tagSet = new Set<string>();
-        personas.forEach(persona =>
-            persona.tags?.forEach(tag => tagSet.add(tag))
-        );
-        return Array.from(tagSet);
-    };
+    // const collectTags = (personas: Persona[]) => {
+    //     const tagSet = new Set<string>();
+    //     personas.forEach(persona =>
+    //         persona.tags?.forEach(tag => tagSet.add(tag))
+    //     );
+    //     return Array.from(tagSet);
+    // };
 
     const handleTagToggle = (tag: string) => {
         setSelectedTags(prev =>

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Heart, X, Cpu, Zap, ChevronDown, Settings } from "lucide-react";
 import { Persona } from "../../controllers/types";
 import { LLMController } from "../../controllers/LLMController";

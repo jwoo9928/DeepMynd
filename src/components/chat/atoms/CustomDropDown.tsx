@@ -1,5 +1,5 @@
 import { ChevronDownIcon } from "lucide-react";
-import React, { useState } from "react";
+import { useState } from "react";
 
 const CustomDropdown = ({
   options,
