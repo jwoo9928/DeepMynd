@@ -1,50 +1,98 @@
-# React + TypeScript + Vite
+# DeepMynd - Advanced AI Chat Interface
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+[![Unimynd](https://img.shields.io/badge/Website-unimynd.me-blue)](https://www.unimynd.me)
 
-Currently, two official plugins are available:
+DeepMynd is an advanced, locally-run AI chat interface built using React, Vite, and TypeScript. It allows users to interact with various Large Language Models (LLMs), including potentially running models directly in the browser using technologies like WebAssembly (Wllama) and MLC. Key features include customizable AI personas, support for different model backends, document interaction capabilities, and a modern, responsive user interface.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Welcome to DeepMynd, a sophisticated AI chat application designed to provide a flexible and powerful interface for interacting with various large language models (LLMs). Built with modern web technologies, DeepMynd offers features like persona customization, local and remote model support, and rich chat interactions.
 
-## Expanding the ESLint configuration
+Visit our website: [www.unimynd.me](https://www.unimynd.me)
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+## ✨ Features
 
-- Configure the top-level `parserOptions` property like this:
+*   **Modern UI:** Built with React, TypeScript, Vite, and Tailwind CSS for a responsive and clean user experience.
+*   **Flexible Model Integration:** Supports interaction with different AI models, potentially including local models (via WebAssembly/MLC) and external services (like Hugging Face).
+*   **Persona Management:** Create, customize, and manage different AI personas to tailor interactions.
+*   **Rich Chat Experience:** Supports text and potentially image-based interactions within the chat interface.
+*   **Document Interaction:** Includes capabilities for viewing documents (e.g., PDF Viewer).
+*   **State Management:** Organized state management for UI and data.
+*   **Background Processing:** Utilizes web workers for tasks like AI model inference, image processing, and translation.
+*   **Vector Database:** Likely uses VoyDB for efficient similarity search or knowledge retrieval.
+*   **Authentication:** User authentication flow.
+*   **Onboarding:** Includes an onboarding tour for new users.
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+## 🛠️ Tech Stack
+
+*   **Frontend:** React, TypeScript
+*   **Build Tool:** Vite
+*   **Styling:** Tailwind CSS
+*   **State Management:** (Likely Zustand or similar, based on store structure)
+*   **Vector Database:** VoyDB
+*   **AI Inference:** WebAssembly (Wllama), MLC (Machine Learning Compilation)
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+*   Node.js (LTS version recommended)
+*   Yarn (Classic or Berry, check `.yarnrc.yml`)
+
+### Installation
+
+1.  Clone the repository:
+    ```bash
+    git clone <your-repository-url>
+    cd DeepMynd
+    ```
+2.  Install dependencies:
+    ```bash
+    yarn install
+    ```
+
+### Running the Development Server
+
+1.  Start the Vite development server:
+    ```bash
+    yarn dev
+    ```
+2.  Open your browser and navigate to `http://localhost:5173` (or the port specified by Vite).
+
+### Building for Production
+
+```bash
+yarn build
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+## ⚙️ Configuration
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
+The application might require environment variables for configuration (e.g., API keys, backend endpoints). Check for a `.env.example` file or documentation regarding necessary environment variables. Create a `.env` file in the root directory based on the requirements.
 
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
-```
+## 📁 Project Structure
+
+The project follows a standard structure for React applications:
+
+*   `public/`: Static assets and web workers.
+*   `src/`: Source code.
+    *   `components/`: Reusable React components, organized by feature (auth, chat, models, persona, etc.).
+    *   `controllers/`: Application logic, API interactions, and worker management.
+    *   `db/`: Database related code (e.g., VoyDB setup).
+    *   `pipelines/`: Specific AI task pipelines (text generation, image generation, TTS).
+    *   `stores/`: State management stores.
+    *   `App.tsx`: Main application component.
+    *   `main.tsx`: Application entry point.
+*   `eslint.config.js`: ESLint configuration.
+*   `tailwind.config.js`: Tailwind CSS configuration.
+*   `vite.config.ts`: Vite configuration.
+*   `tsconfig.json`: TypeScript configuration.
+
+## 🤝 Contributing
+
+Contributions are welcome! Please follow standard Git workflow practices (fork, branch, pull request). Ensure your code adheres to the project's linting rules.
+
+## 📄 License
+
+(Specify your license here, e.g., MIT License)
+
+---
+
+*This README was generated based on the project structure.*

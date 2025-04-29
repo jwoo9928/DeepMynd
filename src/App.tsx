@@ -1,4 +1,5 @@
-import ChatLayout from './components/chat/ChatLayout'
+import ChatLayout from './components/chat/ChatLayout';
+import PdfViewer from './components/docs/PdfViewer'; // Import the new component
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useEffect } from 'react';
 import { DBController } from './controllers/DBController';
@@ -35,6 +36,7 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<ChatLayout />} />
+      <Route path="/docs" element={<PdfViewer />} /> {/* Add the route for /docs */}
       <Route path="/*" element={<Navigate to="/" replace />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
