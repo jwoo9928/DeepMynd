@@ -26,57 +26,30 @@ DeepMynd는 모듈화되고 확장 가능한 아키텍처를 기반으로 설계
 
 ```mermaid
 graph TD
-    UI[UI (사용자 인터페이스)] -->|사용자 입력/출력| ChatController
-    UI -->|AI 모델 상호작용| LLMController
-    UI -->|페르소나 선택/관리| PersonaController
+    UI -->|User Input/Output| ChatController
+    UI -->|AI Model Interaction| LLMController
+    UI -->|Persona Select/Manage| PersonaController
 
-    ChatController -->|채팅 데이터 관리| DBController
-    ChatController -->|AI 응답 요청| LLMController
-    ChatController -->|페르소나 정보 조회| PersonaController
-    ChatController -->|상태 업데이트| UI
+    ChatController -->|Chat Data Manage| DBController
+    ChatController -->|AI Response Request| LLMController
+    ChatController -->|Persona Info Query| PersonaController
+    ChatController -->|State Update| UI
 
-    PersonaController -->|페르소나 데이터 관리| DBController
-    PersonaController -->|페르소나 정보 제공| ChatController
-    PersonaController -->|페르소나 정보 제공| LLMController
+    PersonaController -->|Persona Data Manage| DBController
+    PersonaController -->|Persona Info Provide| ChatController
+    PersonaController -->|Persona Info Provide| LLMController
 
-    LLMController -->|모델 로딩/관리| WebWorker
-    LLMController -->|AI 모델 추론 요청| WebWorker
-    LLMController -->|페르소나 프롬프트 적용| PersonaController
-    LLMController -->|결과 반환| ChatController
+    LLMController -->|Model Load/Manage| WebWorker
+    LLMController -->|AI Inference Request| WebWorker
+    LLMController -->|Apply Persona Prompt| PersonaController
+    LLMController -->|Return Result| ChatController
 
-    WebWorker -->|모델 추론 수행| LLMController
-    WebWorker -->|이벤트 기반 통신| LLMController
+    WebWorker -->|Perform Inference| LLMController
+    WebWorker -->|Event-based Comm| LLMController
 
-    DBController -->|데이터 저장/조회| IndexedDB[(Dexie.js)]
-    DBController -->|데이터 동기화| ChatController
-    DBController -->|데이터 동기화| PersonaController
-
-    subgraph "Controllers"
-        ChatController(ChatController)
-        PersonaController(PersonaController)
-        LLMController(LLMController)
-        DBController(DBController)
-    end
-
-    subgraph "Workers"
-        WebWorker(WebWorker)
-    end
-
-    subgraph "Data Store"
-        IndexedDB
-    end
-
-    %% Styling
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:2px;
-    classDef controller fill:#ccf,stroke:#33a,stroke-width:2px;
-    classDef worker fill:#fcc,stroke:#a33,stroke-width:2px;
-    classDef db fill:#cfc,stroke:#3a3,stroke-width:2px;
-    classDef ui fill:#ffc,stroke:#aa3,stroke-width:2px;
-
-    class UI ui;
-    class ChatController,PersonaController,LLMController,DBController controller;
-    class WebWorker worker;
-    class IndexedDB db;
+    DBController -->|Data Save/Query| IndexedDB
+    DBController -->|Data Sync| ChatController
+    DBController -->|Data Sync| PersonaController
 ```
 
 ### 1. LLMController
@@ -133,27 +106,13 @@ DeepMynd는 TypeScript를 적극적으로 활용하여 코드의 안정성과 �
 
 ```mermaid
 graph TD
-    subgraph "Troubleshooting Flow"
-        LLM_Controller[LLM Controller] -->|이벤트 메시지 통합| LLM_Adapter(LLM Adapter)
-        LLM_Controller -->|백그라운드 연산 요청| Web_Workers(Web Workers)
-        Web_Workers -->|모델 타입별 처리| LLM_Adapter
-        Web_Workers -->|결과 반환| LLM_Controller
-        LLM_Adapter -->|디코딩 및 후처리| Decoder(Decoder)
-        Decoder -->|정제된 결과| LLM_Controller
-        Web_Workers -->|메모리 관리| GarbageCollector(GarbageCollector)
-    end
-
-    %% Styling
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:2px;
-    classDef controller fill:#ccf,stroke:#33a,stroke-width:2px;
-    classDef worker fill:#fcc,stroke:#a33,stroke-width:2px;
-    classDef adapter fill:#f9c,stroke:#a3a,stroke-width:2px;
-    classDef process fill:#cfc,stroke:#3a3,stroke-width:2px;
-
-    class LLM_Controller controller;
-    class Web_Workers worker;
-    class LLM_Adapter adapter;
-    class Decoder,GarbageCollector process;
+    LLM_Controller -->|Event Message Integrate| LLM_Adapter
+    LLM_Controller -->|Background Task Request| Web_Workers
+    Web_Workers -->|Process by Model Type| LLM_Adapter
+    Web_Workers -->|Return Result| LLM_Controller
+    LLM_Adapter -->|Decode & Post-process| Decoder
+    Decoder -->|Refined Result| LLM_Controller
+    Web_Workers -->|Memory Management| GarbageCollector
 ```
 
 ### 1. 채팅방별 텍스트 스트리밍 동기화 문제
